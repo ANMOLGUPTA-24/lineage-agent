@@ -135,7 +135,7 @@ onboarding ("what do I read to understand typing?").
 - [~] `git init` commit (done, 4 commits) + public GitHub repo (👤 `gh repo create lineage-agent --public --source . --push`) (git history = evidence of original work during the event)
 - [x] Wire `ingest/sections.py` into `make ingest`; embed Alternatives (vector index)
 - [x] `considered(idea)`: vector finds the Alternative → graph adds PEP, ruling, decider, is_current, who to ask; returns quote + `#anchor` link
-- [x] `why` returns Rationale quotes; **guard: every quoted span must appear word for word in a tool row**
+- [~] `why` quotes rejected approaches (done) but not yet its Rationale section (ingested, unused); **guard: every quoted span must appear word for word in a tool row** (done)
 - [x] Edge fix: a PEP mentioned inside another PEP's Rejected-Ideas section → `(:PEP)-[:REJECTS_APPROACH_OF]->(:PEP)`, not "builds on"
       (fixes "PEP 572 builds on PEP 3150")
 - [ ] `connection` weights: AUTHORED cost hub-aware (1+ln(1+#authored)), so 484→695 goes through typing PEPs, not "Guido wrote both"
