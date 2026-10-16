@@ -1,0 +1,1226 @@
+[
+ {
+  "number": 366,
+  "title": "PEP 845 -- Leading-Dot Value Patterns",
+  "url": "https://github.com/python/steering-council/issues/366",
+  "peps": [
+   845
+  ],
+  "closed_at": "2026-10-08T22:07:08Z",
+  "opened_by": "tmke8",
+  "verdict": "I'm sorry, the Steering Council feels this submission is severely premature. We need substantive discussion on a PEP before we can consider it, both to be able to assess consensus and to give people time to review the proposal, ask questions and bring up alternatives. Please try to stimulate the discussion, involve more core team members, and resubmit when it's gotten due consideration.",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/366#issuecomment-6069971792"
+ },
+ {
+  "number": 350,
+  "title": "PEP 797 -- Shared Object Proxies",
+  "url": "https://github.com/python/steering-council/issues/350",
+  "peps": [
+   797
+  ],
+  "closed_at": "2026-07-08T10:48:00Z",
+  "opened_by": "ZeroIntensity",
+  "verdict": "The SC has decided to [reject](https://discuss.python.org/t/pep-797-shared-object-proxies/105709/35) the PEP.",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/350#issuecomment-4914003733"
+ },
+ {
+  "number": 346,
+  "title": "PEP 831 \u2013 Frame Pointers Everywhere: Enabling System-Level Observability for Python",
+  "url": "https://github.com/python/steering-council/issues/346",
+  "peps": [
+   831
+  ],
+  "closed_at": "2026-04-30T21:58:15Z",
+  "opened_by": "savannahostrowski",
+  "verdict": "Surprise! The SC has accepted the PEP: https://discuss.python.org/t/pep-831-frame-pointers-everywhere-enabling-system-level-observability-for-python/106958/6\n",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/346#issuecomment-4356438497"
+ },
+ {
+  "number": 344,
+  "title": "PEP 829 -- Package Startup Configuration Files",
+  "url": "https://github.com/python/steering-council/issues/344",
+  "peps": [
+   829
+  ],
+  "closed_at": "2026-04-25T01:26:58Z",
+  "opened_by": "warsaw",
+  "verdict": "The SC has accepted this PEP! https://discuss.python.org/t/pep-829-structured-startup-configuration-files/106789/112",
+  "verdict_by": "savannahostrowski",
+  "verdict_url": "https://github.com/python/steering-council/issues/344#issuecomment-4317368705"
+ },
+ {
+  "number": 339,
+  "title": "PEP 828 -- Supporting 'yield from' in asynchronous generators",
+  "url": "https://github.com/python/steering-council/issues/339",
+  "peps": [
+   828
+  ],
+  "closed_at": "2026-08-07T15:00:36Z",
+  "opened_by": "ZeroIntensity",
+  "verdict": "I think this can be closed now that the PEP has been accepted?",
+  "verdict_by": "StanFromIreland",
+  "verdict_url": "https://github.com/python/steering-council/issues/339#issuecomment-5218527792"
+ },
+ {
+  "number": 337,
+  "title": "PEP 820 \u2013 PySlot: Unified slot system for the C API",
+  "url": "https://github.com/python/steering-council/issues/337",
+  "peps": [
+   820
+  ],
+  "closed_at": "2026-04-23T21:55:22Z",
+  "opened_by": "encukou",
+  "verdict": "The SC has accepted the PEP: https://discuss.python.org/t/pep-820-pyslot-unified-slot-system-for-the-c-api/105552/24",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/337#issuecomment-4308491807"
+ },
+ {
+  "number": 335,
+  "title": "PEP 806 \u2013 Mixed sync/async context managers with precise async marking",
+  "url": "https://github.com/python/steering-council/issues/335",
+  "peps": [
+   806
+  ],
+  "closed_at": "2026-04-23T18:29:19Z",
+  "opened_by": "Zac-HD",
+  "verdict": "We have posted a response to this pep here:\n\nhttps://discuss.python.org/t/pep-806-mixed-sync-async-context-managers-with-precise-async-marking/103971/12\n\nThanks a lot @Zac-HD for your work and the proposal.",
+  "verdict_by": "pablogsal",
+  "verdict_url": "https://github.com/python/steering-council/issues/335#issuecomment-4306821164"
+ },
+ {
+  "number": 334,
+  "title": "PEP 800 \u2013 Disjoint bases in the type system",
+  "url": "https://github.com/python/steering-council/issues/334",
+  "peps": [
+   800
+  ],
+  "closed_at": "2026-04-15T10:38:18Z",
+  "opened_by": "JelleZijlstra",
+  "verdict": "The SC has accepted the PEP:\n\nThe SC accepts [PEP 800 (Disjoint bases in the type system)](https://peps.python.org/pep-0800/). However, we want the text to clarify (at least) in the PEP's abstract and the What's New entry that this is _not_ a feature for typical end users and that it is _not_ recommend all classes be annotated even if they might be disjoint bases.\n\nIt's clear to us that the notion of disjoint bases is important enough to be able to reflect in stub files and (rarely) in Python source, for interoperability and consistent symantics between type system interpretations. At the same time, we expect the way the PEP is currently written -- with the practical use advice and the actual target audience not mentioned until the \"How to Teach This\" section -- will lead to confusion among end users, especially those eager to apply type annotations in their code. A clear note in the PEP abstract, perhaps re-iterated at the end of the Motivation section, as well as clear communication in What's New for Python 3.15 should alleviate these concerns.\n\nhttps://discuss.python.org/t/pep-800-solid-bases-in-the-type-system/99910/41",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/334#issuecomment-4251304617"
+ },
+ {
+  "number": 333,
+  "title": "PEP 803 \u2013 \u201cabi3t\u201d: Stable ABI for Free-Threaded Builds",
+  "url": "https://github.com/python/steering-council/issues/333",
+  "peps": [
+   803
+  ],
+  "closed_at": "2026-03-29T02:39:28Z",
+  "opened_by": "encukou",
+  "verdict": "Hi @encukou ,\n\nSC has now [approved](https://discuss.python.org/t/pep-803-round-two-abi3t-stable-abi-for-free-threaded-builds/106181/26) this PEP. \nCongratulations!\n\nWarm regards,\nDonghee\n(on behalf of the Python Steering Council)",
+  "verdict_by": "corona10",
+  "verdict_url": "https://github.com/python/steering-council/issues/333#issuecomment-4149276935"
+ },
+ {
+  "number": 332,
+  "title": "PEP 776 -- Emscripten Support",
+  "url": "https://github.com/python/steering-council/issues/332",
+  "peps": [
+   776
+  ],
+  "closed_at": "2026-04-04T17:53:42Z",
+  "opened_by": "hoodmane",
+  "verdict": "Opened https://github.com/python/peps/pull/4887",
+  "verdict_by": "hoodmane",
+  "verdict_url": "https://github.com/python/steering-council/issues/332#issuecomment-4195192311"
+ },
+ {
+  "number": 329,
+  "title": "PEP 816 -- WASI Support",
+  "url": "https://github.com/python/steering-council/issues/329",
+  "peps": [
+   816
+  ],
+  "closed_at": "2026-02-27T02:27:12Z",
+  "opened_by": "brettcannon",
+  "verdict": "Hi @brettcannon , \n\nSC has now [approved](https://discuss.python.org/t/pep-816-wasi-support/105237/3) this PEP. Congratulations!\n\nWarm regards,\nDonghee\n(on behalf of the Python Steering Council)\n",
+  "verdict_by": "corona10",
+  "verdict_url": "https://github.com/python/steering-council/issues/329#issuecomment-3970360293"
+ },
+ {
+  "number": 326,
+  "title": "PEP 747 -- Annotating Type Forms",
+  "url": "https://github.com/python/steering-council/issues/326",
+  "peps": [
+   747
+  ],
+  "closed_at": "2026-02-19T22:34:25Z",
+  "opened_by": "davidfstr",
+  "verdict": "The PEP has been [accepted](https://discuss.python.org/t/pep-747-typeexpr-type-hint-for-a-type-expression/55984/103). Thanks folks!",
+  "verdict_by": "savannahostrowski",
+  "verdict_url": "https://github.com/python/steering-council/issues/326#issuecomment-3930532991"
+ },
+ {
+  "number": 325,
+  "title": "PEP 814 -- Add frozendict built-in type",
+  "url": "https://github.com/python/steering-council/issues/325",
+  "peps": [
+   814
+  ],
+  "closed_at": "2026-02-11T17:09:46Z",
+  "opened_by": "vstinner",
+  "verdict": "PEP accepted. See the acceptance notice here:\n\nhttps://discuss.python.org/t/pep-814-add-frozendict-built-in-type/104854/121\n\nCongrats @vstinner and @corona10 \u2764\ufe0f ",
+  "verdict_by": "pablogsal",
+  "verdict_url": "https://github.com/python/steering-council/issues/325#issuecomment-3885779086"
+ },
+ {
+  "number": 323,
+  "title": "PEP 811 -- Defining Python Security Response Team membership and responsibilities",
+  "url": "https://github.com/python/steering-council/issues/323",
+  "peps": [
+   811
+  ],
+  "closed_at": "2025-12-04T19:56:10Z",
+  "opened_by": "sethmlarson",
+  "verdict": "The steering council is happy to accept PEP 811.  Thank you @sethmlarson for driving this one!",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/323#issuecomment-3614083261"
+ },
+ {
+  "number": 316,
+  "title": "PEP 788 -- Protecting the C API from Interpreter Finalization",
+  "url": "https://github.com/python/steering-council/issues/316",
+  "peps": [
+   788
+  ],
+  "closed_at": "2026-04-28T14:34:19Z",
+  "opened_by": "ZeroIntensity",
+  "verdict": "Hi @ZeroIntensity \n\nThe SC has accepted the PEP: https://discuss.python.org/t/pep-788-protecting-the-c-api-from-interpreter-finalization/104150/44",
+  "verdict_by": "corona10",
+  "verdict_url": "https://github.com/python/steering-council/issues/316#issuecomment-4336251461"
+ },
+ {
+  "number": 315,
+  "title": "PEP 743 \u2013 Add Py_OMIT_LEGACY_API to the Python C API",
+  "url": "https://github.com/python/steering-council/issues/315",
+  "peps": [
+   743
+  ],
+  "closed_at": "2026-02-20T10:50:40Z",
+  "opened_by": "encukou",
+  "verdict": "The SC has decided to reject the PEP as it is proposed: https://discuss.python.org/t/pep-743-add-py-compat-api-version-to-the-python-c-api-take-2/59323/20\n",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/315#issuecomment-3933042741"
+ },
+ {
+  "number": 314,
+  "title": "PEP 810 \u2013 Explicit lazy imports",
+  "url": "https://github.com/python/steering-council/issues/314",
+  "peps": [
+   810
+  ],
+  "closed_at": "2025-11-03T16:25:04Z",
+  "opened_by": "pablogsal",
+  "verdict": "The PEP has been [officially accepted](https://discuss.python.org/t/pep-810-explicit-lazy-imports/104131/466).  Thank you everyone!",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/314#issuecomment-3481401399"
+ },
+ {
+  "number": 312,
+  "title": "PEP 679 -- New assert statement syntax with parentheses",
+  "url": "https://github.com/python/steering-council/issues/312",
+  "peps": [
+   679
+  ],
+  "closed_at": "2025-10-24T06:09:45Z",
+  "opened_by": "StanFromIreland",
+  "verdict": "pronouncement posted - https://discuss.python.org/t/pep-679-new-assert-statement-syntax-with-parentheses/103634/24",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/312#issuecomment-3441228204"
+ },
+ {
+  "number": 310,
+  "title": "PEP 791 -- math.integer \u2014 submodule for integer-specific mathematics functions",
+  "url": "https://github.com/python/steering-council/issues/310",
+  "peps": [
+   791
+  ],
+  "closed_at": "2025-10-23T18:27:39Z",
+  "opened_by": "skirpichev",
+  "verdict": "The Steering Council [accepts PEP 791](https://discuss.python.org/t/pep-791-imath-module-for-integer-specific-mathematics-functions/92548/154).  Thank you @skirpichev.  Your sponsor @vstinner should be able to help update the PEP with the acceptance resolution.",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/310#issuecomment-3438516011"
+ },
+ {
+  "number": 308,
+  "title": "PEP 798 -- Unpacking in Comprehensions",
+  "url": "https://github.com/python/steering-council/issues/308",
+  "peps": [
+   798
+  ],
+  "closed_at": "2025-11-03T16:40:38Z",
+  "opened_by": "adqm",
+  "verdict": "The PEP has been [officially accepted](https://discuss.python.org/t/pep-798-unpacking-in-comprehensions/99435/60). Thank you everyone!",
+  "verdict_by": "pablogsal",
+  "verdict_url": "https://github.com/python/steering-council/issues/308#issuecomment-3481472463"
+ },
+ {
+  "number": 296,
+  "title": "PEP 694 -- Upload 2.0 API for Python Package Indexes",
+  "url": "https://github.com/python/steering-council/issues/296",
+  "peps": [
+   694
+  ],
+  "closed_at": "2025-08-07T21:07:41Z",
+  "opened_by": "warsaw",
+  "verdict": "Today the SC decided to ask @di to be the PEP Delegate.  I will update the PEP and close this ticket.",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/296#issuecomment-3165686659"
+ },
+ {
+  "number": 295,
+  "title": "PEP 772 -- Packaging Council governance process",
+  "url": "https://github.com/python/steering-council/issues/295",
+  "peps": [
+   772
+  ],
+  "closed_at": "2026-04-16T21:57:40Z",
+  "opened_by": "warsaw",
+  "verdict": "This PEP has been [accepted](https://discuss.python.org/t/pep-772-packaging-council-governance-process-round-3/100181/118) \ud83c\udf89 ! Thanks folks!",
+  "verdict_by": "savannahostrowski",
+  "verdict_url": "https://github.com/python/steering-council/issues/295#issuecomment-4263678223"
+ },
+ {
+  "number": 294,
+  "title": "PEP 799 \u2013- A dedicated profiling package for organizing Python profiling tools",
+  "url": "https://github.com/python/steering-council/issues/294",
+  "peps": [
+   799
+  ],
+  "closed_at": "2025-08-21T18:09:19Z",
+  "opened_by": "pablogsal",
+  "verdict": "j'aimerais bien developper mon apprentissage ici merci.",
+  "verdict_by": "bekongweesther-collab",
+  "verdict_url": "https://github.com/python/steering-council/issues/294#issuecomment-3477465458"
+ },
+ {
+  "number": 293,
+  "title": "PEP 793 -- PyModExport: A new entry point for C extension modules",
+  "url": "https://github.com/python/steering-council/issues/293",
+  "peps": [
+   793
+  ],
+  "closed_at": "2025-11-12T15:22:22Z",
+  "opened_by": "encukou",
+  "verdict": "Correct! Thanks for the ping",
+  "verdict_by": "pablogsal",
+  "verdict_url": "https://github.com/python/steering-council/issues/293#issuecomment-3522488393"
+ },
+ {
+  "number": 291,
+  "title": "PEP 728 -- TypedDict with typed extra items",
+  "url": "https://github.com/python/steering-council/issues/291",
+  "peps": [
+   728
+  ],
+  "closed_at": "2025-08-15T22:18:23Z",
+  "opened_by": "JelleZijlstra",
+  "verdict": "Copy from https://discuss.python.org/t/pep-728-typeddict-with-typed-extra-items/45443/159\n\nHi @JelleZijlstra ,\n\nAfter several weeks of review, the Steering Council (SC) is pleased to approve [PEP 728](https://peps.python.org/pep-0728/), in line with the recommendations from the Typing Council.\nThank you for your thorough responses and updates throughout the review process.\n\nDonghee\non behalf of the Steering Council\n\nNote:  @warsaw plans to share additional ideas for typing documentation separately.",
+  "verdict_by": "corona10",
+  "verdict_url": "https://github.com/python/steering-council/issues/291#issuecomment-3191619808"
+ },
+ {
+  "number": 290,
+  "title": "PEP 782 -- Add PyBytesWriter C API",
+  "url": "https://github.com/python/steering-council/issues/290",
+  "peps": [
+   782
+  ],
+  "closed_at": "2025-09-11T16:51:59Z",
+  "opened_by": "vstinner",
+  "verdict": "Hi Victor, SC now publishes [the acceptance](https://discuss.python.org/t/pep-782-add-pybyteswriter-c-api/86617/15) of this PEP.\nCongratulations!\n\nWarm regards,\nDonghee\n(on behalf of the Python Steering Council)",
+  "verdict_by": "corona10",
+  "verdict_url": "https://github.com/python/steering-council/issues/290#issuecomment-3281855189"
+ },
+ {
+  "number": 287,
+  "title": "PEP 784 -- Adding Zstandard to the standard library",
+  "url": "https://github.com/python/steering-council/issues/287",
+  "peps": [
+   784
+  ],
+  "closed_at": "2025-04-25T20:49:37Z",
+  "opened_by": "emmatyping",
+  "verdict": "[PEP 784](https://discuss.python.org/t/pep-784-adding-zstandard-to-the-standard-library/87377/138) accepted, with a couple of small changes requested.  Thanks and congrats!",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/287#issuecomment-2831406153"
+ },
+ {
+  "number": 286,
+  "title": "PEP 734 -- Multiple Interpreters in the Stdlib (followup)",
+  "url": "https://github.com/python/steering-council/issues/286",
+  "peps": [
+   734
+  ],
+  "closed_at": "2025-06-05T19:37:40Z",
+  "opened_by": "ericsnowcurrently",
+  "verdict": "PEP 734 [accepted](https://discuss.python.org/t/pep-734-multiple-interpreters-in-the-stdlib/41147/36), with the request to put this in `concurrent.interpreters`.  Thank you @ericsnowcurrently !",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/286#issuecomment-2945872317"
+ },
+ {
+  "number": 282,
+  "title": "PEP 749 -- Implementing PEP 649",
+  "url": "https://github.com/python/steering-council/issues/282",
+  "peps": [
+   649,
+   749
+  ],
+  "closed_at": "2025-06-26T18:01:34Z",
+  "opened_by": "JelleZijlstra",
+  "verdict": "PEP 749 [accepted](https://discuss.python.org/t/pep-749-implementing-pep-649/54974/66).  Congratulations!",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/282#issuecomment-2851973063"
+ },
+ {
+  "number": 281,
+  "title": "PEP 758 -- Allow except and except* expressions without parentheses",
+  "url": "https://github.com/python/steering-council/issues/281",
+  "peps": [
+   758
+  ],
+  "closed_at": "2025-03-14T20:51:24Z",
+  "opened_by": "brettcannon",
+  "verdict": "The Python Steering Council discussed and chosen to Accept this PEP! \ud83c\udf89 ",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/281#issuecomment-2725722828"
+ },
+ {
+  "number": 278,
+  "title": "PEP 774 -- Removing the LLVM requirement for JIT builds",
+  "url": "https://github.com/python/steering-council/issues/278",
+  "peps": [
+   774
+  ],
+  "closed_at": "2025-03-14T21:04:25Z",
+  "opened_by": "savannahostrowski",
+  "verdict": "The Python Steering Council has discussed this PEP and decided that we think this one should be **Deferred** for the time being.\n\nWe generally agree with the approach proposed, but our reasoning is that the JIT work is not bearing meaningful performance wins yet. This is the kind of build change we expect to be taken when expecting the JIT to no longer be an experimental build feature. But it is too soon to consider the JIT not experimental so we feel it is too soon to do this.\n\nThus deferring it until the JIT is closer to some form of \"graduation\" in that regard.\n\nIt is good to have written up, so thank you for that from all of us and from your future selves!  If all goes as we expect the JIT authors are hoping for this will be revisited in the future.",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/278#issuecomment-2725761848"
+ },
+ {
+  "number": 275,
+  "title": "PEP 750 -- Template Strings",
+  "url": "https://github.com/python/steering-council/issues/275",
+  "peps": [
+   750
+  ],
+  "closed_at": "2025-04-17T17:56:30Z",
+  "opened_by": "davepeck",
+  "verdict": "The Steering Council reviewed today https://github.com/python/peps/pull/4351 and we are happy with the changes so we are formally approving the PEP. Congratulations yet again! :)",
+  "verdict_by": "pablogsal",
+  "verdict_url": "https://github.com/python/steering-council/issues/275#issuecomment-2794619570"
+ },
+ {
+  "number": 271,
+  "title": "PEP 773 -- A Python Installation Manager for Windows",
+  "url": "https://github.com/python/steering-council/issues/271",
+  "peps": [
+   773
+  ],
+  "closed_at": "2025-04-25T20:50:43Z",
+  "opened_by": "zooba",
+  "verdict": "PEP 773 [accepted](https://discuss.python.org/t/pep-773-a-python-installation-manager-for-windows/77900/180)!  Thanks and congrats @zooba !",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/271#issuecomment-2831408188"
+ },
+ {
+  "number": 269,
+  "title": "PEP 769 \u2013 Add a 'default' keyword argument to 'attrgetter', 'itemgetter' and 'getitem'",
+  "url": "https://github.com/python/steering-council/issues/269",
+  "peps": [
+   769
+  ],
+  "closed_at": "2025-03-14T01:50:31Z",
+  "opened_by": "facundobatista",
+  "verdict": "We have posted a decision in the discourse discussion here: https://discuss.python.org/t/pep-769-add-a-default-keyword-argument-to-attrgetter-and-itemgetter/76419/32",
+  "verdict_by": "pablogsal",
+  "verdict_url": "https://github.com/python/steering-council/issues/269#issuecomment-2723121882"
+ },
+ {
+  "number": 267,
+  "title": "PEP 768 \u2013 Safe external debugger interface for CPython ",
+  "url": "https://github.com/python/steering-council/issues/267",
+  "peps": [
+   768
+  ],
+  "closed_at": "2025-03-17T22:55:43Z",
+  "opened_by": "pablogsal",
+  "verdict": "Ths Python Steering Council has reviewed _PEP 768 - Safe external debugger interface_ and decided to **Accept** it! \ud83c\udf89 \n\nThanks everybody for the writeup and discussion and iteration on the proposal based on feedback.",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/267#issuecomment-2731134283"
+ },
+ {
+  "number": 266,
+  "title": "PEP 736 -- Shorthand syntax for keyword arguments at invocation",
+  "url": "https://github.com/python/steering-council/issues/266",
+  "peps": [
+   736
+  ],
+  "closed_at": "2025-03-13T21:37:53Z",
+  "opened_by": "joshuabambrick",
+  "verdict": "The SC today made the [decision](https://discuss.python.org/t/pep-736-shorthand-syntax-for-keyword-arguments-at-invocation/43432/222) for this PEP. Thanks for all your efforts!",
+  "verdict_by": "corona10",
+  "verdict_url": "https://github.com/python/steering-council/issues/266#issuecomment-2722748607"
+ },
+ {
+  "number": 264,
+  "title": "PEP 757 -- C API to import-export Python integers",
+  "url": "https://github.com/python/steering-council/issues/264",
+  "peps": [
+   757
+  ],
+  "closed_at": "2024-12-08T16:19:23Z",
+  "opened_by": "vstinner",
+  "verdict": "The steering council has decided to accept PEP 757 per the C API Working Group's recommendation.  Thanks for drafting it with explanations as to why it is needed and providing usage examples.\r\n\r\n_(and thanks for bearing with my own personal questions about the PEP and documentation requests which you turned into follow-up PRs!)_",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/264#issuecomment-2526204596"
+ },
+ {
+  "number": 262,
+  "title": "PEP 765 -- Disallow return/break/continue that exit a finally block",
+  "url": "https://github.com/python/steering-council/issues/262",
+  "peps": [
+   765
+  ],
+  "closed_at": "2025-02-06T23:01:23Z",
+  "opened_by": "iritkatriel",
+  "verdict": "The SC today [unanimously accepts](https://discuss.python.org/t/pep-765-disallow-return-break-continue-that-exit-a-finally-block/71348/111) this PEP.  Congratulations!",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/262#issuecomment-2641312951"
+ },
+ {
+  "number": 260,
+  "title": "PEP 761 -- Deprecating PGP signatures for CPython artifacts",
+  "url": "https://github.com/python/steering-council/issues/260",
+  "peps": [
+   761
+  ],
+  "closed_at": "2024-11-06T18:09:35Z",
+  "opened_by": "sethmlarson",
+  "verdict": "\u2705  The Steering Council approves [PEP-761](https://peps.python.org/pep-0761/). \ud83c\udf88 ",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/260#issuecomment-2460455312"
+ },
+ {
+  "number": 258,
+  "title": "PEP 661 -- Sentinel Values",
+  "url": "https://github.com/python/steering-council/issues/258",
+  "peps": [
+   661
+  ],
+  "closed_at": "2026-05-19T15:59:47Z",
+  "opened_by": "taleinat",
+  "verdict": "Hi @JelleZijlstra - the @python/steering-council approves those changes.  Thanks for making this feature great for 3.15!",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/258#issuecomment-4489613577"
+ },
+ {
+  "number": 255,
+  "title": "PEP 2026 -- Calendar versioning for Python",
+  "url": "https://github.com/python/steering-council/issues/255",
+  "peps": [
+   2026
+  ],
+  "closed_at": "2025-02-06T23:08:28Z",
+  "opened_by": "hugovk",
+  "verdict": "@hugovk Unfortunately, the SC has decided to [reject](https://discuss.python.org/t/pep-2026-calendar-versioning-for-python/55782/126) this PEP.  Despite that, we appreciate and thank you for your work on it.",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/255#issuecomment-2641321718"
+ },
+ {
+  "number": 246,
+  "title": "PEP 741 -- Python Configuration C API (updated)",
+  "url": "https://github.com/python/steering-council/issues/246",
+  "peps": [
+   741
+  ],
+  "closed_at": "2024-09-03T21:59:33Z",
+  "opened_by": "vstinner",
+  "verdict": "Closing as [approved](https://discuss.python.org/t/pep-741-python-configuration-c-api-second-version/45403/88).",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/246#issuecomment-2327515908"
+ },
+ {
+  "number": 239,
+  "title": "Please consider PEP 667 -- Consistent views of namespaces",
+  "url": "https://github.com/python/steering-council/issues/239",
+  "peps": [
+   667
+  ],
+  "closed_at": "2024-04-25T22:10:08Z",
+  "opened_by": "markshannon",
+  "verdict": "Acceptance message posted with one edit needed while marking it accepted: See https://discuss.python.org/t/pep-667-consistent-views-of-namespaces/46631/25\r\n\r\nThanks!",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/239#issuecomment-2078255829"
+ },
+ {
+  "number": 238,
+  "title": "PEP 742 -- Narrowing types with TypeIs",
+  "url": "https://github.com/python/steering-council/issues/238",
+  "peps": [
+   742
+  ],
+  "closed_at": "2024-04-03T17:13:02Z",
+  "opened_by": "gvanrossum",
+  "verdict": "The Steering Council has decided to follow the Typing Council's recommendation and accepts PEP 742. \ud83c\udf89 ",
+  "verdict_by": "emilyemorehouse",
+  "verdict_url": "https://github.com/python/steering-council/issues/238#issuecomment-2035146143"
+ },
+ {
+  "number": 237,
+  "title": "PEP 741 -- Python Configuration C API",
+  "url": "https://github.com/python/steering-council/issues/237",
+  "peps": [
+   741
+  ],
+  "closed_at": "2024-06-03T15:36:07Z",
+  "opened_by": "vstinner",
+  "verdict": "Closed in favor of the new submission: https://github.com/python/steering-council/issues/246.",
+  "verdict_by": "vstinner",
+  "verdict_url": "https://github.com/python/steering-council/issues/237#issuecomment-2145530071"
+ },
+ {
+  "number": 234,
+  "title": "PEP 734 -- Multiple Interpreters in the Stdlib",
+  "url": "https://github.com/python/steering-council/issues/234",
+  "peps": [
+   734
+  ],
+  "closed_at": "2024-04-10T21:37:32Z",
+  "opened_by": "ericsnowcurrently",
+  "verdict": "The SC has [decided to Defer](https://discuss.python.org/t/pep-734-multiple-interpreters-in-the-stdlib/41147/24) this PEP.",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/234#issuecomment-2048478681"
+ },
+ {
+  "number": 231,
+  "title": "PEP 738 -- Adding Android as a supported platform",
+  "url": "https://github.com/python/steering-council/issues/231",
+  "peps": [
+   738
+  ],
+  "closed_at": "2024-03-20T15:51:35Z",
+  "opened_by": "mhsmith",
+  "verdict": "The SC accepts PEP 738. Just to clarify, though: like with iOS, the buildbot will be a requirement for the platform be considered tier 3 (and listed that way in PEP 11), but in the mean time changes can go in to support the platform.",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/231#issuecomment-2009904413"
+ },
+ {
+  "number": 229,
+  "title": "PEP 705 -- TypedDict: Read-only items",
+  "url": "https://github.com/python/steering-council/issues/229",
+  "peps": [
+   705
+  ],
+  "closed_at": "2024-02-29T14:20:50Z",
+  "opened_by": "JelleZijlstra",
+  "verdict": "The Steering Council has decided to follow the Typing Council's recommendation (quoted verbatim below) and accepts PEP 705.\r\n\r\nFor the record, the Typing Council said:\r\n\r\n> The Python Typing Council recommends accepting PEP 705, \u201cTypedDict: Read-only items\u201d. The PEP's motivation and rationale are well written and clearly describe how attribute mutability can hurt ergonomics in common use cases. Variants of the idea have been discussed and iterated on over the last year and a half, and reflect learnings from previous community experience with TypedDict features \u2014 for instance, the final version incorporates lessons from PEP 655. We expect PEP 705 to compose well with existing TypedDict features. The type qualifier introduced would likely work well if we extended support to Protocols in the future. The PEP has already been implemented in one type checker and we foresee no major issues in getting it implemented in other type checkers.",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/229#issuecomment-1971246536"
+ },
+ {
+  "number": 227,
+  "title": "PEP 737 -- Unify type name formatting",
+  "url": "https://github.com/python/steering-council/issues/227",
+  "peps": [
+   737
+  ],
+  "closed_at": "2024-03-14T13:24:16Z",
+  "opened_by": "vstinner",
+  "verdict": "The SC accepts the updated PEP.",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/227#issuecomment-1997454919"
+ },
+ {
+  "number": 220,
+  "title": "PEP 732 -- The Python Documentation Editorial Board",
+  "url": "https://github.com/python/steering-council/issues/220",
+  "peps": [
+   732
+  ],
+  "closed_at": "2023-12-11T14:39:42Z",
+  "opened_by": "jablonskidev",
+  "verdict": "PEP accepted! https://discuss.python.org/t/pep-732-the-python-documentation-editorial-board/36710/9",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/220#issuecomment-1850211917"
+ },
+ {
+  "number": 218,
+  "title": "PEP 730 -- Adding iOS as a supported platform",
+  "url": "https://github.com/python/steering-council/issues/218",
+  "peps": [
+   730
+  ],
+  "closed_at": "2023-12-04T19:29:11Z",
+  "opened_by": "freakboy3742",
+  "verdict": "Probably an oversight, posted python/peps#3694 to update the status.",
+  "verdict_by": "JelleZijlstra",
+  "verdict_url": "https://github.com/python/steering-council/issues/218#issuecomment-1968236016"
+ },
+ {
+  "number": 216,
+  "title": "PEP 726 -- Module __setattr__ and __delattr__",
+  "url": "https://github.com/python/steering-council/issues/216",
+  "peps": [
+   726
+  ],
+  "closed_at": "2024-02-28T17:20:12Z",
+  "opened_by": "skirpichev",
+  "verdict": "Thanks for the PEP and apologies on our end for the review & response delay:\r\n\r\nThe Python Steering Council has discussed [PEP-726 \u2013 Module `__setattr__` and `__delattr__`](https://peps.python.org/pep-0726/) and decided to Reject it.\r\n\r\nWe did not see clear consensus in the community about use cases such as read-only module attributes, and we are concerned that going further down the route of modules behaving semi-class-like may lead to future performance optimization challenges and confusing semantics. We do not find there to be a strong need for having read-only module attributes, and even if there is one, this is not the ideal solution to that problem. Preventing one possible mis-use of modules did not seem compelling enough.\r\n\r\nThere are already workarounds that people can use to achieve similar results. That some people consider those workarounds such as replacing a module with another object to be gross is not considered a problem as it is an uncommon need.\r\n\r\n\u2013 The 2024 PSC",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/216#issuecomment-1969475863"
+ },
+ {
+  "number": 213,
+  "title": "PEP 729 -- Typing governance process",
+  "url": "https://github.com/python/steering-council/issues/213",
+  "peps": [
+   729
+  ],
+  "closed_at": "2023-11-20T19:24:50Z",
+  "opened_by": "JelleZijlstra",
+  "verdict": "On behalf of the SC, we're pleased to accept this PEP. \ud83d\ude42 ",
+  "verdict_by": "emilyemorehouse",
+  "verdict_url": "https://github.com/python/steering-council/issues/213#issuecomment-1819667102"
+ },
+ {
+  "number": 210,
+  "title": "PEP 731 -- C API Working Group Charter",
+  "url": "https://github.com/python/steering-council/issues/210",
+  "peps": [
+   731
+  ],
+  "closed_at": "2023-11-20T19:26:01Z",
+  "opened_by": "gvanrossum",
+  "verdict": "@python/organization-owners Please block @pathum2583-eng, they've spammed before (https://github.com/python/peps/pull/4925, https://github.com/hugovk/top-pypi-packages/pull/60). ",
+  "verdict_by": "hugovk",
+  "verdict_url": "https://github.com/python/steering-council/issues/210#issuecomment-4507875132"
+ },
+ {
+  "number": 206,
+  "title": "PEP 712 -- Adding a \u201cconverter\u201d parameter to dataclasses.field",
+  "url": "https://github.com/python/steering-council/issues/206",
+  "peps": [
+   712
+  ],
+  "closed_at": "2024-06-06T22:55:22Z",
+  "opened_by": "thejcannon",
+  "verdict": "Official [rejection notice](https://discuss.python.org/t/pep-712-adding-a-converter-parameter-to-dataclasses-field/26126/99) for PEP 712 just posted.  Thank you to all who contributed.",
+  "verdict_by": "warsaw",
+  "verdict_url": "https://github.com/python/steering-council/issues/206#issuecomment-2153526624"
+ },
+ {
+  "number": 199,
+  "title": "Update PEP 387 Backwards Compatibility Policy: Add Soft Deprecation",
+  "url": "https://github.com/python/steering-council/issues/199",
+  "peps": [
+   387
+  ],
+  "closed_at": "2023-07-03T19:03:59Z",
+  "opened_by": "vstinner",
+  "verdict": "Thanks for investivating my case \ud83d\ude01",
+  "verdict_by": "vstinner",
+  "verdict_url": "https://github.com/python/steering-council/issues/199#issuecomment-1619072387"
+ },
+ {
+  "number": 191,
+  "title": "PEP 713 -- Callable Modules",
+  "url": "https://github.com/python/steering-council/issues/191",
+  "peps": [
+   713
+  ],
+  "closed_at": "2023-09-04T17:26:04Z",
+  "opened_by": "amyreese",
+  "verdict": "Please may this rejection notice be posted to Discourse? (Both to update the PEP, and for a wider audience.) The Discussions-To thread is currently locked.\r\n\r\nA",
+  "verdict_by": "AA-Turner",
+  "verdict_url": "https://github.com/python/steering-council/issues/191#issuecomment-1705944339"
+ },
+ {
+  "number": 188,
+  "title": "PEP 703 -- Making the Global Interpreter Lock Optional in CPython",
+  "url": "https://github.com/python/steering-council/issues/188",
+  "peps": [
+   703
+  ],
+  "closed_at": "2023-11-05T05:50:46Z",
+  "opened_by": "colesbury",
+  "verdict": "LOL yes.",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/188#issuecomment-1793645781"
+ },
+ {
+  "number": 187,
+  "title": "PEP 649 update",
+  "url": "https://github.com/python/steering-council/issues/187",
+  "peps": [
+   649
+  ],
+  "closed_at": "2023-05-15T18:52:52Z",
+  "opened_by": "larryhastings",
+  "verdict": "The SC is happy with the changes.",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/187#issuecomment-1548386727"
+ },
+ {
+  "number": 186,
+  "title": "PEP 695 -- Type Parameter Syntax: Proposed changes",
+  "url": "https://github.com/python/steering-council/issues/186",
+  "peps": [
+   695
+  ],
+  "closed_at": "2023-05-08T18:00:13Z",
+  "opened_by": "JelleZijlstra",
+  "verdict": "Thanks!",
+  "verdict_by": "JelleZijlstra",
+  "verdict_url": "https://github.com/python/steering-council/issues/186#issuecomment-1538832073"
+ },
+ {
+  "number": 183,
+  "title": "PEP 702 -- Marking deprecations using the type system",
+  "url": "https://github.com/python/steering-council/issues/183",
+  "peps": [
+   702
+  ],
+  "closed_at": "2023-11-07T12:25:04Z",
+  "opened_by": "JelleZijlstra",
+  "verdict": "The SC has accepted the PEP: https://discuss.python.org/t/pep-702-marking-deprecations-using-the-type-system/23036/61",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/183#issuecomment-1798401242"
+ },
+ {
+  "number": 180,
+  "title": "PEP 659 -- Specializing Adaptive Interpreter",
+  "url": "https://github.com/python/steering-council/issues/180",
+  "peps": [
+   659
+  ],
+  "closed_at": "2023-04-03T20:52:11Z",
+  "opened_by": "markshannon",
+  "verdict": "See also https://github.com/python/peps/pull/3135#issuecomment-1532772983",
+  "verdict_by": "vstinner",
+  "verdict_url": "https://github.com/python/steering-council/issues/180#issuecomment-1921899192"
+ },
+ {
+  "number": 179,
+  "title": "PEP 709 -- Inlined comprehensions",
+  "url": "https://github.com/python/steering-council/issues/179",
+  "peps": [
+   709
+  ],
+  "closed_at": "2023-05-08T19:25:17Z",
+  "opened_by": "carljm",
+  "verdict": "The implementation is ready and reviewed, so I think I will likely land it today!",
+  "verdict_by": "carljm",
+  "verdict_url": "https://github.com/python/steering-council/issues/179#issuecomment-1538927718"
+ },
+ {
+  "number": 178,
+  "title": "PEP 707: A simplified signature for __exit__ and __aexit__",
+  "url": "https://github.com/python/steering-council/issues/178",
+  "peps": [
+   707
+  ],
+  "closed_at": "2023-04-10T19:21:24Z",
+  "opened_by": "iritkatriel",
+  "verdict": "We discussed the PEP and have decided to reject it. Our thinking was the magic and risk of potential breakage didn't warrant the benefits. We are totally supportive, though, of exploring a potential context manager v2 API or `__leave__`.",
+  "verdict_by": "brettcannon",
+  "verdict_url": "https://github.com/python/steering-council/issues/178#issuecomment-1502209587"
+ },
+ {
+  "number": 177,
+  "title": "PEP 696 Type defaults for TypeVarLikes",
+  "url": "https://github.com/python/steering-council/issues/177",
+  "peps": [
+   696
+  ],
+  "closed_at": "2024-02-29T14:18:52Z",
+  "opened_by": "Gobot1234",
+  "verdict": "The Steering Council has decided to follow the Typing Council's recommendation and accepts PEP 696.",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/177#issuecomment-1971242767"
+ },
+ {
+  "number": 176,
+  "title": "PEP 683 -- Following Up on Conditional Acceptance",
+  "url": "https://github.com/python/steering-council/issues/176",
+  "peps": [
+   683
+  ],
+  "closed_at": "2023-03-29T18:45:02Z",
+  "opened_by": "ericsnowcurrently",
+  "verdict": "Amazing, this is great to hear!! Will now go back to the PR that implements the PEP to get it ready for reviews/merge.",
+  "verdict_by": "eduardo-elizondo",
+  "verdict_url": "https://github.com/python/steering-council/issues/176#issuecomment-1489107733"
+ },
+ {
+  "number": 173,
+  "title": "PEP 695 -- Type Parameter Syntax",
+  "url": "https://github.com/python/steering-council/issues/173",
+  "peps": [
+   695
+  ],
+  "closed_at": "2023-04-07T19:42:58Z",
+  "opened_by": "gvanrossum",
+  "verdict": "The SC has accepted this PEP! See our announcement on Discourse here: https://discuss.python.org/t/pep-695-type-parameter-syntax/21646/92",
+  "verdict_by": "emilyemorehouse",
+  "verdict_url": "https://github.com/python/steering-council/issues/173#issuecomment-1500586280"
+ },
+ {
+  "number": 170,
+  "title": "PEP 669 -- Low Impact Monitoring for CPython",
+  "url": "https://github.com/python/steering-council/issues/170",
+  "peps": [
+   669
+  ],
+  "closed_at": "2023-02-27T18:54:24Z",
+  "opened_by": "markshannon",
+  "verdict": "Thanks for the updates! The steering council discussed this and agrees that it makes sense, proceed with your changes.",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/170#issuecomment-1446879920"
+ },
+ {
+  "number": 169,
+  "title": "PEP 706 \u2013 Filter for tarfile.extractall",
+  "url": "https://github.com/python/steering-council/issues/169",
+  "peps": [
+   706
+  ],
+  "closed_at": "2023-03-20T18:23:32Z",
+  "opened_by": "encukou",
+  "verdict": "PEP 706 accepted. I just posted to the discuss thread stating that. thanks for the well written technical PEP!",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/169#issuecomment-1476730351"
+ },
+ {
+  "number": 167,
+  "title": "PEP 684 -- A Per-Interpreter GIL",
+  "url": "https://github.com/python/steering-council/issues/167",
+  "peps": [
+   684
+  ],
+  "closed_at": "2023-04-07T19:42:52Z",
+  "opened_by": "ericsnowcurrently",
+  "verdict": "The SC has accepted this PEP! See our announcement on Discourse here: https://discuss.python.org/t/pep-684-a-per-interpreter-gil/19583/42",
+  "verdict_by": "emilyemorehouse",
+  "verdict_url": "https://github.com/python/steering-council/issues/167#issuecomment-1500586193"
+ },
+ {
+  "number": 166,
+  "title": "PEP 701 -- Syntactic formalization of f-strings",
+  "url": "https://github.com/python/steering-council/issues/166",
+  "peps": [
+   701
+  ],
+  "closed_at": "2023-03-14T12:43:13Z",
+  "opened_by": "pablogsal",
+  "verdict": "The SC has accepted the PEP: https://discuss.python.org/t/pep-701-syntactic-formalization-of-f-strings/22046/119",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/166#issuecomment-1468036765"
+ },
+ {
+  "number": 165,
+  "title": "PEP 582 -- Python local packages directory",
+  "url": "https://github.com/python/steering-council/issues/165",
+  "peps": [
+   582
+  ],
+  "closed_at": "2023-03-28T09:57:16Z",
+  "opened_by": "kushaldas",
+  "verdict": "We've decided to reject the PEP: https://discuss.python.org/t/pep-582-python-local-packages-directory/963/430",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/165#issuecomment-1486558595"
+ },
+ {
+  "number": 161,
+  "title": "PEP 697 \u2013 Limited C API for Extending Opaque Types",
+  "url": "https://github.com/python/steering-council/issues/161",
+  "peps": [
+   697
+  ],
+  "closed_at": "2023-03-07T20:17:39Z",
+  "opened_by": "encukou",
+  "verdict": "\ud83c\udf89 ",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/161#issuecomment-1458806473"
+ },
+ {
+  "number": 160,
+  "title": "PEP 698 -- Override Decorator for Static Typing",
+  "url": "https://github.com/python/steering-council/issues/160",
+  "peps": [
+   698
+  ],
+  "closed_at": "2023-01-30T19:23:00Z",
+  "opened_by": "stroxler",
+  "verdict": "The SC discussed this PEP and is happy to accept this PEP!\r\n\r\n@stroxler please send a PR to update the status of the PEP to accepted and we will let you handle sending PRs to implement it.",
+  "verdict_by": "brettcannon",
+  "verdict_url": "https://github.com/python/steering-council/issues/160#issuecomment-1409208844"
+ },
+ {
+  "number": 158,
+  "title": "PEP 688 -- Making the buffer protocol accessible in Python",
+  "url": "https://github.com/python/steering-council/issues/158",
+  "peps": [
+   688
+  ],
+  "closed_at": "2023-03-08T11:36:09Z",
+  "opened_by": "JelleZijlstra",
+  "verdict": "Sorry for the delay (we had a couple of weeks that we could not meet due to holidays and stuff).\r\n\r\nI am very happy to report here that the Steering Council approves PEP 688: Making the buffer protocol accessible in Python with the latest changes. Thanks a lot @JelleZijlstra for the fantastic work and the patience. This is a fantastic improvement and we are very happy to see it happening :)\r\n\r\nCongratulations! \ud83c\udf89 \ud83e\udd18",
+  "verdict_by": "pablogsal",
+  "verdict_url": "https://github.com/python/steering-council/issues/158#issuecomment-1458347148"
+ },
+ {
+  "number": 156,
+  "title": "Request PEP 387 exception to remove 4 functions broken since Python 3.11: Py_GenNew()",
+  "url": "https://github.com/python/steering-council/issues/156",
+  "peps": [
+   387
+  ],
+  "closed_at": "2022-12-13T15:43:41Z",
+  "opened_by": "vstinner",
+  "verdict": "The SC sees no reason to the skip deprecation period.\r\nThe functions can raise an exception if they cannot do their job, but please do follow the backwards compatibility policy (PEP 387).\r\n\r\nYes, we're aware that PEP 387 wasn't always followed in the past. That's bad. Don't treat it as a precedent. If PEP 387 is inadequate, we should change it rather than ignore it.\r\n\r\n\u2014 Petr, on behalf of the SC\r\n",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/156#issuecomment-1352845270"
+ },
+ {
+  "number": 155,
+  "title": "PEP 689 -- Unstable C API tier",
+  "url": "https://github.com/python/steering-council/issues/155",
+  "peps": [
+   689
+  ],
+  "closed_at": "2023-01-16T14:56:14Z",
+  "opened_by": "encukou",
+  "verdict": "The SC has accepted the PEP: https://discuss.python.org/t/pep-689-unstable-c-api-tier/20452/13",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/155#issuecomment-1384178975"
+ },
+ {
+  "number": 153,
+  "title": "PEP 699 -- Remove private dict version field added in PEP 509",
+  "url": "https://github.com/python/steering-council/issues/153",
+  "peps": [
+   509,
+   699
+  ],
+  "closed_at": "2023-01-16T14:54:35Z",
+  "opened_by": "Fidget-Spinner",
+  "verdict": "We've accepted the PEP: https://discuss.python.org/t/pep-699-remove-private-dict-version-field-added-in-pep-509/19724/13",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/153#issuecomment-1384177139"
+ },
+ {
+  "number": 147,
+  "title": "PEP 690 -- Lazy Imports",
+  "url": "https://github.com/python/steering-council/issues/147",
+  "peps": [
+   690
+  ],
+  "closed_at": "2022-12-02T19:08:21Z",
+  "opened_by": "Kronuz",
+  "verdict": "Decision posted: https://discuss.python.org/t/pep-690-lazy-imports-again/19661/26",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/147#issuecomment-1335692361"
+ },
+ {
+  "number": 143,
+  "title": "PEP 683 -- Immortal Objects, Using a Fixed Refcount",
+  "url": "https://github.com/python/steering-council/issues/143",
+  "peps": [
+   683
+  ],
+  "closed_at": "2022-11-07T20:55:17Z",
+  "opened_by": "ericsnowcurrently",
+  "verdict": "The Steering Council accepts PEP 683 (Immortal Objects) with reservations.\r\n\r\nThe main concern for the SC is ABI compatibility.\r\nTo mimimize possible risk, even to 32-bit Stable-ABI extensions, please implement the proposed \u201cSolution for Accidental De-Immortalization\u201d \u2013 that is, only immortalize objects whose deallocator will reset the refcount. (Note that this rules out automatically marking *all* objects immortal at the end of runtime init.)\r\n\r\nPlease update the PEP with performance measurements as the implementation is being finalized. We'll need to have another round of public disscussions about the performance impact once it's known.\r\n\r\n*\u2014 Petr, on behalf of the SC*",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/143#issuecomment-1306178487"
+ },
+ {
+  "number": 140,
+  "title": "PEP 692 -- Using TypedDict for more precise **kwargs typing",
+  "url": "https://github.com/python/steering-council/issues/140",
+  "peps": [
+   692
+  ],
+  "closed_at": "2023-01-16T19:44:49Z",
+  "opened_by": "franekmagiera",
+  "verdict": "Thanks, opened python/peps#3022",
+  "verdict_by": "JelleZijlstra",
+  "verdict_url": "https://github.com/python/steering-council/issues/140#issuecomment-1439540044"
+ },
+ {
+  "number": 137,
+  "title": "PEP 669 -- Low Impact Monitoring for CPython",
+  "url": "https://github.com/python/steering-council/issues/137",
+  "peps": [
+   669
+  ],
+  "closed_at": "2022-11-07T20:53:30Z",
+  "opened_by": "markshannon",
+  "verdict": "The Steering Council accepts PEP 669 (Low Impact Monitoring for CPython).\r\n\r\nWe'd like to point out that, as with any PEP, if the initial implementation requires design changes, they need to be re-approved and noted in the PEP (see [PEP 1](https://peps.python.org/pep-0001/#pep-maintenance)).  \r\nPlease just ping a SC member on the pull request if/when you change the PEP.\r\n\r\nTo be clear, we expect that all claims in the PEP will hold, and that the PEP will mention all known cases where the implementation degrades performance.\r\n\r\nIf the changes are unacceptable, the SC may still reject the PEP and ask for reverting the change.\r\n(You could say the PEP is \"provisionally accepted, pending the implementation\" -- except it's how PEP acceptance works in general. In this case, the SC does still have some reservations, but a successful implementation would be the best way to resolve them.)\r\n\r\n*\u2014 Petr, on behalf of the SC*\r\n",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/137#issuecomment-1306176415"
+ },
+ {
+  "number": 134,
+  "title": "PEP 659 \u2013 Specializing Adaptive Interpreter",
+  "url": "https://github.com/python/steering-council/issues/134",
+  "peps": [
+   659
+  ],
+  "closed_at": "2022-12-19T15:05:49Z",
+  "opened_by": "encukou",
+  "verdict": "This is better left to PEP editors & documentarians, with SC having the final word if something's controversial.",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/134#issuecomment-1357804911"
+ },
+ {
+  "number": 125,
+  "title": "PEP 689 \u2013 Unstable C API tier",
+  "url": "https://github.com/python/steering-council/issues/125",
+  "peps": [
+   689
+  ],
+  "closed_at": "2022-08-10T08:02:06Z",
+  "opened_by": "encukou",
+  "verdict": "There are disagreements about what *currently* marks something as private API, and that needs to be addressed first. I should defer the PEP.",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/125#issuecomment-1210307624"
+ },
+ {
+  "number": 121,
+  "title": "PEP 687 -- Isolating modules in the standard library",
+  "url": "https://github.com/python/steering-council/issues/121",
+  "peps": [
+   687
+  ],
+  "closed_at": "2022-06-27T13:10:09Z",
+  "opened_by": "encukou",
+  "verdict": "The PEP was accepted: https://discuss.python.org/t/pep-687-isolating-modules-in-the-standard-library/14824/4",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/121#issuecomment-1167333846"
+ },
+ {
+  "number": 110,
+  "title": "Submission for SC consideration: PEP 682 -- Format Specifier for Signed Zero ",
+  "url": "https://github.com/python/steering-council/issues/110",
+  "peps": [
+   682
+  ],
+  "closed_at": "2022-03-02T17:17:04Z",
+  "opened_by": "belm0",
+  "verdict": "Hi, we (the steering council) discussed this PEP briefly yesterday and decided the concept makes sense but that we'd all defer to Mark Dickinson as the domain expert to decide here anyways. So if @mdickinson doesn't object to the role (he's already the PEP sponsor), Mark can decide.",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/110#issuecomment-1057178340"
+ },
+ {
+  "number": 109,
+  "title": "PEP 594 -- Removing dead batteries from the standard library",
+  "url": "https://github.com/python/steering-council/issues/109",
+  "peps": [
+   594
+  ],
+  "closed_at": "2022-03-11T18:49:48Z",
+  "opened_by": "brettcannon",
+  "verdict": "Accepted: See https://discuss.python.org/t/pep-594-take-2-removing-dead-batteries-from-the-standard-library/13508/22?u=gpshead",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/109#issuecomment-1065394336"
+ },
+ {
+  "number": 108,
+  "title": "Submission for SC consideration: PEP 675 -- Arbitrary Literal String Type",
+  "url": "https://github.com/python/steering-council/issues/108",
+  "peps": [
+   675
+  ],
+  "closed_at": "2022-03-21T20:13:09Z",
+  "opened_by": "pradeep90",
+  "verdict": "accepted! https://mail.python.org/archives/list/typing-sig@python.org/thread/XEOOSSPNYPGZ5NXOJFPLXG2BTN7EVRT5/",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/108#issuecomment-1074369734"
+ },
+ {
+  "number": 105,
+  "title": "Submission for SC consideration: PEP 678 -- Enriching Exceptions with Notes",
+  "url": "https://github.com/python/steering-council/issues/105",
+  "peps": [
+   678
+  ],
+  "closed_at": "2022-04-12T00:57:43Z",
+  "opened_by": "Zac-HD",
+  "verdict": "Thanks! **Accepted**: https://discuss.python.org/t/pep-678-enriching-exceptions-with-notes/13374/100 ",
+  "verdict_by": "gpshead",
+  "verdict_url": "https://github.com/python/steering-council/issues/105#issuecomment-1095752853"
+ },
+ {
+  "number": 104,
+  "title": "Submission for SC consideration: PEP 680 -- tomllib",
+  "url": "https://github.com/python/steering-council/issues/104",
+  "peps": [
+   680
+  ],
+  "closed_at": "2022-02-22T12:55:38Z",
+  "opened_by": "hukkin",
+  "verdict": "The PEP was [accepted](https://mail.python.org/archives/list/python-dev@python.org/thread/3AHGWYY562HHO55L4Z2OVYUFZP5W73IS/).",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/104#issuecomment-1047768861"
+ },
+ {
+  "number": 100,
+  "title": " Submission for SC consideration: PEP 674 \u2013 Disallow using Py_TYPE() and Py_SIZE() macros as l-values",
+  "url": "https://github.com/python/steering-council/issues/100",
+  "peps": [
+   674
+  ],
+  "closed_at": "2022-02-22T12:58:03Z",
+  "opened_by": "vstinner",
+  "verdict": "The PEP was not accepted in the current form: https://mail.python.org/archives/list/python-dev@python.org/thread/CV6KWDRHV5WP6TIDK3Z46PW7HNSHYOWG/",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/100#issuecomment-1047770717"
+ },
+ {
+  "number": 97,
+  "title": "PEP-Delegate notification for PEP 676",
+  "url": "https://github.com/python/steering-council/issues/97",
+  "peps": [
+   676
+  ],
+  "closed_at": "2022-03-01T10:29:38Z",
+  "opened_by": "AA-Turner",
+  "verdict": "The PR was merged, so I'll close this issue as well.",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/97#issuecomment-1055277765"
+ },
+ {
+  "number": 90,
+  "title": "Submission for SC consideration: PEP 670 -- Convert macros to functions in the Python C API",
+  "url": "https://github.com/python/steering-council/issues/90",
+  "peps": [
+   670
+  ],
+  "closed_at": "2022-06-20T15:49:05Z",
+  "opened_by": "vstinner",
+  "verdict": "The PEP is ~~Accepted~~ Final now, I just forgot to close the issue.\r\nAcceptance mail: https://mail.python.org/archives/list/python-dev@python.org/thread/QQFCJ7LR36RUZSC3WI6WZZMQVQ3ZI4MS/",
+  "verdict_by": "encukou",
+  "verdict_url": "https://github.com/python/steering-council/issues/90#issuecomment-1160606977"
+ },
+ {
+  "number": 63,
+  "title": "Submission for SC consideration: PEP 649 -- Deferred Evaluation Of Annotations Using Descriptors",
+  "url": "https://github.com/python/steering-council/issues/63",
+  "peps": [
+   649
+  ],
+  "closed_at": "2023-05-08T19:22:49Z",
+  "opened_by": "larryhastings",
+  "verdict": "After some consideration we've decided to accept the PEP _for 3.13_, rather than 3.12, due to the size and intricacy of the implementation. We do want to get this into 3.13 _early_, though, so if this could land shortly after the 3.12 beta 1 cut that would be great. For now we're assuming it won't need a future import in 3.13.",
+  "verdict_by": "Yhg1s",
+  "verdict_url": "https://github.com/python/steering-council/issues/63#issuecomment-1538909692"
+ }
+]
