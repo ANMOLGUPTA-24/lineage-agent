@@ -13,6 +13,7 @@ ingest: data/raw/peps   ## build the graph from data/raw
 	$(PY) -m lineage.ingest.github load
 	$(PY) -m lineage.ingest.derive
 	$(PY) -m lineage.ingest.sections
+	$(PY) -m lineage.ingest.expertise
 
 app:
 	uv run uvicorn lineage.server:app --port 8000

@@ -155,13 +155,28 @@ def template(step: dict) -> str:
                     + ", ".join(f"PEP {x['pep']} ({x['status']})" for x in r["latest"]) + ".")
         return step["note"] or f"PEP {r['pep']} is {r['status']}."
     if t == "who_knows":
-        return f"For {r['subject']}: " + "; ".join(f"{p['name']} ({', '.join(x.lower() for x in p['roles'])}, {p['items']} items)" for p in r["people"]) + "."
+        if "people" in r:  # local fallback
+            return f"For {r['subject']}: " + "; ".join(f"{p['name']} ({', '.join(x.lower() for x in p['roles'])}, {p['items']} items)" for p in r["people"]) + "."
+        s = ""
+        if r["direct"]:
+            s = "Wrote or decided it: " + ", ".join(f"{d['name']} ({d['role'].replace('_', ' ')})" for d in r["direct"]) + ". "
+        s += (f"In {r['subject']} ({r['people_in_area']} people wrote, decided, implemented or discussed its PEPs), "
+              f"the work builds most on: "
+              + ", ".join(f"{p['name']} ({p['influence_share'] * 100:.1f}% of influence)" for p in r["most_built_on"])
+              + ". Most active: " + ", ".join(f"{p['name']} ({p['items']} PEPs/PRs)" for p in r["most_active"]) + ".")
+        return s
     if t == "bus_factor":
         m = r["most_involved"]
-        s = (f"{r['subject']}: {r['peps']} PEPs, {r['people']} people. {m['name']} is involved in {m['peps']} "
-             f"({int(m['share'] * 100)}%). {r['single_person_peps']} PEPs depend on a single person")
+        who = f"{m['name']}, the person this area's work builds on most," if r.get("connected") else m["name"]
+        s = (f"{r['subject']}: {r['peps']} PEPs, {r['people']} people who wrote, decided or implemented them. "
+             f"{who} is attached to {m['peps']} of them ({int(m['share'] * 100)}%). "
+             f"{r['single_person_peps']} PEPs depend on a single person")
         if r["orphaned_if_they_leave"]:
             s += f"; if {m['name']} left, these would have no one: " + ", ".join(f"PEP {x['pep']}" for x in r["orphaned_if_they_leave"])
+        if c := r.get("connected"):
+            s += (f". Without {m['name']}, the largest connected group of people goes from {c['largest_group']} to "
+                  f"{c['largest_without_them']}" + (f", cutting off {c['cut_off_if_they_leave']}" if c["cut_off_if_they_leave"] else
+                                                     ", so no one else is cut off"))
         return s + "."
     if t == "connection":
         p = step["paths"][0]

@@ -14,8 +14,13 @@ EXAMPLES = [
     ("bus_factor", {"subject": "packaging"}),
     ("connection", {"a": "572", "b": "634"}),
     ("recall", {"pep": "572"}),
+    ("already_decided", {"idea": "Has anyone proposed a do-while loop?"}),
+    ("draft_reply", {"idea": "add a switch statement"}),
 ]
-DERIVE = Path(__file__).resolve().parents[1] / "lineage" / "ingest" / "derive.py"
+INGEST = Path(__file__).resolve().parents[1] / "lineage" / "ingest"
+AT_INGEST = [("derive.py", "PageRank, betweenness, label propagation, indexes"),
+             ("sections.py", "quotable sections, rejected ideas, CITES / REJECTS_APPROACH_OF"),
+             ("expertise.py", "per-area influence projections, PageRank and WCC")]
 
 
 def main() -> None:
@@ -27,11 +32,13 @@ def main() -> None:
         out += [f"## `{name}({', '.join(f'{k}={v!r}' for k, v in args.items())})`", "",
                 (tools.TOOLS[name].__doc__ or "").strip().replace("\n    ", " "), "",
                 f"Outcome: `{res['outcome']}`, {len(res['rows'])} rows, {len(res['paths'])} paths, {res['ms']} ms.", ""]
-        out += [f"```cypher\n{q}\n```" for q in res["cypher"]] + [""]
+        for q, params in zip(res["cypher"], res["params"]):
+            out += [f"```cypher\n{q}\n```", f"params: `{params}`", ""]
     out += ["## `remember(pep, text)` (the only write)", "",
             "```cypher\nMATCH (p:PEP {number: $n}) CREATE (f:Finding {text: $text, at: $at, session: $session})-[:ABOUT {weight: 1.0}]->(p)\n```", "",
-            "## Graph algorithms run at ingest (`lineage/ingest/derive.py`)", "",
-            "See the module docstring for why each one is there.", "", "```python", DERIVE.read_text(), "```", ""]
+            "## Run at ingest", "", "Each module's docstring says why each query or algorithm is there.", ""]
+    for name, what in AT_INGEST:
+        out += [f"### `lineage/ingest/{name}`: {what}", "", "```python", (INGEST / name).read_text(), "```", ""]
     path = Path(__file__).resolve().parents[1] / "docs" / "QUERIES.md"
     path.parent.mkdir(exist_ok=True)
     path.write_text("\n".join(out))

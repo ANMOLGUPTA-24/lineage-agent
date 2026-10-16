@@ -199,3 +199,37 @@ def test_router_sends_proposals_to_already_decided(monkeypatch):
 def test_question_framing_does_not_weaken_the_match(question):
     top = tools.call("already_decided", {"idea": question})["rows"][0]
     assert top["pep"] == 315 and top["match"] == "same"
+
+
+# ---------------------------------------------------------------- expertise (PageRank / WCC projections)
+
+def test_who_knows_ranks_by_topic_pagerank_with_evidence_paths():
+    r = tools.call("who_knows", {"subject": "typing"})
+    row = r["rows"][0]
+    assert row["method"] == "PageRank over INFLUENCE_typing"
+    shares = [p["influence_share"] for p in row["most_built_on"]]
+    assert shares == sorted(shares, reverse=True)
+    # The most active person is reported even when PageRank ranks them lower.
+    assert row["most_active"][0]["items"] >= max(p["items"] for p in row["most_built_on"])
+    assert r["paths"] and all(p[0]["label"] == "Person" and p[-1]["label"] == "Person" for p in r["paths"])
+
+
+def test_who_knows_for_a_pep_lists_its_own_authors_first():
+    row = tools.call("who_knows", {"subject": "572"})["rows"][0]
+    assert {"name": "Chris Angelico", "role": "authored"} in row["direct"]
+
+
+def test_group_author_strings_are_not_ranked_as_people():
+    row = tools.call("who_knows", {"subject": "governance", "limit": 20})["rows"][0]
+    assert not any("community" in p["name"].lower() for p in row["most_built_on"])
+
+
+def test_bus_factor_reports_wcc_split():
+    c = tools.call("bus_factor", {"subject": "3115"})["rows"][0]["connected"]
+    assert c["largest_without_them"] < c["largest_group"] and c["cut_off_if_they_leave"] >= 1
+
+
+def test_projection_has_one_edge_per_pair():
+    dup = tools.graph().ro_query("""MATCH (a:Person)-[e:INFLUENCE_typing]->(b:Person)
+                                    WITH a, b, count(e) AS n WHERE n > 1 RETURN count(*)""").result_set[0][0]
+    assert dup == 0

@@ -32,9 +32,11 @@ who ruled on it, or which earlier proposals it builds on four hops back. Those a
 | `resolve(text)` | "walrus operator" → PEP 572 | exact number → full-text index → vector index; reports when a match is ambiguous |
 | `why(pep, depth≤4)` | Why/how did X come about? | variable-length `REQUIRES\|REFERENCES\|SUPERSEDES*1..4`, cheapest path per ancestor, drift filter by `vec.cosineDistance`; ruling + who made it; implementing PRs |
 | `is_current(pep)` | Is X still how Python works? | `SUPERSEDES*` chain to the latest PEP |
-| `who_knows(subject)` | Who should I ask? | authorship, delegation and PR edges around a topic or PEP, plus a **betweenness** bridge score |
-| `bus_factor(subject)` | Where is knowledge concentrated? | distinct people per PEP; what's orphaned if the top person leaves |
+| `who_knows(subject)` | Who should I ask? | **PageRank** over the area's own influence graph (`INFLUENCE_<area>`: who the area's PEPs and PRs build on), plus the most active people and, for a PEP, its own authors and decider |
+| `bus_factor(subject)` | Where is knowledge concentrated? | PEPs that depend on one person, and **WCC** on the area's influence graph with and without its top person |
 | `connection(a, b)` | How are A and B related? | **`algo.SPpaths`** weighted shortest paths over every relationship type |
+| `already_decided(idea)` | Has Python already decided this? | vector + full-text candidates over PEPs and 1,085 rejected ideas, scored by a local cross-encoder; then a traversal: ruling, decider, the PEP's own rejection notice (quoted), `SUPERSEDES*`, and later PEPs that set the same approach aside (`REJECTS_APPROACH_OF`) |
+| `draft_reply(idea)` | Answer a forum proposal | a reply built only from `already_decided` rows: quotes, deep links, who to ask. Nothing is posted |
 | `recall` / `remember` | What did we find last time? | `Finding` nodes linked to the PEP they describe |
 
 The model **never writes Cypher**. It picks a tool and fills typed arguments; each query is
@@ -74,14 +76,29 @@ are marked `inferred` and drawn dashed.
 (:PR | :Issue {number, title, url, merged})-[:IMPLEMENTS | :DISCUSSES]->(:PEP)
 (:Person)-[:OPENED]->(:PR | :Issue)
 (:Finding {text, at, session})-[:ABOUT]->(:PEP)              agent memory
+(:PEP)-[:HAS_SECTION]->(:Section {kind, title, text, url})   Motivation / Rationale / ruling notice
+(:Alternative {title, text, url})-[:REJECTED_IN]->(:PEP)      each rejected idea, deep-linked
+(:Alternative)-[:CITES {quote}]->(:PEP)                       the sentence that names another PEP
+(:PEP)-[:REJECTS_APPROACH_OF {via}]->(:PEP)                   cited PEP was an older, never-adopted proposal
+(:Person)-[:INFLUENCE_<area>{n}]->(:Person)                   per-area projection (ingest only)
+(:Person)-[:EXPERT_IN {rank, share, items}]->(:Topic | :Community)
 ```
 
 Every edge has a `weight`. `REFERENCES` edges cost `1 + ln(1 + in-degree of target)`, so shortest
 paths don't route through PEPs that everything cites. Steering Council edges cost 3 for the same reason.
 
-**Algorithms used:** `algo.SPpaths` (connection), `algo.pageRank` (PEP rank),
-`algo.betweenness` (person bridge score), `algo.labelPropagation` (communities), plus full-text
-and vector indexes. **Every query is listed in [docs/QUERIES.md](docs/QUERIES.md)**, generated
+**Algorithms used:** `algo.SPpaths` (connection), `algo.pageRank` (PEP rank, and per-area
+expertise over each `INFLUENCE_<area>` projection), `algo.WCC` (bus factor: does the area split
+without its top person?), `algo.betweenness` (person bridge score), `algo.labelPropagation`
+(communities), plus full-text and vector indexes. FalkorDB's PageRank ignores parallel edges
+(tested), so each projection has one edge per pair.
+
+**Why a cross-encoder in `already_decided`:** vector distance alone could not separate "same idea"
+from "same words" (multi-line lambdas landed 0.21 from conditional expressions, switch statements
+0.30 from the switch PEP). Vectors and full-text only gather candidates; a local MiniLM
+cross-encoder scores them: true matches scored 6.0-7.9 on hand-checked ideas, unrecorded ones
+below 0. Above 5 is "same idea", 1-5 is labelled "related", and below that the answer is
+"the graph doesn't record it", never "it's new". **Every query is listed in [docs/QUERIES.md](docs/QUERIES.md)**, generated
 from what the tools actually run.
 
 **Multi-tenant:** each tenant is its own FalkorDB graph (`select_graph`), not a filter clause.
@@ -110,7 +127,7 @@ Without Docker for the app:
 ```bash
 docker run -d -p 6379:6379 -p 3000:3000 falkordb/falkordb:latest
 uv sync && make ingest && make app
-make test                         # 14 behaviour tests against the loaded graph
+make test                         # 33 behaviour tests against the loaded graph
 ```
 
 ### LLM (optional, free options)

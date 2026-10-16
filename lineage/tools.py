@@ -281,10 +281,71 @@ def _subject_peps(run: Run, subject: str) -> tuple[str, list[int]] | None:
     return f"PEP {n}", nums[0]
 
 
+SCOPE_PEPS = {"Topic": "(q:PEP)-[:IN_TOPIC]->(:Topic {name: $key})",
+              "Community": "(q:PEP)-[:IN_COMMUNITY]->(:Community {id: $key})"}
+
+
+def _scope(run: Run, subject: str) -> dict | None:
+    """The area a subject belongs to: a Topic by name, or for a PEP its Topic, else its Community.
+    Only scopes with a precomputed expertise projection (ingest/expertise.py) qualify."""
+    rows = run.q("""MATCH (s:Topic) WHERE s.name = toLower($s) AND s.slug IS NOT NULL
+                    RETURN 'Topic' AS kind, s.name AS key, 'topic ' + s.name AS name, s""",
+                 {"s": subject.strip()})
+    pep = None
+    if not rows:
+        pep = pep_number(run, subject)
+        if pep is None:
+            return None
+        rows = run.q("""MATCH (p:PEP {number: $n})
+                        OPTIONAL MATCH (p)-[:IN_TOPIC]->(t:Topic) WHERE t.slug IS NOT NULL
+                        OPTIONAL MATCH (p)-[:IN_COMMUNITY]->(c:Community) WHERE c.slug IS NOT NULL
+                        WITH coalesce(t, c) AS s WHERE s IS NOT NULL
+                        RETURN labels(s)[0], CASE WHEN s:Topic THEN s.name ELSE s.id END,
+                               CASE WHEN s:Topic THEN 'topic ' + s.name ELSE 'the cluster around PEP ' + toString(s.hub) END, s
+                        LIMIT 1""", {"n": pep})
+        if not rows:
+            return {"pep": pep}
+    kind, key, name, node = rows[0]
+    return {"kind": kind, "key": key, "name": name, "slug": node.properties["slug"], "pep": pep, **{
+        k: node.properties.get(k) for k in ("people", "top", "largest", "largest_without_top", "groups_without_top")}}
+
+
 def who_knows(subject: str, limit: int = 5, tenant: str = "python") -> dict:
-    """People who know an area (a topic such as 'typing', or a PEP and its neighbours), ranked by
-    what they authored, decided and implemented, with a betweenness 'bridge' score."""
+    """People who know an area (a topic such as 'typing', or a PEP's area). Ranked by PageRank over
+    the area's influence graph (who the area's PEPs and PRs build on: citations, implementations,
+    decisions), with the most active people listed separately. For a PEP, its own authors and
+    decider come first."""
     run, args = Run(tenant), {"subject": subject, "limit": limit}
+    sc = _scope(run, subject)
+    if sc is None:
+        return unknown("who_knows", args, run, subject)
+    if "slug" not in sc:
+        return _who_knows_local(run, args, subject, limit)
+    limit = max(1, min(int(limit), 20))
+    experts = run.q("""MATCH (p:Person)-[e:EXPERT_IN {scope: $slug}]->()
+                       RETURN p.name, e.rank, e.share, e.items ORDER BY e.rank""", {"slug": sc["slug"]})
+    people = [{"name": n, "rank": r, "influence_share": s, "items": i} for n, r, s, i in experts]
+    direct = []
+    if sc["pep"] is not None:
+        direct = [{"name": n, "role": role.lower()} for n, role in run.q(
+            "MATCH (a:Person)-[r:AUTHORED|DELEGATE_FOR]->(:PEP {number: $n}) RETURN a.name, type(r)", {"n": sc["pep"]})]
+    paths = []
+    for p in people[:3]:
+        paths += [path_view(r[0]) for r in run.q(f"""
+            MATCH path = (a:Person)-[:AUTHORED|OPENED]->(x)-[:REQUIRES|REFERENCES|SUPERSEDES|IMPLEMENTS|DISCUSSES]->
+                         (q:PEP)<-[:AUTHORED|DELEGATE_FOR]-(b:Person {{name: $name}})
+            WHERE a <> b AND {SCOPE_PEPS[sc['kind']]}
+            RETURN path LIMIT 2""", {"name": p["name"], "key": sc["key"]})]
+    row = {"subject": sc["name"], "people_in_area": sc["people"], "direct": direct,
+           "most_built_on": people[:limit],
+           "most_active": sorted(people, key=lambda p: -p["items"])[:3],
+           "method": f"PageRank over INFLUENCE_{sc['slug']}"}
+    return envelope("who_knows", args, run, "answered", rows=[row], paths=paths)
+
+
+def _who_knows_local(run: Run, args: dict, subject: str, limit: int) -> dict:
+    """Fallback for a PEP outside every expertise scope: count who authored, decided and
+    implemented the PEP and its direct neighbours."""
     found = _subject_peps(run, subject)
     if not found:
         return unknown("who_knows", args, run, subject)
@@ -323,10 +384,16 @@ def bus_factor(subject: str, tenant: str = "python") -> dict:
     """Knowledge concentration in an area: for each PEP, how many distinct people (authors,
     deciders, implementers) are attached, and what is orphaned if the top person left."""
     run, args = Run(tenant), {"subject": subject}
-    found = _subject_peps(run, subject)
-    if not found:
+    sc = _scope(run, subject)
+    if sc is None:
         return unknown("bus_factor", args, run, subject)
-    label, nums = found
+    if "slug" in sc:
+        label = sc["name"]
+        nums = [r[0] for r in run.q(f"MATCH {SCOPE_PEPS[sc['kind']]} RETURN q.number", {"key": sc["key"]})]
+    elif found := _subject_peps(run, subject):
+        label, nums = found
+    else:
+        return unknown("bus_factor", args, run, subject)
     per_pep = run.q("""
         MATCH (p:PEP) WHERE p.number IN $nums
         OPTIONAL MATCH (a:Person)-[:AUTHORED|DELEGATE_FOR]->(p)
@@ -341,12 +408,20 @@ def bus_factor(subject: str, tenant: str = "python") -> dict:
             counts[name] = counts.get(name, 0) + 1
     if not counts:
         return envelope("bus_factor", args, run, "not_in_graph", note=f"No people recorded for {label}.")
-    top = max(counts, key=counts.get)
+    # The person whose departure matters most: the area's top PageRank person when the area has
+    # a projection, otherwise the person attached to the most PEPs.
+    top = sc.get("top") if sc.get("top") in counts else max(counts, key=counts.get)
     orphaned = [{"pep": n, "title": t} for n, t, people in per_pep if people == [top]]
     single = [{"pep": n, "title": t, "only": people[0]} for n, t, people in per_pep if len(people) == 1]
     rows = [{"subject": label, "peps": len(per_pep), "people": len(counts),
              "most_involved": {"name": top, "peps": counts[top], "share": round(counts[top] / len(per_pep), 2)},
              "orphaned_if_they_leave": orphaned, "single_person_peps": len(single)}]
+    if "slug" in sc and sc["largest"]:
+        # WCC at ingest: the largest connected group of the area's people, with and without `top`.
+        rows[0]["connected"] = {"largest_group": sc["largest"], "largest_without_them": sc["largest_without_top"],
+                                "cut_off_if_they_leave": max(0, sc["largest"] - 1 - sc["largest_without_top"]),
+                                "groups_without_them": sc["groups_without_top"],
+                                "method": f"algo.WCC over INFLUENCE_{sc['slug']}"}
     paths = [path_view(r[0]) for r in run.q("""MATCH path = (a:Person {name: $top})-[:AUTHORED|DELEGATE_FOR]->(p:PEP)
                                                WHERE p.number IN $nums RETURN path LIMIT 6""",
                                             {"top": top, "nums": [o["pep"] for o in orphaned] or nums})]
