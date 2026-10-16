@@ -8,6 +8,9 @@
    so CDLP groups the rest. Each community is named after its highest-ranked PEP.
 5. Full-text index (title, abstract) and a vector index on title+abstract embeddings, used
    only to resolve fuzzy names ("walrus operator" -> PEP 572).
+
+Community nodes are rebuilt here, which drops the expertise attached to them, so after running
+this module on its own, run lineage.ingest.expertise again (`make ingest` runs both in order).
 """
 from fastembed import TextEmbedding
 
@@ -36,6 +39,17 @@ def main() -> None:
 
     g.query("""CALL algo.pageRank('PEP', 'REFERENCES') YIELD node, score
                SET node.rank = score""")
+
+    # Same idea for people: Guido authored 65 PEPs, so at weight 1 "PEP 484 <- Guido -> PEP 695"
+    # (cost 2) beat the direct citation 695 -> 484 (cost 4.3). Each person edge costs
+    # 1 + ln(1 + that person's number of edges of that type).
+    for rel in ("AUTHORED", "OPENED", "DELEGATE_FOR"):
+        g.query(f"""MATCH (a:Person)-[e:{rel}]->() WITH a, count(e) AS n
+                    MATCH (a)-[e:{rel}]->() SET e.weight = 1.0 + log(1.0 + n)""")
+    # And for topics: "both are typing PEPs" (49 of them) is true of every pair, so it must not
+    # undercut a real citation between the two.
+    g.query("""MATCH ()-[e:IN_TOPIC]->(t:Topic) WITH t, count(e) AS n
+               MATCH ()-[e:IN_TOPIC]->(t) SET e.weight = 1.0 + log(1.0 + n)""")
 
     # The Steering Council made 100+ rulings; at weight 1 every path would route through it.
     g.query("MATCH (:Decision)-[m:MADE_BY]->(:Council) SET m.weight = 3.0")

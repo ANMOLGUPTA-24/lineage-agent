@@ -233,3 +233,14 @@ def test_projection_has_one_edge_per_pair():
     dup = tools.graph().ro_query("""MATCH (a:Person)-[e:INFLUENCE_typing]->(b:Person)
                                     WITH a, b, count(e) AS n WHERE n > 1 RETURN count(*)""").result_set[0][0]
     assert dup == 0
+
+
+def test_connection_prefers_a_real_citation_over_hubs():
+    # Before hub-aware person/topic weights this was "484 <- Guido -> 695", then "both are typing PEPs".
+    p = tools.call("connection", {"a": "484", "b": "695"})["paths"][0]
+    assert [x for x in p if "edge" in x] == [{"edge": "REFERENCES", "forward": False}]
+
+
+def test_connection_uses_rejected_approach_edges():
+    p = tools.call("connection", {"a": "3150", "b": "572"})["paths"][0]
+    assert any(x.get("edge") == "REJECTS_APPROACH_OF" for x in p)
