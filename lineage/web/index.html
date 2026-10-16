@@ -11,20 +11,20 @@
 :root {
   --bg: #f6f3ec; --panel: #fffdf8; --ink: #1d1b16; --muted: #6b6457; --line: #e3ddd0;
   --accent: #2f4fbf; --pep: #2f4fbf; --person: #c27a12; --decision: #2e7d4f; --pr: #7b4bb8;
-  --council: #b23a3a; --finding: #12808a; --other: #8a8475; --bad: #b23a3a; --ok: #2e7d4f;
+  --council: #b23a3a; --finding: #12808a; --alternative: #a8456b; --other: #8a8475; --bad: #b23a3a; --ok: #2e7d4f;
   --chip: #efe9dc;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #15140f; --panel: #1d1c16; --ink: #ece7da; --muted: #a39b8a; --line: #34322a;
     --accent: #8ea6ff; --pep: #8ea6ff; --person: #f0b04a; --decision: #6cc391; --pr: #b993ee;
-    --council: #f07a7a; --finding: #5fc6cf; --other: #a39b8a; --bad: #f07a7a; --ok: #6cc391; --chip: #2a2820;
+    --council: #f07a7a; --finding: #5fc6cf; --alternative: #e78bb0; --other: #a39b8a; --bad: #f07a7a; --ok: #6cc391; --chip: #2a2820;
   }
 }
 :root[data-theme="dark"] {
   --bg: #15140f; --panel: #1d1c16; --ink: #ece7da; --muted: #a39b8a; --line: #34322a;
   --accent: #8ea6ff; --pep: #8ea6ff; --person: #f0b04a; --decision: #6cc391; --pr: #b993ee;
-  --council: #f07a7a; --finding: #5fc6cf; --other: #a39b8a; --bad: #f07a7a; --ok: #6cc391; --chip: #2a2820;
+  --council: #f07a7a; --finding: #5fc6cf; --alternative: #e78bb0; --other: #a39b8a; --bad: #f07a7a; --ok: #6cc391; --chip: #2a2820;
 }
 * { box-sizing: border-box; }
 html, body { overflow-x: hidden; }
@@ -95,7 +95,7 @@ button:disabled { opacity: .5; cursor: wait; }
       <div class="legend">
         <span><i style="background:var(--pep)"></i>PEP</span><span><i style="background:var(--person)"></i>Person</span>
         <span><i style="background:var(--decision)"></i>Decision</span><span><i style="background:var(--pr)"></i>PR / Issue</span>
-        <span><i style="background:var(--council)"></i>Council</span><span><i style="background:var(--finding)"></i>Finding</span>
+        <span><i style="background:var(--council)"></i>Council</span><span><i style="background:var(--finding)"></i>Finding</span><span><i style="background:var(--alternative)"></i>Rejected idea</span>
       </div>
       <div class="empty" id="empty">Ask a question. The paths the agent walked will be drawn here.</div>
       <div id="info"></div>
@@ -128,7 +128,7 @@ for (const e of EXAMPLES) {
 
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const color = (label) => ({PEP: css("--pep"), Person: css("--person"), Decision: css("--decision"), PR: css("--pr"),
-  Issue: css("--pr"), Council: css("--council"), Finding: css("--finding")}[label] || css("--other"));
+  Issue: css("--pr"), Council: css("--council"), Finding: css("--finding"), Alternative: css("--alternative")}[label] || css("--other"));
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 
 function draw(res) {

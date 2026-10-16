@@ -132,15 +132,15 @@ the ruling, who decided it, whether it is still current, and who to ask, and **d
 onboarding ("what do I read to understand typing?").
 
 ### P0: must ship (by Oct 17 night)
-- [ ] `git init` commit + public GitHub repo (git history = evidence of original work during the event)
-- [ ] Wire `ingest/sections.py` into `make ingest`; embed Alternatives (vector index)
-- [ ] `considered(idea)`: vector finds the Alternative → graph adds PEP, ruling, decider, is_current, who to ask; returns quote + `#anchor` link
-- [ ] `why` returns Rationale quotes; **guard: every quoted span must appear word for word in a tool row**
-- [ ] Edge fix: a PEP mentioned inside another PEP's Rejected-Ideas section → `(:PEP)-[:REJECTS_APPROACH_OF]->(:PEP)`, not "builds on"
+- [~] `git init` commit (done, 4 commits) + public GitHub repo (👤 `gh repo create lineage-agent --public --source . --push`) (git history = evidence of original work during the event)
+- [x] Wire `ingest/sections.py` into `make ingest`; embed Alternatives (vector index)
+- [x] `considered(idea)`: vector finds the Alternative → graph adds PEP, ruling, decider, is_current, who to ask; returns quote + `#anchor` link
+- [x] `why` returns Rationale quotes; **guard: every quoted span must appear word for word in a tool row**
+- [x] Edge fix: a PEP mentioned inside another PEP's Rejected-Ideas section → `(:PEP)-[:REJECTS_APPROACH_OF]->(:PEP)`, not "builds on"
       (fixes "PEP 572 builds on PEP 3150")
 - [ ] `connection` weights: AUTHORED cost hub-aware (1+ln(1+#authored)), so 484→695 goes through typing PEPs, not "Guido wrote both"
-- [ ] `draft_reply(idea)`: a ready-to-post forum reply built only from `considered` rows (human posts it; nothing is posted automatically)
-- [ ] Router + LLM schemas + tests for all of the above
+- [x] `draft_reply(idea)`: a ready-to-post forum reply built only from `considered` rows (human posts it; nothing is posted automatically)
+- [x] Router + LLM schemas + tests for all of the above
 - [ ] Live deploy: one Docker image (FalkorDB + app, graph baked in) on HF Spaces; LLM key as secret
 ### P1: strong differentiators (Oct 18 morning)
 - [ ] `eval/`: about 50 questions with ground truth, graph agent vs vector-only baseline, table in README (proves "graph must matter")
@@ -162,6 +162,17 @@ onboarding ("what do I read to understand typing?").
 - The repo has **zero commits**.
 - Rules: "entirely generated using AI without meaningful participant contribution... may be rejected". You must be able to
   explain the model, the queries and the decisions in person.
+
+### Round 3 progress (Oct 17)
+- Step 1 `d7e35fb`: CITES (218) / REJECTS_APPROACH_OF (50) from rejected-idea text. Rule from a 210-mention sample:
+  citations of Final/Accepted PEPs were context, so only older never-adopted PEPs count as rejected approaches.
+- Step 2 `47e0e77`: `already_decided` / `draft_reply`. Vector distance could not separate same idea from same words
+  (lambda→PEP 308 at 0.21, switch→3103 at 0.30), so vector + full-text gather candidates and a MiniLM-L-6 cross-encoder
+  scores them (same ≥5, related 1–5). Ruling notices (160) ingested as quotable sections. Guard checks quotes word for word.
+- Step 3 `7828c15`: per-area `INFLUENCE_<area>` projections → PageRank (`EXPERT_IN`) + WCC with/without the top person.
+  Tested: algo.pageRank ignores parallel edges. Excluded group author strings (that removal changed governance's top person).
+- 33 tests; clean `make ingest` 1m51s; warm `already_decided` ≈0.85 s.
+- Still open: `connection` AUTHORED weights (484→695 via "Guido wrote both"), community naming, deploy, eval, sync, chats.
 
 ## Notes from building
 - rst parsing lives in `ingest/peps.py`; derived structure (reverse edges, hub-aware weights,
