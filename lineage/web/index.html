@@ -79,12 +79,12 @@ button:disabled { opacity: .5; cursor: wait; }
 <body>
 <header>
   <h1>Lineage</h1>
-  <p>Why does Python work the way it does? Every answer comes with the graph path behind it.</p>
+  <p>Has Python already decided this? Why does it work the way it does? Every answer comes with the graph path behind it.</p>
 </header>
 <main>
   <section id="left">
     <form id="f">
-      <input id="q" type="text" placeholder="Ask about a PEP, feature, person or topic" autocomplete="off" required>
+      <input id="q" type="text" placeholder="Ask about a PEP, a person, a topic, or paste an idea" autocomplete="off" required>
       <button id="go">Ask</button>
     </form>
     <div class="examples" id="examples"></div>
@@ -106,13 +106,14 @@ button:disabled { opacity: .5; cursor: wait; }
 </main>
 <script>
 const EXAMPLES = [
+  "Has anyone proposed a do-while loop?",
+  "Draft a reply to someone proposing a switch statement",
+  "Has anyone proposed statement-local name bindings with a given clause?",
   "Why does Python have the walrus operator?",
-  "Deep history of PEP 634",
   "Is PEP 333 still current?",
-  "Who knows typing?",
-  "What is the bus factor of packaging?",
-  "How are PEP 572 and PEP 634 connected?",
-  "Why does Python have the banana keyword?",
+  "Who should I ask about typing?",
+  "How is PEP 484 related to PEP 695?",
+  "Has anyone proposed a banana keyword?",
 ];
 const $ = (s) => document.querySelector(s);
 const session = Math.random().toString(16).slice(2, 10);

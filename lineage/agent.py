@@ -222,9 +222,11 @@ def template(step: dict) -> str:
                 s = f"{head}PEP {x['pep']} ({x['title']}, {(x['created'] or '')[:4]}) proposed this; it was {x['verdict']}{by}"
                 if x["reason"]:
                     s += f'. {x["reason"]["section"]}: "{x["reason"]["quote"]}" ({x["reason"]["url"]})'
-            if x["came_back"]:
-                s += ". It came up again in " + ", ".join(f"PEP {b['pep']} ({(b['created'] or '')[:4]})" for b in x["came_back"])
-            if x["superseded_by"]:
+            if x.get("came_back"):
+                s += ". It came up again: " + "; ".join(
+                    f"PEP {b['pep']} ({(b['created'] or '')[:4]})" + (f' set it aside: "{b["quote"]}" ({b["url"]})' if b.get("quote") else "")
+                    for b in x["came_back"])
+            if x.get("superseded_by"):
                 s += f". Superseded by {x['superseded_by']}"
             out.append(s + ".")
         return " ".join(out)

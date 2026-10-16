@@ -45,6 +45,8 @@ def node_view(n: Node) -> dict:
                 "url": p.get("verdict_url") or p.get("url"), "at": p.get("at")}
     if label == "Finding":
         return {"id": f"Finding {p.get('at')}", "label": "Finding", "title": p.get("text")}
+    if label == "Section":
+        return {"id": f"{p.get('title')} (PEP {p.get('pep')})", "label": "Section", "title": p.get("title"), "url": p.get("url")}
     if label == "Thread":
         return {"id": f"Thread: {p.get('title', '')[:60]}", "label": "Thread", "title": p.get("title"), "url": p.get("url")}
     if label == "Change":
@@ -614,7 +616,7 @@ def idea_candidates(run: Run, idea: str, k: int = 15) -> list[dict]:
 
 def pep_context(run: Run, n: int) -> tuple[dict, list]:
     """Ruling, decider, supersession and later re-rejections of one PEP, in one traversal."""
-    (num, title, status, created, url, abstract, authors, rulings, decisions, lines, notice, backs, later), = run.q("""
+    (num, title, status, created, url, abstract, authors, rulings, decisions, lines, npaths, notice, backs, later), = run.q("""
         MATCH (p:PEP {number: $n})
         OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p)
         WITH p, collect(DISTINCT au.name) AS authors
@@ -624,11 +626,12 @@ def pep_context(run: Run, n: int) -> tuple[dict, list]:
                       url: coalesce(d.verdict_url, d.url)}) AS decisions
         OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP)
         WITH p, authors, rulings, decisions, collect(line) AS lines
-        OPTIONAL MATCH (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'})
-        WITH p, authors, rulings, decisions, lines, collect({text: s.text, url: s.url, title: s.title})[0] AS notice
+        OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'})
+        WITH p, authors, rulings, decisions, lines, collect(npath) AS npaths,
+             collect({text: s.text, url: s.url, title: s.title})[0] AS notice
         OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p)
         RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings,
-               decisions, lines, notice, collect(back),
+               decisions, lines, npaths, notice, collect(back),
                collect({pep: later.number, title: later.title, created: later.created, via: x.via})""", {"n": n})
     decided = [d for d in decisions if d["by"]]
     succ = sorted((path_view(l) for l in lines), key=len)
@@ -642,7 +645,13 @@ def pep_context(run: Run, n: int) -> tuple[dict, list]:
            "superseded_by": succ[-1][-1]["id"] if succ else None,
            "came_back": sorted(({"pep": x["pep"], "title": x["title"], "created": x["created"], "url": x["via"][0]}
                                 for x in later if x["pep"]), key=lambda x: x["created"] or "")}
-    return row, [path_view(r) for r in rulings] + succ + [path_view(b) for b in backs]
+    if row["came_back"]:
+        # The sentence in each later PEP that set this one aside, so the comeback is quoted, not asserted.
+        quotes = dict(run.q("""MATCH (a:Alternative)-[c:CITES]->(:PEP {number: $n}) WHERE a.url IN $urls
+                               RETURN a.url, c.quote""", {"n": n, "urls": [b["url"] for b in row["came_back"]]}))
+        for b in row["came_back"]:
+            b["quote"] = quotes.get(b["url"]) or ""
+    return row, [path_view(r) for r in rulings + npaths] + succ + [path_view(b) for b in backs]
 
 
 KIND_ORDER = {"pep": 0, "alt": 1, "thread": 2}
@@ -754,7 +763,8 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
             if d and d["url"]:
                 lines.append(f"  The ruling: {d['url']}")
         for b in r["came_back"][:3]:
-            lines.append(f'  It came up again in PEP {b["pep"]} ({(b["created"] or "")[:4]}), which set it aside: {b["url"]}')
+            said = f' "{b["quote"]}"' if b.get("quote") else ""
+            lines.append(f'  It came up again in PEP {b["pep"]} ({(b["created"] or "")[:4]}), which set it aside:{said} {b["url"]}')
         if r["superseded_by"]:
             lines.append(f"  PEP {r['pep']} was later superseded by {r['superseded_by']}.")
     people = sorted({a for r in same for a in r.get("authors", [])})[:4]
