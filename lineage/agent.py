@@ -137,6 +137,10 @@ def template(step: dict) -> str:
             by = " and ".join(x["by"] for x in d["decided_by"])
             inferred = any(x["inferred"] for x in d["decided_by"])
             s += f"; it was {d['outcome']} {'(attributed to' if inferred else 'by'} {by}{')' if inferred else ''}"
+        if x := r.get("rationale"):
+            s += f'. Its {x["section"]}: "{x["quote"]}" ({x["url"]})'
+        if x := r.get("ruling_notice"):
+            s += f'. {x["section"]}: "{x["quote"]}" ({x["url"]})'
         if r.get("builds_on"):
             s += f". It builds on {', '.join(r['builds_on'][:6])}"
         if r.get("earlier_proposals"):

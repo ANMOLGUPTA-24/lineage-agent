@@ -244,3 +244,17 @@ def test_connection_prefers_a_real_citation_over_hubs():
 def test_connection_uses_rejected_approach_edges():
     p = tools.call("connection", {"a": "3150", "b": "572"})["paths"][0]
     assert any(x.get("edge") == "REJECTS_APPROACH_OF" for x in p)
+
+
+def test_why_quotes_rationale_and_ruling_notice():
+    r = tools.call("why", {"pep": "3103"})["rows"][0]
+    assert r["rationale"]["url"].endswith("#rationale")
+    assert r["ruling_notice"]["quote"].startswith("A quick poll during my keynote")
+
+
+def test_guard_catches_a_paraphrased_rationale():
+    steps = [tools.call("why", {"pep": "572"})]
+    real = steps[0]["rows"][0]["rationale"]["quote"]
+    edited = real.replace("important part of programming", "essential part of programming")
+    assert agent.unsupported_quotes(f'The PEP says "{real}"', steps) == []
+    assert agent.unsupported_quotes(f'The PEP says "{edited}"', steps) != []

@@ -213,6 +213,14 @@ def why(pep: str, depth: int = 2, tenant: str = "python") -> dict:
         WHERE drift < $max_drift
         RETURN best ORDER BY drift LIMIT 12""", {"n": n, "max_drift": MAX_DRIFT})]
 
+    # The PEP's own words: why it exists (Rationale, else Motivation) and, if any, its ruling notice.
+    for kind, title, text, surl in run.q("""MATCH (p:PEP {number: $n})-[:HAS_SECTION]->(s:Section)
+                                            WHERE s.kind IN ['rationale', 'motivation', 'notice']
+                                            RETURN s.kind, s.title, s.text, s.url""", {"n": n}):
+        key = "ruling_notice" if kind == "notice" else "rationale"
+        if key not in rows[0] or (key == "rationale" and kind == "rationale"):
+            rows[0][key] = {"section": title, "quote": first_sentences(text), "url": surl}
+
     # A cited PEP that never shipped is an earlier proposal, not something this PEP builds on.
     ancestors = [p[-1] for p in paths]
     rows[0]["builds_on"] = [a["id"] for a in ancestors if a.get("status") not in NOT_ADOPTED]
