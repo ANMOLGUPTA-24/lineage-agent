@@ -100,6 +100,25 @@ widened after the first run, both to PEPs that themselves proposed the idea (f-s
 positional-only: 457); this is recorded in `eval/questions.jsonl`. Full list of misses:
 [eval/RESULTS.md](eval/RESULTS.md). Reproduce: `uv run python -m eval.run`.
 
+## Keeping it current
+
+`make sync` (add `FETCH=1` to pull peps.json and the PEP sources first) rebuilds the graph **beside**
+the live one, diffs the two and writes `(:Change {at, kind, detail})-[:CHANGED]->(:PEP)` for new PEPs,
+status changes, new supersessions, new rulings and newly linked PRs. It then flips the
+`lineage:active:<tenant>` alias with one `SET`. Agent memory (`Finding`) and earlier change history
+are carried over; findings written during the rebuild are copied after the flip. It refuses to swap
+a build that lost more than 5% of PEPs, a Redis lock stops two syncs running at once, and
+`make rollback` points the alias back. The `changes` tool answers "what changed lately?".
+
+Tested under load: 4 reader threads made 22,468 queries during a 2-minute sync, every one saw a
+complete graph (745 PEPs, old or new), with 0 errors. A simulated upstream change (a status change,
+a new PEP, a new supersession) came out as exactly those 3 `Change` events.
+
+Why rebuild instead of patching: a long-lived graph that had been re-ingested in place many times
+began returning a wrong endpoint for 3 edges on an unanchored scan (PEP 0 instead of PEP 831; the
+anchored query was right), on FalkorDB 4.22.1. A fresh build was correct, and the sync diff is what
+surfaced it.
+
 ## Graph model
 
 ```

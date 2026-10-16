@@ -63,6 +63,10 @@ SCHEMAS = [
          "required": ["idea"]}},
     {"name": "draft_reply", "description": tools.draft_reply.__doc__,
      "parameters": {"type": "object", "properties": {"idea": {"type": "string"}}, "required": ["idea"]}},
+    {"name": "changes", "description": tools.changes.__doc__,
+     "parameters": {"type": "object", "properties": {
+         "since": {"type": "string", "description": "ISO date, e.g. 2026-10-01"},
+         "pep": {"type": "string"}}}},
     {"name": "recall", "description": tools.recall.__doc__,
      "parameters": {"type": "object", "properties": {"pep": {"type": "string"}}, "required": ["pep"]}},
     {"name": "remember", "description": tools.remember.__doc__ + " Only when the user asks you to remember or note something.",
@@ -188,6 +192,11 @@ def template(step: dict) -> str:
     if t == "connection":
         p = step["paths"][0]
         return "Shortest link: " + " ".join(x["id"] if "id" in x else (f"-[{x['edge']}]->" if x["forward"] else f"<-[{x['edge']}]-") for x in p) + "."
+    if t == "changes":
+        s = f"Last sync {r['last_sync']}: {r['changes_at_last_sync']} changes."
+        if r["changes"]:
+            s += " " + "; ".join(f"{c['detail']} ({c['at'][:10]})" for c in r["changes"][:8]) + "."
+        return s
     if t == "draft_reply":
         return r.get("draft") or step["note"]
     if t == "already_decided":
@@ -224,6 +233,7 @@ ROUTES = [  # (pattern, tool, needs)
     (r"\b(already|ever|proposed|suggested|why not|why (doesn't|does not|no|isn't) python|"
      r"been (decided|discussed|rejected)|decided (on|about|whether)|was there a pep|idea)\b", "already_decided", "idea"),
     (r"\b(remember|note that|save)\b", "remember", "pep"),
+    (r"\b(what('s| is| has)? (new|changed)|recent changes|changed (lately|recently)|last sync|synced)\b", "changes", "none"),
     (r"\bwho (decided|accepted|rejected|approved|ruled)\b", "why", "pep"),
     (r"\b(still|current|superseded|outdated|replaced|deprecated)\b", "is_current", "pep"),
     (r"\b(bus factor|leave|left|single point|concentrat)", "bus_factor", "subject"),
@@ -250,7 +260,9 @@ def route(question: str, tenant: str) -> list[dict]:
 
     for pattern, tool, needs in ROUTES:
         if re.search(pattern, question, re.I):
-            if needs == "idea":
+            if needs == "none":
+                steps.append(tools.call(tool, {}, tenant))
+            elif needs == "idea":
                 steps.append(tools.call(tool, {"idea": question}, tenant))
             elif needs == "subject":
                 subject = topic.group(1).lower() if topic else find_pep()

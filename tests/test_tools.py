@@ -5,12 +5,12 @@ import uuid
 import pytest
 
 from lineage import agent, tools
-from lineage.db import connect
+from lineage.db import connect, resolve
 
 
 @pytest.fixture(scope="module", autouse=True)
 def graph_loaded():
-    if "python" not in connect().list_graphs():
+    if resolve("python") not in connect().list_graphs():
         pytest.skip("graph not loaded")
 
 
@@ -258,3 +258,8 @@ def test_guard_catches_a_paraphrased_rationale():
     edited = real.replace("important part of programming", "essential part of programming")
     assert agent.unsupported_quotes(f'The PEP says "{real}"', steps) == []
     assert agent.unsupported_quotes(f'The PEP says "{edited}"', steps) != []
+
+
+def test_router_sends_whats_new_to_changes(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    assert agent.ask("What changed recently?")["steps"][-1]["tool"] == "changes"

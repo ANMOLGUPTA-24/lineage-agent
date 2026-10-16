@@ -5,6 +5,7 @@ Inputs (both public):
   data/raw/peps/       git clone --depth 1 https://github.com/python/peps
 """
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -12,7 +13,7 @@ from pathlib import Path
 from lineage.db import graph
 from lineage.ingest.rst import clip, demarkup, sections
 
-RAW = Path(__file__).resolve().parents[2] / "data" / "raw"
+RAW = Path(os.getenv("LINEAGE_RAW") or Path(__file__).resolve().parents[2] / "data" / "raw")
 
 # Python's governance changed on 2018-07-12 (Guido stepped down as BDFL); the first
 # Steering Council took office 2019-02-04. We use this to attribute decisions that

@@ -7,7 +7,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from lineage import agent
-from lineage.db import connect
+from lineage.db import connect, graph, resolve
 
 app = FastAPI(title="Lineage")
 WEB = Path(__file__).parent / "web"
@@ -26,7 +26,9 @@ def index():
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "graphs": connect().list_graphs()}
+    last = graph().ro_query("MATCH (s:Sync) RETURN s.at, s.changes ORDER BY s.at DESC LIMIT 1").result_set
+    return {"ok": True, "live_graph": resolve("python"), "graphs": connect().list_graphs(),
+            "last_sync": {"at": last[0][0], "changes": last[0][1]} if last else None}
 
 
 @app.post("/api/ask")

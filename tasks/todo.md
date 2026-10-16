@@ -138,13 +138,13 @@ onboarding ("what do I read to understand typing?").
 - [~] `why` quotes rejected approaches (done) but not yet its Rationale section (ingested, unused); **guard: every quoted span must appear word for word in a tool row** (done)
 - [x] Edge fix: a PEP mentioned inside another PEP's Rejected-Ideas section → `(:PEP)-[:REJECTS_APPROACH_OF]->(:PEP)`, not "builds on"
       (fixes "PEP 572 builds on PEP 3150")
-- [ ] `connection` weights: AUTHORED cost hub-aware (1+ln(1+#authored)), so 484→695 goes through typing PEPs, not "Guido wrote both"
+- [x] `connection` weights: AUTHORED cost hub-aware (1+ln(1+#authored)), so 484→695 goes through typing PEPs, not "Guido wrote both"
 - [x] `draft_reply(idea)`: a ready-to-post forum reply built only from `considered` rows (human posts it; nothing is posted automatically)
 - [x] Router + LLM schemas + tests for all of the above
 - [ ] Live deploy: one Docker image (FalkorDB + app, graph baked in) on HF Spaces; LLM key as secret
 ### P1: strong differentiators (Oct 18 morning)
-- [ ] `eval/`: about 50 questions with ground truth, graph agent vs vector-only baseline, table in README (proves "graph must matter")
-- [ ] `make sync` + `(:Change)` events + `changes(since)` tool + "synced N h ago" in UI + nightly GitHub Action (keeping knowledge current)
+- [x] `eval/`: about 50 questions with ground truth, graph agent vs vector-only baseline, table in README (proves "graph must matter")
+- [x] `make sync` + `(:Change)` events + `changes(since)` tool + "synced N h ago" in UI + nightly GitHub Action (keeping knowledge current)
 - [ ] `onboard(topic)`: reading order (topological on REQUIRES/REFERENCES, ranked by PageRank, superseded PEPs replaced) + who to ask
 - [ ] Chats: discuss.python.org threads from `discussions_to` → `(:Thread)`, participants feed who_knows (capped, cached)
 - [ ] CI (GitHub Actions: FalkorDB service → ingest → tests)
@@ -173,6 +173,17 @@ onboarding ("what do I read to understand typing?").
   Tested: algo.pageRank ignores parallel edges. Excluded group author strings (that removal changed governance's top person).
 - 33 tests; clean `make ingest` 1m51s; warm `already_decided` ≈0.85 s.
 - Still open: `connection` AUTHORED weights (484→695 via "Guido wrote both"), community naming, deploy, eval, sync, chats.
+
+### Round 3 progress, part 2 (Oct 17)
+- `e7fafc0` connection: hub-aware person/topic edge costs; 484→695 is the direct citation now.
+- `872ebd6` why quotes Rationale / Motivation / ruling notice.
+- `e29434f` eval: 98 questions, held-out split; graph questions 83–100% vs baseline 0–25%; held-out "already
+  decided" top answer 76% vs 53%; 3/32 confident matches wrong. Found 66 PEPs with no abstract (fixed).
+- sync: alias pointer + rebuild beside + diff → Change events + Finding carry-over + lock + refusal + rollback.
+  22,468 concurrent reads during a sync, 0 errors, all complete graphs. Simulated upstream diff exact.
+- Possible FalkorDB 4.22.1 issue: long-lived, repeatedly re-ingested graph returned PEP 0 as the endpoint of
+  3 IMPLEMENTS edges on an unanchored scan (anchored query correct); fresh build correct. No minimal repro yet.
+- Still open: deploy (needs HF login), discuss.python.org Ideas threads, video script, blog draft.
 
 ## Notes from building
 - rst parsing lives in `ingest/peps.py`; derived structure (reverse edges, hub-aware weights,

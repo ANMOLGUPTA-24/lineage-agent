@@ -45,6 +45,8 @@ def node_view(n: Node) -> dict:
                 "url": p.get("verdict_url") or p.get("url"), "at": p.get("at")}
     if label == "Finding":
         return {"id": f"Finding {p.get('at')}", "label": "Finding", "title": p.get("text")}
+    if label == "Change":
+        return {"id": f"Change {p.get('at', '')[:10]}: {p.get('kind')}", "label": "Change", "title": p.get("detail")}
     if label == "Alternative":
         return {"id": f"Rejected idea: {p.get('title')} (PEP {p.get('pep')})", "label": "Alternative",
                 "title": p.get("title"), "url": p.get("url")}
@@ -508,6 +510,30 @@ def remember(pep: str, text: str, session: str, tenant: str = "python") -> dict:
     return envelope("remember", args, run, "answered", rows=[{"saved": True, "pep": n, "at": at}])
 
 
+def changes(since: str = "", pep: str = "", tenant: str = "python") -> dict:
+    """What changed in the graph at recent syncs (`make sync`): new PEPs, status changes, new
+    supersessions, new rulings, newly linked PRs and issues. Optional `since` (ISO date) and `pep`."""
+    run, args = Run(tenant), {"since": since, "pep": pep}
+    last = run.q("MATCH (s:Sync) RETURN s.at, s.changes, s.previous ORDER BY s.at DESC LIMIT 1")
+    if not last:
+        return envelope("changes", args, run, "not_in_graph",
+                        note="This graph has not been synced since it was built, so no changes are recorded.")
+    n = None
+    if pep:
+        n = pep_number(run, pep)
+        if n is None:
+            return unknown("changes", args, run, pep)
+    found = run.q("""MATCH path = (c:Change)-[:CHANGED]->(p:PEP)
+                     WHERE c.at >= $since AND ($n IS NULL OR p.number = $n)
+                     RETURN path, c.at, c.kind, c.detail ORDER BY c.at DESC, p.number LIMIT 50""",
+                  {"since": since, "n": n})
+    at, count, prev = last[0]
+    rows = [{"last_sync": at, "changes_at_last_sync": count, "previous_graph": prev,
+             "changes": [{"at": a, "kind": k, "detail": d} for _, a, k, d in found]}]
+    return envelope("changes", args, run, "answered", rows=rows, paths=[path_view(r[0]) for r in found[:12]],
+                    note="" if found else "No recorded changes match.")
+
+
 # ---------------------------------------------------------------- already decided?
 
 # Vector distance alone can't tell "same idea" from "same vocabulary" (multi-line lambdas land
@@ -693,7 +719,7 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
 
 
 TOOLS = {f.__name__: f for f in (resolve, why, is_current, who_knows, bus_factor, connection, recall, remember,
-                                 already_decided, draft_reply)}
+                                 already_decided, draft_reply, changes)}
 
 
 def call(name: str, args: dict, tenant: str = "python") -> dict:

@@ -15,6 +15,12 @@ ingest: data/raw/peps   ## build the graph from data/raw
 	$(PY) -m lineage.ingest.sections
 	$(PY) -m lineage.ingest.expertise
 
+sync:             ## rebuild beside the live graph, record changes, swap atomically (FETCH=1 pulls upstream first)
+	$(PY) -m lineage.ingest.sync
+
+rollback:
+	$(PY) -m lineage.ingest.sync rollback
+
 app:
 	uv run uvicorn lineage.server:app --port 8000
 
@@ -24,4 +30,4 @@ mcp:
 test:
 	uv run pytest -q
 
-.PHONY: fetch ingest app mcp test
+.PHONY: fetch ingest sync rollback app mcp test
