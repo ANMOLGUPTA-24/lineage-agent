@@ -114,6 +114,9 @@ def fetch() -> None:
 
 
 def load() -> None:
+    if not CACHE.exists():
+        print("no data/raw/discourse.json; skipping threads (run `python -m lineage.ingest.discourse fetch`)")
+        return
     g = graph()
     cache = json.loads(CACHE.read_text())
     peps = json.loads((RAW / "peps.json").read_text())

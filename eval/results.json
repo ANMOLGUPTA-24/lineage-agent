@@ -10,20 +10,22 @@
     315
    ],
    "lineage": true,
-   "lineage_ms": 846.1,
-   "lineage_paths": 0,
+   "lineage_ms": 1717.1,
+   "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 315,
      "match": "same",
-     "score": 7.82
+     "score": 7.82,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 315,
    "baseline_top1_sim": 0.813,
-   "baseline_ms": 27.2,
+   "baseline_ms": 25.9,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -38,25 +40,22 @@
     275
    ],
    "lineage": true,
-   "lineage_ms": 894.0,
-   "lineage_paths": 2,
+   "lineage_ms": 1279.3,
+   "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 3103,
      "match": "same",
-     "score": 7.26
-    },
-    {
-     "pep": 622,
-     "match": "related",
-     "score": 2.02
+     "score": 7.26,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 3103,
    "baseline_top1_sim": 0.704,
-   "baseline_ms": 19.7,
+   "baseline_ms": 26.4,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -71,25 +70,30 @@
     824
    ],
    "lineage": true,
-   "lineage_ms": 1169.3,
-   "lineage_paths": 1,
+   "lineage_ms": 1500.8,
+   "lineage_paths": 4,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "PEP 823: None-aware access operators"
+   ],
    "lineage_top": [
     {
      "pep": 505,
      "match": "same",
-     "score": 7.09
+     "score": 7.09,
+     "kind": "pep"
     },
     {
      "pep": 823,
      "match": "same",
-     "score": 6.16
+     "score": 6.16,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 823,
    "baseline_top1_sim": 0.817,
-   "baseline_ms": 26.0,
+   "baseline_ms": 28.9,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -104,25 +108,28 @@
     472
    ],
    "lineage": false,
-   "lineage_ms": 1182.1,
+   "lineage_ms": 1487.8,
    "lineage_paths": 6,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 472,
      "match": "related",
-     "score": 4.11
+     "score": 4.11,
+     "kind": "pep"
     },
     {
      "pep": 637,
      "match": "related",
-     "score": 3.23
+     "score": 3.23,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 472,
    "baseline_top1_sim": 0.859,
-   "baseline_ms": 18.5,
+   "baseline_ms": 34.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -137,25 +144,28 @@
     779
    ],
    "lineage": true,
-   "lineage_ms": 1325.7,
+   "lineage_ms": 1674.9,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 779,
      "match": "same",
-     "score": 7.9
+     "score": 7.9,
+     "kind": "pep"
     },
     {
      "pep": 703,
      "match": "same",
-     "score": 6.33
+     "score": 6.33,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 703,
    "baseline_top1_sim": 0.788,
-   "baseline_ms": 46.9,
+   "baseline_ms": 40.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -169,20 +179,25 @@
     584
    ],
    "lineage": true,
-   "lineage_ms": 1150.1,
-   "lineage_paths": 1,
+   "lineage_ms": 1701.0,
+   "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Add Symmetric Difference Operators To Dict",
+    "Should `collections.abc.MutableMapping` implement `__ior__` as a mixin?"
+   ],
    "lineage_top": [
     {
      "pep": 584,
      "match": "same",
-     "score": 5.79
+     "score": 5.79,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 584,
    "baseline_top1_sim": 0.784,
-   "baseline_ms": 28.2,
+   "baseline_ms": 33.5,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -196,20 +211,22 @@
     3150
    ],
    "lineage": true,
-   "lineage_ms": 1115.8,
+   "lineage_ms": 1443.8,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 3150,
      "match": "same",
-     "score": 6.56
+     "score": 6.56,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 572,
    "baseline_top1_sim": 0.746,
-   "baseline_ms": 22.8,
+   "baseline_ms": 30.7,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -223,25 +240,28 @@
     3129
    ],
    "lineage": true,
-   "lineage_ms": 1099.0,
+   "lineage_ms": 1416.6,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 3129,
      "match": "same",
-     "score": 6.89
+     "score": 6.89,
+     "kind": "pep"
     },
     {
      "pep": 318,
      "match": "same",
-     "score": 6.28
+     "score": 6.28,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 3129,
    "baseline_top1_sim": 0.826,
-   "baseline_ms": 15.9,
+   "baseline_ms": 33.7,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -257,25 +277,28 @@
     701
    ],
    "lineage": true,
-   "lineage_ms": 1154.8,
-   "lineage_paths": 1,
+   "lineage_ms": 1659.8,
+   "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 536,
      "match": "same",
-     "score": 8.69
+     "score": 8.69,
+     "kind": "pep"
     },
     {
      "pep": 498,
      "match": "same",
-     "score": 5.74
+     "score": 5.74,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 536,
    "baseline_top1_sim": 0.846,
-   "baseline_ms": 23.1,
+   "baseline_ms": 76.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -289,14 +312,15 @@
     308
    ],
    "lineage": false,
-   "lineage_ms": 1089.9,
+   "lineage_ms": 1379.3,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": true,
    "baseline_top1": 308,
    "baseline_top1_sim": 0.753,
-   "baseline_ms": 42.3,
+   "baseline_ms": 49.5,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -310,25 +334,30 @@
     435
    ],
    "lineage": true,
-   "lineage_ms": 1015.3,
+   "lineage_ms": 1394.5,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Built-in StrEnum"
+   ],
    "lineage_top": [
     {
      "pep": 435,
      "match": "same",
-     "score": 8.13
+     "score": 8.13,
+     "kind": "pep"
     },
     {
      "pep": 663,
      "match": "related",
-     "score": 4.92
+     "score": 4.92,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 435,
    "baseline_top1_sim": 0.823,
-   "baseline_ms": 23.8,
+   "baseline_ms": 59.6,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -342,25 +371,30 @@
     3105
    ],
    "lineage": true,
-   "lineage_ms": 1156.7,
+   "lineage_ms": 1452.8,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Separate print() and println() functions"
+   ],
    "lineage_top": [
     {
      "pep": 3105,
      "match": "same",
-     "score": 9.26
+     "score": 9.26,
+     "kind": "pep"
     },
     {
      "pep": 3138,
      "match": "related",
-     "score": 1.82
+     "score": 1.82,
+     "kind": "rejected_idea"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 3105,
    "baseline_top1_sim": 0.856,
-   "baseline_ms": 22.9,
+   "baseline_ms": 31.0,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -374,25 +408,25 @@
     654
    ],
    "lineage": true,
-   "lineage_ms": 977.7,
-   "lineage_paths": 2,
+   "lineage_ms": 1232.9,
+   "lineage_paths": 4,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Standardizing Docstring Conventions for Exception Groups (PEP 654/`except*`)",
+    "Accepting PEP 654 (Exception Groups and except*)"
+   ],
    "lineage_top": [
     {
      "pep": 654,
      "match": "same",
-     "score": 9.82
-    },
-    {
-     "pep": 758,
-     "match": "related",
-     "score": 4.69
+     "score": 9.82,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 654,
    "baseline_top1_sim": 0.832,
-   "baseline_ms": 19.2,
+   "baseline_ms": 20.4,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -409,25 +443,28 @@
     636
    ],
    "lineage": true,
-   "lineage_ms": 958.7,
+   "lineage_ms": 1369.2,
    "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 634,
      "match": "same",
-     "score": 7.93
+     "score": 7.93,
+     "kind": "pep"
     },
     {
      "pep": 622,
      "match": "same",
-     "score": 7.3
+     "score": 7.3,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 642,
    "baseline_top1_sim": 0.786,
-   "baseline_ms": 20.2,
+   "baseline_ms": 35.6,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -441,20 +478,22 @@
     515
    ],
    "lineage": false,
-   "lineage_ms": 1065.8,
+   "lineage_ms": 1303.1,
    "lineage_paths": 0,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 515,
      "match": "related",
-     "score": 4.39
+     "score": 4.39,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 515,
    "baseline_top1_sim": 0.85,
-   "baseline_ms": 25.1,
+   "baseline_ms": 45.0,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -468,20 +507,22 @@
     204
    ],
    "lineage": false,
-   "lineage_ms": 1006.6,
+   "lineage_ms": 1449.6,
    "lineage_paths": 0,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 204,
      "match": "related",
-     "score": 2.09
+     "score": 2.09,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 515,
    "baseline_top1_sim": 0.76,
-   "baseline_ms": 32.8,
+   "baseline_ms": 41.0,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -495,25 +536,28 @@
     465
    ],
    "lineage": true,
-   "lineage_ms": 1156.6,
+   "lineage_ms": 1361.7,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 465,
      "match": "same",
-     "score": 9.89
+     "score": 9.89,
+     "kind": "pep"
     },
     {
      "pep": 835,
      "match": "related",
-     "score": 1.11
+     "score": 1.11,
+     "kind": "rejected_idea"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 465,
    "baseline_top1_sim": 0.853,
-   "baseline_ms": 37.8,
+   "baseline_ms": 43.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -528,25 +572,30 @@
     457
    ],
    "lineage": true,
-   "lineage_ms": 1052.5,
-   "lineage_paths": 0,
+   "lineage_ms": 1402.7,
+   "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "PEP 570: Python Positional-Only Parameters"
+   ],
    "lineage_top": [
     {
      "pep": 457,
      "match": "same",
-     "score": 9.61
+     "score": 9.61,
+     "kind": "pep"
     },
     {
      "pep": 570,
      "match": "same",
-     "score": 9.21
+     "score": 9.21,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 570,
    "baseline_top1_sim": 0.852,
-   "baseline_ms": 20.4,
+   "baseline_ms": 33.0,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -561,25 +610,30 @@
     810
    ],
    "lineage": true,
-   "lineage_ms": 1042.5,
-   "lineage_paths": 3,
+   "lineage_ms": 1294.5,
+   "lineage_paths": 4,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "PEP 810: Explicit lazy imports"
+   ],
    "lineage_top": [
     {
      "pep": 690,
      "match": "same",
-     "score": 8.55
+     "score": 8.55,
+     "kind": "pep"
     },
     {
      "pep": 810,
      "match": "same",
-     "score": 8.29
+     "score": 8.29,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 810,
    "baseline_top1_sim": 0.861,
-   "baseline_ms": 90.5,
+   "baseline_ms": 28.0,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -593,25 +647,28 @@
     526
    ],
    "lineage": true,
-   "lineage_ms": 1144.0,
-   "lineage_paths": 5,
+   "lineage_ms": 1332.5,
+   "lineage_paths": 7,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 526,
      "match": "same",
-     "score": 8.51
+     "score": 8.51,
+     "kind": "pep"
     },
     {
      "pep": 593,
      "match": "same",
-     "score": 6.08
+     "score": 6.08,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 526,
    "baseline_top1_sim": 0.828,
-   "baseline_ms": 20.8,
+   "baseline_ms": 41.0,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -623,14 +680,15 @@
    "q": "Has anyone proposed braces instead of indentation?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 938.4,
+   "lineage_ms": 1280.3,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 622,
    "baseline_top1_sim": 0.753,
-   "baseline_ms": 41.7,
+   "baseline_ms": 51.1,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -642,14 +700,15 @@
    "q": "Has anyone proposed a banana keyword?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1042.4,
+   "lineage_ms": 1436.7,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 472,
    "baseline_top1_sim": 0.699,
-   "baseline_ms": 23.1,
+   "baseline_ms": 39.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -661,14 +720,18 @@
    "q": "Have multi-line lambdas ever been proposed?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1123.8,
+   "lineage_ms": 1428.4,
    "lineage_paths": 0,
-   "lineage_outcome": "not_in_graph",
+   "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Simple multi-line lambda syntax",
+    "Typed Anonymous Functions (lamdef)"
+   ],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 312,
    "baseline_top1_sim": 0.739,
-   "baseline_ms": 29.2,
+   "baseline_ms": 36.6,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -680,20 +743,25 @@
    "q": "Has anyone proposed an HTTP/3 client in the standard library?",
    "expect": [],
    "lineage": false,
-   "lineage_ms": 921.5,
+   "lineage_ms": 1320.4,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Simple https client in standard library",
+    "Add a http.fetch() API"
+   ],
    "lineage_top": [
     {
      "pep": 476,
      "match": "same",
-     "score": 6.31
+     "score": 6.31,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": null,
    "baseline_top1": 268,
    "baseline_top1_sim": 0.727,
-   "baseline_ms": 16.0,
+   "baseline_ms": 71.1,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -705,14 +773,15 @@
    "q": "Has anyone proposed tail-call optimization?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1136.3,
+   "lineage_ms": 1331.7,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 210,
    "baseline_top1_sim": 0.698,
-   "baseline_ms": 26.8,
+   "baseline_ms": 33.7,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -724,14 +793,15 @@
    "q": "Has anyone proposed a goto statement?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 987.1,
+   "lineage_ms": 1289.6,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 769,
    "baseline_top1_sim": 0.652,
-   "baseline_ms": 21.7,
+   "baseline_ms": 38.1,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -743,14 +813,15 @@
    "q": "Has anyone proposed ++ and -- increment operators?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1107.5,
+   "lineage_ms": 1343.9,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 465,
    "baseline_top1_sim": 0.754,
-   "baseline_ms": 28.8,
+   "baseline_ms": 55.6,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -762,14 +833,15 @@
    "q": "Who decided PEP 572?",
    "expect": "Guido van Rossum",
    "lineage": true,
-   "lineage_ms": 97.7,
+   "lineage_ms": 68.1,
    "lineage_paths": 10,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 521,
    "baseline_top1_sim": 0.708,
-   "baseline_ms": 24.4,
+   "baseline_ms": 32.1,
    "router_tool": "why",
    "router_ok": true
   },
@@ -780,14 +852,15 @@
    "q": "Who decided PEP 484?",
    "expect": "Mark Shannon",
    "lineage": true,
-   "lineage_ms": 87.7,
+   "lineage_ms": 62.3,
    "lineage_paths": 19,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 8012,
    "baseline_top1_sim": 0.715,
-   "baseline_ms": 29.2,
+   "baseline_ms": 38.8,
    "router_tool": "why",
    "router_ok": true
   },
@@ -798,14 +871,15 @@
    "q": "Who decided PEP 634?",
    "expect": "Python Steering Council",
    "lineage": true,
-   "lineage_ms": 58.3,
+   "lineage_ms": 35.1,
    "lineage_paths": 11,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 8012,
    "baseline_top1_sim": 0.699,
-   "baseline_ms": 28.9,
+   "baseline_ms": 29.1,
    "router_tool": "why",
    "router_ok": true
   },
@@ -816,14 +890,15 @@
    "q": "Who decided PEP 3103?",
    "expect": "Guido van Rossum",
    "lineage": false,
-   "lineage_ms": 36.6,
+   "lineage_ms": 15.9,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 275,
    "baseline_top1_sim": 0.724,
-   "baseline_ms": 23.3,
+   "baseline_ms": 35.0,
    "router_tool": "why",
    "router_ok": true
   },
@@ -834,14 +909,15 @@
    "q": "Who decided PEP 703?",
    "expect": "Python Steering Council",
    "lineage": true,
-   "lineage_ms": 77.0,
+   "lineage_ms": 45.6,
    "lineage_paths": 11,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 536,
    "baseline_top1_sim": 0.724,
-   "baseline_ms": 16.5,
+   "baseline_ms": 40.0,
    "router_tool": "why",
    "router_ok": true
   },
@@ -852,14 +928,15 @@
    "q": "Who decided PEP 695?",
    "expect": "Python Steering Council",
    "lineage": true,
-   "lineage_ms": 94.4,
+   "lineage_ms": 85.3,
    "lineage_paths": 18,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 8010,
    "baseline_top1_sim": 0.698,
-   "baseline_ms": 22.5,
+   "baseline_ms": 26.8,
    "router_tool": "why",
    "router_ok": true
   },
@@ -872,14 +949,15 @@
     572
    ],
    "lineage": true,
-   "lineage_ms": 99.7,
+   "lineage_ms": 82.4,
    "lineage_paths": 5,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 572,
    "baseline_top1_sim": 0.746,
-   "baseline_ms": 22.5,
+   "baseline_ms": 30.1,
    "router_tool": "already_decided",
    "router_ok": true
   },
@@ -892,14 +970,15 @@
     824
    ],
    "lineage": true,
-   "lineage_ms": 51.7,
+   "lineage_ms": 36.8,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 823,
    "baseline_top1_sim": 0.817,
-   "baseline_ms": 22.5,
+   "baseline_ms": 26.0,
    "router_tool": "why",
    "router_ok": true
   },
@@ -912,14 +991,15 @@
     567
    ],
    "lineage": true,
-   "lineage_ms": 84.9,
+   "lineage_ms": 48.8,
    "lineage_paths": 6,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 789,
    "baseline_top1_sim": 0.828,
-   "baseline_ms": 29.1,
+   "baseline_ms": 27.9,
    "router_tool": "already_decided",
    "router_ok": true
   },
@@ -930,14 +1010,15 @@
    "q": "How is PEP 333 related to PEP 3333?",
    "expect": "SUPERSEDES",
    "lineage": true,
-   "lineage_ms": 52.7,
+   "lineage_ms": 67.5,
    "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 444,
    "baseline_top1_sim": 0.724,
-   "baseline_ms": 14.7,
+   "baseline_ms": 32.6,
    "router_tool": "connection",
    "router_ok": true
   },
@@ -948,14 +1029,15 @@
    "q": "How is PEP 484 related to PEP 695?",
    "expect": "REFERENCES",
    "lineage": true,
-   "lineage_ms": 183.6,
+   "lineage_ms": 98.2,
    "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 483,
    "baseline_top1_sim": 0.729,
-   "baseline_ms": 47.0,
+   "baseline_ms": 57.5,
    "router_tool": "connection",
    "router_ok": true
   },
@@ -966,14 +1048,15 @@
    "q": "How is PEP 3150 related to PEP 572?",
    "expect": "REJECTS_APPROACH_OF",
    "lineage": true,
-   "lineage_ms": 105.6,
+   "lineage_ms": 104.4,
    "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 402,
    "baseline_top1_sim": 0.7,
-   "baseline_ms": 35.5,
+   "baseline_ms": 32.4,
    "router_tool": "connection",
    "router_ok": true
   },
@@ -984,14 +1067,15 @@
    "q": "How is PEP 622 related to PEP 634?",
    "expect": "SUPERSEDES",
    "lineage": true,
-   "lineage_ms": 183.9,
+   "lineage_ms": 108.0,
    "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 636,
    "baseline_top1_sim": 0.737,
-   "baseline_ms": 60.5,
+   "baseline_ms": 30.5,
    "router_tool": "connection",
    "router_ok": true
   },
@@ -1004,25 +1088,28 @@
     492
    ],
    "lineage": true,
-   "lineage_ms": 1087.5,
+   "lineage_ms": 1288.7,
    "lineage_paths": 0,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 492,
      "match": "same",
-     "score": 6.96
+     "score": 6.96,
+     "kind": "pep"
     },
     {
      "pep": 530,
      "match": "same",
-     "score": 6.27
+     "score": 6.27,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 530,
    "baseline_top1_sim": 0.851,
-   "baseline_ms": 26.7,
+   "baseline_ms": 40.2,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -1036,25 +1123,30 @@
     343
    ],
    "lineage": false,
-   "lineage_ms": 1109.8,
-   "lineage_paths": 1,
+   "lineage_ms": 1290.9,
+   "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Function-level (indent-less) \"with\" to do cleanup when function exits"
+   ],
    "lineage_top": [
     {
      "pep": 340,
      "match": "related",
-     "score": 2.16
+     "score": 2.16,
+     "kind": "pep"
     },
     {
      "pep": 343,
      "match": "related",
-     "score": 1.58
+     "score": 1.58,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 806,
    "baseline_top1_sim": 0.717,
-   "baseline_ms": 29.3,
+   "baseline_ms": 29.6,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -1068,25 +1160,30 @@
     380
    ],
    "lineage": true,
-   "lineage_ms": 1192.3,
+   "lineage_ms": 1437.6,
    "lineage_paths": 4,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Supporting 'yield from' in asynchronous generators"
+   ],
    "lineage_top": [
     {
      "pep": 380,
      "match": "same",
-     "score": 7.39
+     "score": 7.39,
+     "kind": "pep"
     },
     {
      "pep": 828,
      "match": "related",
-     "score": 4.03
+     "score": 4.03,
+     "kind": "rejected_idea"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 380,
    "baseline_top1_sim": 0.854,
-   "baseline_ms": 23.5,
+   "baseline_ms": 28.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1100,25 +1197,28 @@
     318
    ],
    "lineage": false,
-   "lineage_ms": 1083.0,
+   "lineage_ms": 1261.1,
    "lineage_paths": 4,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 647,
      "match": "same",
-     "score": 5.38
+     "score": 5.38,
+     "kind": "rejected_idea"
     },
     {
      "pep": 810,
      "match": "same",
-     "score": 5.07
+     "score": 5.07,
+     "kind": "rejected_idea"
     }
    ],
    "baseline_evidence": false,
    "baseline_top1": 403,
    "baseline_top1_sim": 0.81,
-   "baseline_ms": 27.9,
+   "baseline_ms": 42.4,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -1132,25 +1232,30 @@
     3102
    ],
    "lineage": true,
-   "lineage_ms": 1218.3,
-   "lineage_paths": 5,
+   "lineage_ms": 1400.9,
+   "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Allow for positional- or keyword-only arguments in dataclasses"
+   ],
    "lineage_top": [
     {
      "pep": 3102,
      "match": "same",
-     "score": 9.96
+     "score": 9.96,
+     "kind": "pep"
     },
     {
      "pep": 637,
      "match": "related",
-     "score": 4.33
+     "score": 4.33,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 3102,
    "baseline_top1_sim": 0.848,
-   "baseline_ms": 16.7,
+   "baseline_ms": 42.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1164,25 +1269,30 @@
     557
    ],
    "lineage": false,
-   "lineage_ms": 1150.6,
+   "lineage_ms": 1374.7,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Dataclasses - make use of Annotated"
+   ],
    "lineage_top": [
     {
      "pep": 681,
      "match": "same",
-     "score": 5.65
+     "score": 5.65,
+     "kind": "pep"
     },
     {
      "pep": 649,
      "match": "related",
-     "score": 1.73
+     "score": 1.73,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 593,
    "baseline_top1_sim": 0.791,
-   "baseline_ms": 25.6,
+   "baseline_ms": 27.6,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -1196,20 +1306,22 @@
     553
    ],
    "lineage": true,
-   "lineage_ms": 1073.4,
+   "lineage_ms": 1385.5,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 553,
      "match": "same",
-     "score": 8.69
+     "score": 8.69,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 553,
    "baseline_top1_sim": 0.757,
-   "baseline_ms": 31.6,
+   "baseline_ms": 31.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -1223,20 +1335,22 @@
     485
    ],
    "lineage": true,
-   "lineage_ms": 1080.7,
+   "lineage_ms": 1327.1,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 485,
      "match": "same",
-     "score": 6.65
+     "score": 6.65,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 485,
    "baseline_top1_sim": 0.783,
-   "baseline_ms": 23.4,
+   "baseline_ms": 57.2,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1250,25 +1364,28 @@
     428
    ],
    "lineage": true,
-   "lineage_ms": 1124.8,
-   "lineage_paths": 1,
+   "lineage_ms": 1378.7,
+   "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 428,
      "match": "same",
-     "score": 9.34
+     "score": 9.34,
+     "kind": "pep"
     },
     {
      "pep": 355,
      "match": "same",
-     "score": 8.62
+     "score": 8.62,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 355,
    "baseline_top1_sim": 0.804,
-   "baseline_ms": 38.0,
+   "baseline_ms": 36.7,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -1282,25 +1399,28 @@
     3104
    ],
    "lineage": false,
-   "lineage_ms": 1103.4,
+   "lineage_ms": 1350.7,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 3104,
      "match": "related",
-     "score": 3.21
+     "score": 3.21,
+     "kind": "pep"
     },
     {
      "pep": 845,
      "match": "related",
-     "score": 1.13
+     "score": 1.13,
+     "kind": "rejected_idea"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 572,
    "baseline_top1_sim": 0.824,
-   "baseline_ms": 36.4,
+   "baseline_ms": 72.8,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -1314,20 +1434,24 @@
     450
    ],
    "lineage": true,
-   "lineage_ms": 1024.5,
+   "lineage_ms": 1238.7,
    "lineage_paths": 0,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Standard Library Health Check Module"
+   ],
    "lineage_top": [
     {
      "pep": 450,
      "match": "same",
-     "score": 8.63
+     "score": 8.63,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 450,
    "baseline_top1_sim": 0.813,
-   "baseline_ms": 36.8,
+   "baseline_ms": 37.2,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1341,25 +1465,30 @@
     615
    ],
    "lineage": true,
-   "lineage_ms": 1180.0,
-   "lineage_paths": 2,
+   "lineage_ms": 1492.4,
+   "lineage_paths": 4,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "PEP 615: Support for the IANA Time Zone Database in the Standard Library"
+   ],
    "lineage_top": [
     {
      "pep": 615,
      "match": "same",
-     "score": 9.49
+     "score": 9.49,
+     "kind": "pep"
     },
     {
      "pep": 431,
      "match": "related",
-     "score": 4.32
+     "score": 4.32,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 615,
    "baseline_top1_sim": 0.862,
-   "baseline_ms": 51.3,
+   "baseline_ms": 48.2,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1373,25 +1502,30 @@
     680
    ],
    "lineage": true,
-   "lineage_ms": 1122.8,
-   "lineage_paths": 8,
+   "lineage_ms": 1410.3,
+   "lineage_paths": 5,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "PEP 680: \"tomllib\" Support for parsing TOML in the Standard Library"
+   ],
    "lineage_top": [
     {
      "pep": 680,
      "match": "same",
-     "score": 8.18
+     "score": 8.18,
+     "kind": "pep"
     },
     {
      "pep": 665,
      "match": "related",
-     "score": 4.33
+     "score": 4.33,
+     "kind": "rejected_idea"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 680,
    "baseline_top1_sim": 0.855,
-   "baseline_ms": 24.9,
+   "baseline_ms": 34.5,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1405,25 +1539,28 @@
     594
    ],
    "lineage": true,
-   "lineage_ms": 1326.7,
-   "lineage_paths": 1,
+   "lineage_ms": 1584.1,
+   "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 594,
      "match": "same",
-     "score": 6.14
+     "score": 6.14,
+     "kind": "pep"
     },
     {
      "pep": 4,
      "match": "related",
-     "score": 3.67
+     "score": 3.67,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 594,
    "baseline_top1_sim": 0.791,
-   "baseline_ms": 30.4,
+   "baseline_ms": 45.1,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1439,25 +1576,25 @@
     603
    ],
    "lineage": true,
-   "lineage_ms": 1185.7,
-   "lineage_paths": 1,
+   "lineage_ms": 1451.3,
+   "lineage_paths": 5,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "PEP 814: Add frozendict built-in type",
+    "PEP 841: Adding Frozen Syntax to Make Immutable Types Optimizable"
+   ],
    "lineage_top": [
     {
      "pep": 814,
      "match": "same",
-     "score": 8.96
-    },
-    {
-     "pep": 416,
-     "match": "related",
-     "score": 4.64
+     "score": 8.96,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 841,
    "baseline_top1_sim": 0.858,
-   "baseline_ms": 27.7,
+   "baseline_ms": 47.1,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": false
@@ -1471,20 +1608,24 @@
     604
    ],
    "lineage": true,
-   "lineage_ms": 1230.4,
+   "lineage_ms": 1569.8,
    "lineage_paths": 0,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Syntactic sugar for union cases in match statements"
+   ],
    "lineage_top": [
     {
      "pep": 604,
      "match": "same",
-     "score": 8.5
+     "score": 8.5,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 604,
    "baseline_top1_sim": 0.901,
-   "baseline_ms": 28.9,
+   "baseline_ms": 48.6,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1498,25 +1639,28 @@
     3132
    ],
    "lineage": true,
-   "lineage_ms": 1125.5,
+   "lineage_ms": 1449.7,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": [],
    "lineage_top": [
     {
      "pep": 3132,
      "match": "same",
-     "score": 5.53
+     "score": 5.53,
+     "kind": "pep"
     },
     {
      "pep": 448,
      "match": "related",
-     "score": 2.62
+     "score": 2.62,
+     "kind": "pep"
     }
    ],
    "baseline_evidence": true,
    "baseline_top1": 3132,
    "baseline_top1_sim": 0.822,
-   "baseline_ms": 26.5,
+   "baseline_ms": 48.9,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1528,14 +1672,15 @@
    "q": "Has anyone proposed a built-in YAML parser?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1220.6,
+   "lineage_ms": 1389.9,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 332,
    "baseline_top1_sim": 0.758,
-   "baseline_ms": 42.0,
+   "baseline_ms": 42.2,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1547,20 +1692,24 @@
    "q": "Has anyone proposed an unless keyword?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1068.4,
-   "lineage_paths": 2,
+   "lineage_ms": 1313.8,
+   "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Except..if instead of except*?"
+   ],
    "lineage_top": [
     {
      "pep": 654,
      "match": "related",
-     "score": 3.82
+     "score": 3.82,
+     "kind": "rejected_idea"
     }
    ],
    "baseline_evidence": null,
    "baseline_top1": 572,
    "baseline_top1_sim": 0.762,
-   "baseline_ms": 38.6,
+   "baseline_ms": 30.0,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1572,20 +1721,25 @@
    "q": "Has anyone proposed JSON5 support in the json module?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1080.5,
-   "lineage_paths": 1,
+   "lineage_ms": 1323.9,
+   "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": [
+    "Json should support collections.type.Mapping (revisit)",
+    "Add json.ExtendedEncoder to the standard library for common types (datetime, UUID, Decimal, set)"
+   ],
    "lineage_top": [
     {
      "pep": 837,
      "match": "related",
-     "score": 1.69
+     "score": 1.69,
+     "kind": "rejected_idea"
     }
    ],
    "baseline_evidence": null,
    "baseline_top1": 837,
    "baseline_top1_sim": 0.74,
-   "baseline_ms": 46.9,
+   "baseline_ms": 37.6,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1597,14 +1751,15 @@
    "q": "Has anyone proposed a repeat N times loop statement?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1226.3,
+   "lineage_ms": 1427.6,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 601,
    "baseline_top1_sim": 0.683,
-   "baseline_ms": 27.8,
+   "baseline_ms": 37.9,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1616,14 +1771,15 @@
    "q": "Has anyone proposed a built-in Excel spreadsheet reader?",
    "expect": [],
    "lineage": true,
-   "lineage_ms": 1214.9,
+   "lineage_ms": 1300.1,
    "lineage_paths": 0,
    "lineage_outcome": "not_in_graph",
+   "lineage_threads": [],
    "lineage_top": [],
    "baseline_evidence": null,
    "baseline_top1": 210,
    "baseline_top1_sim": 0.67,
-   "baseline_ms": 25.9,
+   "baseline_ms": 33.3,
    "router_tool": "already_decided",
    "router_ok": true,
    "baseline_answer_ok": true
@@ -1635,14 +1791,15 @@
    "q": "Is PEP 5 (Guidelines for Language Evolution) still current, or was it superseded?",
    "expect": 387,
    "lineage": true,
-   "lineage_ms": 74.5,
+   "lineage_ms": 75.0,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 5,
    "baseline_top1_sim": 0.864,
-   "baseline_ms": 27.2,
+   "baseline_ms": 64.1,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1653,14 +1810,15 @@
    "q": "Is PEP 102 (Doing Python Micro Releases) still current, or was it superseded?",
    "expect": 101,
    "lineage": true,
-   "lineage_ms": 80.0,
+   "lineage_ms": 27.9,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 102,
    "baseline_top1_sim": 0.847,
-   "baseline_ms": 63.4,
+   "baseline_ms": 66.6,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1671,14 +1829,15 @@
    "q": "Is PEP 215 (String Interpolation) still current, or was it superseded?",
    "expect": 292,
    "lineage": true,
-   "lineage_ms": 51.9,
+   "lineage_ms": 54.7,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 292,
    "baseline_top1_sim": 0.822,
-   "baseline_ms": 41.1,
+   "baseline_ms": 82.2,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1689,14 +1848,15 @@
    "q": "Is PEP 216 (Docstring Format) still current, or was it superseded?",
    "expect": 287,
    "lineage": true,
-   "lineage_ms": 82.2,
+   "lineage_ms": 32.8,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 287,
    "baseline_top1_sim": 0.829,
-   "baseline_ms": 34.8,
+   "baseline_ms": 62.6,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1707,14 +1867,15 @@
    "q": "Is PEP 241 (Metadata for Python Software Packages) still current, or was it superseded?",
    "expect": 566,
    "lineage": true,
-   "lineage_ms": 80.8,
+   "lineage_ms": 64.0,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 241,
    "baseline_top1_sim": 0.902,
-   "baseline_ms": 49.9,
+   "baseline_ms": 39.0,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1725,14 +1886,15 @@
    "q": "Is PEP 248 (Python Database API Specification v1.0) still current, or was it superseded?",
    "expect": 249,
    "lineage": true,
-   "lineage_ms": 65.5,
+   "lineage_ms": 45.8,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 249,
    "baseline_top1_sim": 0.882,
-   "baseline_ms": 35.2,
+   "baseline_ms": 55.6,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1743,14 +1905,15 @@
    "q": "Is PEP 291 (Backward Compatibility for the Python 2 Standard Library) still current, or was it superseded?",
    "expect": 387,
    "lineage": true,
-   "lineage_ms": 46.2,
+   "lineage_ms": 32.9,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 291,
    "baseline_top1_sim": 0.887,
-   "baseline_ms": 28.3,
+   "baseline_ms": 37.8,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1761,14 +1924,15 @@
    "q": "Is PEP 314 (Metadata for Python Software Packages 1.1) still current, or was it superseded?",
    "expect": 566,
    "lineage": true,
-   "lineage_ms": 24.8,
+   "lineage_ms": 82.6,
    "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 345,
    "baseline_top1_sim": 0.888,
-   "baseline_ms": 31.1,
+   "baseline_ms": 58.5,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1779,14 +1943,15 @@
    "q": "Is PEP 333 (Python Web Server Gateway Interface v1.0) still current, or was it superseded?",
    "expect": 3333,
    "lineage": true,
-   "lineage_ms": 58.9,
+   "lineage_ms": 37.0,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 333,
    "baseline_top1_sim": 0.88,
-   "baseline_ms": 17.2,
+   "baseline_ms": 64.2,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1797,14 +1962,15 @@
    "q": "Is PEP 345 (Metadata for Python Software Packages 1.2) still current, or was it superseded?",
    "expect": 566,
    "lineage": true,
-   "lineage_ms": 82.0,
+   "lineage_ms": 41.5,
    "lineage_paths": 3,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 345,
    "baseline_top1_sim": 0.904,
-   "baseline_ms": 16.9,
+   "baseline_ms": 39.9,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1815,14 +1981,15 @@
    "q": "Is PEP 354 (Enumerations in Python) still current, or was it superseded?",
    "expect": 435,
    "lineage": true,
-   "lineage_ms": 83.9,
+   "lineage_ms": 75.9,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 354,
    "baseline_top1_sim": 0.842,
-   "baseline_ms": 21.7,
+   "baseline_ms": 27.2,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1833,14 +2000,15 @@
    "q": "Is PEP 386 (Changing the version comparison module in Distutils) still current, or was it superseded?",
    "expect": 440,
    "lineage": true,
-   "lineage_ms": 75.5,
+   "lineage_ms": 58.3,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 386,
    "baseline_top1_sim": 0.883,
-   "baseline_ms": 23.2,
+   "baseline_ms": 34.7,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1851,14 +2019,15 @@
    "q": "Is PEP 409 (Suppressing exception context) still current, or was it superseded?",
    "expect": 415,
    "lineage": true,
-   "lineage_ms": 70.6,
+   "lineage_ms": 84.1,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 409,
    "baseline_top1_sim": 0.884,
-   "baseline_ms": 19.0,
+   "baseline_ms": 24.3,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1869,14 +2038,15 @@
    "q": "Is PEP 426 (Metadata for Python Software Packages 2.0) still current, or was it superseded?",
    "expect": 566,
    "lineage": true,
-   "lineage_ms": 82.8,
+   "lineage_ms": 44.7,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 426,
    "baseline_top1_sim": 0.904,
-   "baseline_ms": 29.5,
+   "baseline_ms": 25.9,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1887,14 +2057,15 @@
    "q": "Is PEP 431 (Time zone support improvements) still current, or was it superseded?",
    "expect": 615,
    "lineage": true,
-   "lineage_ms": 86.6,
+   "lineage_ms": 24.2,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 431,
    "baseline_top1_sim": 0.875,
-   "baseline_ms": 23.8,
+   "baseline_ms": 21.3,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1905,14 +2076,15 @@
    "q": "Is PEP 433 (Easier suppression of file descriptor inheritance) still current, or was it superseded?",
    "expect": 446,
    "lineage": true,
-   "lineage_ms": 69.2,
+   "lineage_ms": 66.7,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 446,
    "baseline_top1_sim": 0.821,
-   "baseline_ms": 13.8,
+   "baseline_ms": 48.9,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1923,14 +2095,15 @@
    "q": "Is PEP 438 (Transitioning to release-file hosting on PyPI) still current, or was it superseded?",
    "expect": 470,
    "lineage": true,
-   "lineage_ms": 90.5,
+   "lineage_ms": 61.2,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 438,
    "baseline_top1_sim": 0.867,
-   "baseline_ms": 19.4,
+   "baseline_ms": 34.9,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1941,14 +2114,15 @@
    "q": "Is PEP 501 (General purpose template literal strings) still current, or was it superseded?",
    "expect": 750,
    "lineage": true,
-   "lineage_ms": 81.3,
+   "lineage_ms": 32.5,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 501,
    "baseline_top1_sim": 0.842,
-   "baseline_ms": 26.2,
+   "baseline_ms": 23.7,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1959,14 +2133,15 @@
    "q": "Is PEP 509 (Add a private version to dict) still current, or was it superseded?",
    "expect": 699,
    "lineage": true,
-   "lineage_ms": 54.4,
+   "lineage_ms": 70.8,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 699,
    "baseline_top1_sim": 0.867,
-   "baseline_ms": 23.2,
+   "baseline_ms": 32.0,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1977,14 +2152,15 @@
    "q": "Is PEP 513 (A Platform Tag for Portable Linux Built Distributions) still current, or was it superseded?",
    "expect": 600,
    "lineage": true,
-   "lineage_ms": 86.2,
+   "lineage_ms": 74.5,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 513,
    "baseline_top1_sim": 0.893,
-   "baseline_ms": 31.3,
+   "baseline_ms": 20.4,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -1995,14 +2171,15 @@
    "q": "Is PEP 543 (A Unified TLS API for Python) still current, or was it superseded?",
    "expect": 748,
    "lineage": true,
-   "lineage_ms": 73.3,
+   "lineage_ms": 64.7,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 543,
    "baseline_top1_sim": 0.891,
-   "baseline_ms": 28.3,
+   "baseline_ms": 16.7,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2013,14 +2190,15 @@
    "q": "Is PEP 554 (Multiple Interpreters in the Stdlib) still current, or was it superseded?",
    "expect": 734,
    "lineage": true,
-   "lineage_ms": 70.0,
+   "lineage_ms": 73.7,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 554,
    "baseline_top1_sim": 0.841,
-   "baseline_ms": 18.8,
+   "baseline_ms": 29.5,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2031,14 +2209,15 @@
    "q": "Is PEP 563 (Postponed Evaluation of Annotations) still current, or was it superseded?",
    "expect": 649,
    "lineage": true,
-   "lineage_ms": 65.9,
+   "lineage_ms": 73.8,
    "lineage_paths": 2,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 649,
    "baseline_top1_sim": 0.825,
-   "baseline_ms": 18.8,
+   "baseline_ms": 28.0,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2049,14 +2228,15 @@
    "q": "Is PEP 571 (The manylinux2010 Platform Tag) still current, or was it superseded?",
    "expect": 600,
    "lineage": true,
-   "lineage_ms": 71.2,
+   "lineage_ms": 43.8,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 571,
    "baseline_top1_sim": 0.902,
-   "baseline_ms": 25.0,
+   "baseline_ms": 22.7,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2067,14 +2247,15 @@
    "q": "Is PEP 599 (The manylinux2014 Platform Tag) still current, or was it superseded?",
    "expect": 600,
    "lineage": true,
-   "lineage_ms": 76.9,
+   "lineage_ms": 38.8,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 599,
    "baseline_top1_sim": 0.899,
-   "baseline_ms": 32.9,
+   "baseline_ms": 30.1,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2085,14 +2266,15 @@
    "q": "Is PEP 601 (Forbid return/break/continue breaking out of finally) still current, or was it superseded?",
    "expect": 765,
    "lineage": true,
-   "lineage_ms": 67.1,
+   "lineage_ms": 70.0,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 765,
    "baseline_top1_sim": 0.894,
-   "baseline_ms": 21.7,
+   "baseline_ms": 35.1,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2103,14 +2285,15 @@
    "q": "Is PEP 622 (Structural Pattern Matching) still current, or was it superseded?",
    "expect": 634,
    "lineage": true,
-   "lineage_ms": 82.7,
+   "lineage_ms": 52.2,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 642,
    "baseline_top1_sim": 0.877,
-   "baseline_ms": 22.4,
+   "baseline_ms": 37.9,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2121,14 +2304,15 @@
    "q": "Is PEP 631 (Dependency specification in pyproject.toml based on PEP 508) still current, or was it superseded?",
    "expect": 621,
    "lineage": true,
-   "lineage_ms": 88.6,
+   "lineage_ms": 74.2,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 631,
    "baseline_top1_sim": 0.916,
-   "baseline_ms": 28.6,
+   "baseline_ms": 28.1,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2139,14 +2323,15 @@
    "q": "Is PEP 665 (A file format to list Python dependencies for reproducibility of an application) still current, or was it superseded?",
    "expect": 751,
    "lineage": true,
-   "lineage_ms": 48.0,
+   "lineage_ms": 54.8,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 665,
    "baseline_top1_sim": 0.886,
-   "baseline_ms": 46.1,
+   "baseline_ms": 28.2,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2157,14 +2342,15 @@
    "q": "Is PEP 722 (Dependency specification for single-file scripts) still current, or was it superseded?",
    "expect": 723,
    "lineage": true,
-   "lineage_ms": 86.4,
+   "lineage_ms": 78.3,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": false,
    "baseline_top1": 722,
    "baseline_top1_sim": 0.883,
-   "baseline_ms": 20.4,
+   "baseline_ms": 19.6,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2175,14 +2361,15 @@
    "q": "Is PEP 3153 (Asynchronous IO support) still current, or was it superseded?",
    "expect": 3156,
    "lineage": true,
-   "lineage_ms": 51.9,
+   "lineage_ms": 68.5,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": true,
    "baseline_top1": 3153,
    "baseline_top1_sim": 0.886,
-   "baseline_ms": 15.8,
+   "baseline_ms": 39.2,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2193,14 +2380,15 @@
    "q": "Is PEP 8 (Style Guide for Python Code) still current, or was it superseded?",
    "expect": null,
    "lineage": true,
-   "lineage_ms": 53.2,
+   "lineage_ms": 35.5,
    "lineage_paths": 0,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": null,
    "baseline_top1": 8,
    "baseline_top1_sim": 0.868,
-   "baseline_ms": 15.7,
+   "baseline_ms": 18.2,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2211,14 +2399,15 @@
    "q": "Is PEP 484 (Type Hints) still current, or was it superseded?",
    "expect": null,
    "lineage": true,
-   "lineage_ms": 54.7,
+   "lineage_ms": 34.6,
    "lineage_paths": 0,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": null,
    "baseline_top1": 483,
    "baseline_top1_sim": 0.84,
-   "baseline_ms": 16.5,
+   "baseline_ms": 27.8,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2229,14 +2418,15 @@
    "q": "Is PEP 572 (Assignment Expressions) still current, or was it superseded?",
    "expect": null,
    "lineage": true,
-   "lineage_ms": 70.7,
+   "lineage_ms": 41.8,
    "lineage_paths": 0,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": null,
    "baseline_top1": 577,
    "baseline_top1_sim": 0.824,
-   "baseline_ms": 37.5,
+   "baseline_ms": 22.5,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2247,14 +2437,15 @@
    "q": "Is PEP 634 (Structural Pattern Matching: Specification) still current, or was it superseded?",
    "expect": null,
    "lineage": true,
-   "lineage_ms": 80.7,
+   "lineage_ms": 59.1,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": null,
    "baseline_top1": 634,
    "baseline_top1_sim": 0.909,
-   "baseline_ms": 25.3,
+   "baseline_ms": 50.9,
    "router_tool": "is_current",
    "router_ok": true
   },
@@ -2265,14 +2456,15 @@
    "q": "Is PEP 3333 (Python Web Server Gateway Interface v1.0.1) still current, or was it superseded?",
    "expect": null,
    "lineage": true,
-   "lineage_ms": 40.0,
+   "lineage_ms": 59.3,
    "lineage_paths": 1,
    "lineage_outcome": "answered",
+   "lineage_threads": null,
    "lineage_top": null,
    "baseline_evidence": null,
    "baseline_top1": 3333,
    "baseline_top1_sim": 0.883,
-   "baseline_ms": 24.2,
+   "baseline_ms": 20.4,
    "router_tool": "is_current",
    "router_ok": true
   }

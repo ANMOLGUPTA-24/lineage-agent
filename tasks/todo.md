@@ -146,7 +146,7 @@ onboarding ("what do I read to understand typing?").
 - [x] `eval/`: about 50 questions with ground truth, graph agent vs vector-only baseline, table in README (proves "graph must matter")
 - [x] `make sync` + `(:Change)` events + `changes(since)` tool + "synced N h ago" in UI + nightly GitHub Action (keeping knowledge current)
 - [ ] `onboard(topic)`: reading order (topological on REQUIRES/REFERENCES, ranked by PageRank, superseded PEPs replaced) + who to ask
-- [ ] Chats: discuss.python.org threads from `discussions_to` → `(:Thread)`, participants feed who_knows (capped, cached)
+- [x] Chats: discuss.python.org threads from `discussions_to` → `(:Thread)`, participants feed who_knows (capped, cached)
 - [ ] CI (GitHub Actions: FalkorDB service → ingest → tests)
 ### P2: polish
 - [ ] UI: landing stats, quote cards with deep links, example-question chips, node expand on double-click
@@ -189,7 +189,12 @@ onboarding ("what do I read to understand typing?").
   Fetch running (2,073 Ideas topics; ~1,748 threads at the forum's pace). Then: load, eval rerun, sync, bundle, deploy.
 - docs/DEMO.md (video script) and docs/BLOG.md (draft) written for the author to edit.
 - UI checked in Chrome: fixed stale server after alias change, example chips, ruling-notice paths for edgeless PEPs.
-- LLM path not exercised against a real model this session (no key): test before deploying.
+- LLM path not exercised against a real model this session (no key). Live demo runs keyless (router + templates).
+- Hosting: HF marks Docker Spaces "Paid" for this account; free Gradio images can't run FalkorDB (FalkorDBLite
+  needs glibc 2.39, can't read a Redis 8.10 RDB). User asked for zero cost, so: docker-compose.quick.yml with
+  the pre-built graph (deploy/graph.rdb, 9 MB, only the live graph) + Codespaces devcontainer. Rules accept local setup.
+- Threads loaded via `make sync` (1,748 threads, 199 DISCUSSES, 264 MENTIONS, 170 authors matched). Eval unchanged
+  on PEP claims; ideas without a PEP now point to their forum threads.
 
 ## Notes from building
 - rst parsing lives in `ingest/peps.py`; derived structure (reverse edges, hub-aware weights,

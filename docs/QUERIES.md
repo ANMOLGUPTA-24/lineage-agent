@@ -7,7 +7,7 @@ All tool queries run through `ro_query` (read-only), except `remember`.
 
 Find PEPs, people or topics matching free text. Call this before any other tool when the user names something without a PEP number.
 
-Outcome: `answered`, 1 rows, 0 paths, 886.9 ms.
+Outcome: `answered`, 1 rows, 0 paths, 962.4 ms.
 
 ```cypher
 CALL db.idx.fulltext.queryNodes('Person', $q) YIELD node, score RETURN node.name, score ORDER BY score DESC LIMIT 3
@@ -33,7 +33,7 @@ params: `{'k': 5, 'v': '<vector[384]>'}`
 
 Decision lineage of a PEP: who proposed and decided it, where the ruling is, which earlier PEPs it builds on (up to `depth` hops), and the CPython PRs that implemented it. Ancestors: every PEP reachable within `depth` hops (skipping Process PEPs such as PEP 1 and PEP 8, which everything cites), each via its cheapest path, kept only if it is about the same thing (embedding distance < MAX_DRIFT), closest first.
 
-Outcome: `answered`, 1 rows, 16 paths, 54.1 ms.
+Outcome: `answered`, 1 rows, 15 paths, 40.2 ms.
 
 ```cypher
 MATCH (p:PEP {number: $n}) RETURN p.number
@@ -51,7 +51,17 @@ MATCH path = (p:PEP {number: $n})-[:REQUIRES|REFERENCES|SUPERSEDES*1..4]->(q:PEP
 params: `{'n': 634, 'max_drift': 0.27}`
 
 ```cypher
+MATCH (p:PEP {number: $n})-[:HAS_SECTION]->(s:Section) WHERE s.kind IN ['rationale', 'motivation', 'notice'] RETURN s.kind, s.title, s.text, s.url
+```
+params: `{'n': 634}`
+
+```cypher
 MATCH path = (p:PEP {number: $n})<-[:REJECTED_IN]-(a:Alternative)-[c:CITES]->(q:PEP) WHERE (p)-[:REJECTS_APPROACH_OF]->(q) RETURN path, q.number, q.status, a.title, CASE WHEN coalesce(c.quote, '') = '' THEN a.text ELSE c.quote END, a.url
+```
+params: `{'n': 634}`
+
+```cypher
+MATCH path = (p:PEP {number: $n})<-[x:REJECTS_APPROACH_OF]-(l:PEP) RETURN path, l.number, l.created, x.via ORDER BY l.created
 ```
 params: `{'n': 634}`
 
@@ -74,7 +84,7 @@ params: `{'n': 634}`
 
 Whether a PEP still describes how Python works: its status and the full SUPERSEDES chain to whatever replaced it.
 
-Outcome: `answered`, 1 rows, 1 paths, 31.0 ms.
+Outcome: `answered`, 1 rows, 1 paths, 11.4 ms.
 
 ```cypher
 MATCH (p:PEP {number: $n}) RETURN p.number
@@ -100,7 +110,7 @@ params: `{'n': 333}`
 
 People who know an area (a topic such as 'typing', or a PEP's area). Ranked by PageRank over the area's influence graph (who the area's PEPs and PRs build on: citations, implementations, decisions), with the most active people listed separately. For a PEP, its own authors and decider come first.
 
-Outcome: `answered`, 1 rows, 6 paths, 78.2 ms.
+Outcome: `answered`, 1 rows, 6 paths, 80.4 ms.
 
 ```cypher
 MATCH (s:Topic) WHERE s.name = toLower($s) AND s.slug IS NOT NULL RETURN 'Topic' AS kind, s.name AS key, 'topic ' + s.name AS name, s
@@ -131,7 +141,7 @@ params: `{'name': 'Jukka Lehtosalo', 'key': 'typing'}`
 
 Knowledge concentration in an area: for each PEP, how many distinct people (authors, deciders, implementers) are attached, and what is orphaned if the top person left.
 
-Outcome: `answered`, 1 rows, 2 paths, 16.6 ms.
+Outcome: `answered`, 1 rows, 2 paths, 11.3 ms.
 
 ```cypher
 MATCH (s:Topic) WHERE s.name = toLower($s) AND s.slug IS NOT NULL RETURN 'Topic' AS kind, s.name AS key, 'topic ' + s.name AS name, s
@@ -157,7 +167,7 @@ params: `{'top': 'Alyssa Coghlan', 'nums': [459]}`
 
 Shortest weighted path between two PEPs and/or people across every relationship in the graph: authorship, decisions, PEP links, implementing PRs.
 
-Outcome: `answered`, 3 rows, 3 paths, 58.3 ms.
+Outcome: `answered`, 3 rows, 3 paths, 15.7 ms.
 
 ```cypher
 MATCH (p:PEP {number: $n}) RETURN p.number
@@ -172,13 +182,13 @@ params: `{'n': 634}`
 ```cypher
 MATCH (x:PEP {number: $va}), (y:PEP {number: $vb}) CALL algo.SPpaths({sourceNode: x, targetNode: y, relTypes: $rels, weightProp: 'weight', maxLen: 6, relDirection: 'both', pathCount: 3}) YIELD path, pathWeight RETURN path, pathWeight ORDER BY pathWeight
 ```
-params: `{'va': 572, 'vb': 634, 'rels': ['AUTHORED', 'DELEGATE_FOR', 'REFERENCES', 'REQUIRES', 'SUPERSEDES', 'OPENED', 'IMPLEMENTS', 'DISCUSSES', 'RESOLVED_BY', 'MADE_BY', 'IN_TOPIC']}`
+params: `{'va': 572, 'vb': 634, 'rels': ['AUTHORED', 'DELEGATE_FOR', 'REFERENCES', 'REQUIRES', 'SUPERSEDES', 'REJECTS_APPROACH_OF', 'OPENED', 'IMPLEMENTS', 'DISCUSSES', 'RESOLVED_BY', 'MADE_BY', 'IN_TOPIC']}`
 
 ## `recall(pep='572')`
 
 Findings saved in earlier sessions about a PEP, newest first.
 
-Outcome: `not_in_graph`, 0 rows, 0 paths, 4.1 ms.
+Outcome: `not_in_graph`, 0 rows, 0 paths, 2.2 ms.
 
 ```cypher
 MATCH (p:PEP {number: $n}) RETURN p.number
@@ -194,7 +204,7 @@ params: `{'n': 572}`
 
 Has Python already decided this idea? Finds the PEP or the rejected idea inside a PEP that matches the proposal, then follows the graph: the ruling and who made it, whether it was superseded, which later PEPs set the same approach aside again, and who to ask. Use for "has X been proposed", "why not X", "was X rejected", or any pasted proposal.
 
-Outcome: `answered`, 1 rows, 0 paths, 1144.3 ms.
+Outcome: `answered`, 1 rows, 1 paths, 1406.6 ms.
 
 ```cypher
 CALL db.idx.vector.queryNodes('PEP', 'embedding', $k, vecf32($v)) YIELD node RETURN 'pep', node.number, node.title, node.title + '. ' + coalesce(node.abstract, '')
@@ -217,7 +227,17 @@ CALL db.idx.fulltext.queryNodes('Alternative', $q) YIELD node RETURN 'alt', node
 params: `{'k': 15, 'v': '<vector[384]>', 'q': 'while|loop'}`
 
 ```cypher
-MATCH (p:PEP {number: $n}) OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p) WITH p, collect(DISTINCT au.name) AS authors OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who) WITH p, authors, collect(ruling) AS rulings, collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at, url: coalesce(d.verdict_url, d.url)}) AS decisions OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP) WITH p, authors, rulings, decisions, collect(line) AS lines OPTIONAL MATCH (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'}) WITH p, authors, rulings, decisions, lines, collect({text: s.text, url: s.url, title: s.title})[0] AS notice OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p) RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings, decisions, lines, notice, collect(back), collect({pep: later.number, title: later.title, created: later.created, via: x.via})
+CALL db.idx.vector.queryNodes('Thread', 'embedding', $k, vecf32($v)) YIELD node RETURN 'thread', node.id, node.title, node.title + '. ' + coalesce(node.text, '')
+```
+params: `{'k': 15, 'v': '<vector[384]>', 'q': 'while|loop'}`
+
+```cypher
+CALL db.idx.fulltext.queryNodes('Thread', $q) YIELD node RETURN 'thread', node.id, node.title, node.title + '. ' + coalesce(node.text, '') LIMIT $k
+```
+params: `{'k': 15, 'v': '<vector[384]>', 'q': 'while|loop'}`
+
+```cypher
+MATCH (p:PEP {number: $n}) OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p) WITH p, collect(DISTINCT au.name) AS authors OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who) WITH p, authors, collect(ruling) AS rulings, collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at, url: coalesce(d.verdict_url, d.url)}) AS decisions OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP) WITH p, authors, rulings, decisions, collect(line) AS lines OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'}) WITH p, authors, rulings, decisions, lines, collect(npath) AS npaths, collect({text: s.text, url: s.url, title: s.title})[0] AS notice OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p) RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings, decisions, lines, npaths, notice, collect(back), collect({pep: later.number, title: later.title, created: later.created, via: x.via})
 ```
 params: `{'n': 315}`
 
@@ -225,7 +245,7 @@ params: `{'n': 315}`
 
 Draft a forum reply to someone proposing `idea`: what was decided before, quoted, with links and who to ask. Built only from already_decided's rows; nothing is posted.
 
-Outcome: `answered`, 2 rows, 0 paths, 862.5 ms.
+Outcome: `answered`, 2 rows, 1 paths, 1194.9 ms.
 
 ```cypher
 CALL db.idx.vector.queryNodes('PEP', 'embedding', $k, vecf32($v)) YIELD node RETURN 'pep', node.number, node.title, node.title + '. ' + coalesce(node.abstract, '')
@@ -248,7 +268,17 @@ CALL db.idx.fulltext.queryNodes('Alternative', $q) YIELD node RETURN 'alt', node
 params: `{'k': 15, 'v': '<vector[384]>', 'q': 'switch|statement'}`
 
 ```cypher
-MATCH (p:PEP {number: $n}) OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p) WITH p, collect(DISTINCT au.name) AS authors OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who) WITH p, authors, collect(ruling) AS rulings, collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at, url: coalesce(d.verdict_url, d.url)}) AS decisions OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP) WITH p, authors, rulings, decisions, collect(line) AS lines OPTIONAL MATCH (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'}) WITH p, authors, rulings, decisions, lines, collect({text: s.text, url: s.url, title: s.title})[0] AS notice OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p) RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings, decisions, lines, notice, collect(back), collect({pep: later.number, title: later.title, created: later.created, via: x.via})
+CALL db.idx.vector.queryNodes('Thread', 'embedding', $k, vecf32($v)) YIELD node RETURN 'thread', node.id, node.title, node.title + '. ' + coalesce(node.text, '')
+```
+params: `{'k': 15, 'v': '<vector[384]>', 'q': 'switch|statement'}`
+
+```cypher
+CALL db.idx.fulltext.queryNodes('Thread', $q) YIELD node RETURN 'thread', node.id, node.title, node.title + '. ' + coalesce(node.text, '') LIMIT $k
+```
+params: `{'k': 15, 'v': '<vector[384]>', 'q': 'switch|statement'}`
+
+```cypher
+MATCH (p:PEP {number: $n}) OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p) WITH p, collect(DISTINCT au.name) AS authors OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who) WITH p, authors, collect(ruling) AS rulings, collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at, url: coalesce(d.verdict_url, d.url)}) AS decisions OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP) WITH p, authors, rulings, decisions, collect(line) AS lines OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'}) WITH p, authors, rulings, decisions, lines, collect(npath) AS npaths, collect({text: s.text, url: s.url, title: s.title})[0] AS notice OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p) RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings, decisions, lines, npaths, notice, collect(back), collect({pep: later.number, title: later.title, created: later.created, via: x.via})
 ```
 params: `{'n': 3103}`
 
@@ -275,6 +305,9 @@ Each module's docstring says why each query or algorithm is there.
    so CDLP groups the rest. Each community is named after its highest-ranked PEP.
 5. Full-text index (title, abstract) and a vector index on title+abstract embeddings, used
    only to resolve fuzzy names ("walrus operator" -> PEP 572).
+
+Community nodes are rebuilt here, which drops the expertise attached to them, so after running
+this module on its own, run lineage.ingest.expertise again (`make ingest` runs both in order).
 """
 from fastembed import TextEmbedding
 
@@ -303,6 +336,17 @@ def main() -> None:
 
     g.query("""CALL algo.pageRank('PEP', 'REFERENCES') YIELD node, score
                SET node.rank = score""")
+
+    # Same idea for people: Guido authored 65 PEPs, so at weight 1 "PEP 484 <- Guido -> PEP 695"
+    # (cost 2) beat the direct citation 695 -> 484 (cost 4.3). Each person edge costs
+    # 1 + ln(1 + that person's number of edges of that type).
+    for rel in ("AUTHORED", "OPENED", "DELEGATE_FOR"):
+        g.query(f"""MATCH (a:Person)-[e:{rel}]->() WITH a, count(e) AS n
+                    MATCH (a)-[e:{rel}]->() SET e.weight = 1.0 + log(1.0 + n)""")
+    # And for topics: "both are typing PEPs" (49 of them) is true of every pair, so it must not
+    # undercut a real citation between the two.
+    g.query("""MATCH ()-[e:IN_TOPIC]->(t:Topic) WITH t, count(e) AS n
+               MATCH ()-[e:IN_TOPIC]->(t) SET e.weight = 1.0 + log(1.0 + n)""")
 
     # The Steering Council made 100+ rulings; at weight 1 every path would route through it.
     g.query("MATCH (:Decision)-[m:MADE_BY]->(:Council) SET m.weight = 3.0")
@@ -364,9 +408,8 @@ from fastembed import TextEmbedding
 from lineage.db import graph
 from lineage.ingest.derive import EMBED_MODEL, try_query
 from lineage.ingest.peps import RAW
-from lineage.ingest.rst import clip, demarkup
+from lineage.ingest.rst import clip, demarkup, sections
 
-UNDERLINE = re.compile(r"^([=\-~^\"'`#*+])\1{2,}\s*$")
 REJECTED = re.compile(r"^(rejected|alternative|frequently raised objections|objections|why not|"
                       r"open issues and rejected|discarded)", re.I)
 RATIONALE = re.compile(r"^(motivation|rationale)\b", re.I)
@@ -387,31 +430,6 @@ def citing_sentence(text: str, pep: int, limit: int = 400) -> str:
 
 def anchor(title: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", demarkup(title).lower().replace("`", "")).strip("-")
-
-
-def sections(path: Path) -> list[dict]:
-    """Flat list of {level, title, body} using rst's rule: heading levels follow the order in
-    which underline characters first appear."""
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    levels: list[str] = []
-    out, cur = [], None
-    i = 0
-    while i < len(lines):
-        if (i + 1 < len(lines) and lines[i].strip() and not lines[i].startswith(" ")
-                and UNDERLINE.match(lines[i + 1]) and len(lines[i + 1].rstrip()) >= len(lines[i].rstrip())):
-            ch = lines[i + 1][0]
-            if ch not in levels:
-                levels.append(ch)
-            cur = {"level": levels.index(ch), "title": lines[i].strip(), "body": []}
-            out.append(cur)
-            i += 2
-            continue
-        if cur is not None:
-            cur["body"].append(lines[i])
-        i += 1
-    for s in out:
-        s["body"] = "\n".join(s["body"])
-    return out
 
 
 def extract(num: int, path: Path) -> tuple[list[dict], list[dict]]:

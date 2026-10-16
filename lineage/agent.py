@@ -202,14 +202,16 @@ def template(step: dict) -> str:
     if t == "already_decided":
         out = []
         for x in rows:
-            d = x["decision"]
+            d = x.get("decision")
             by = ""
             if d:
                 names = " and ".join(y["by"] for y in d["decided_by"])
                 by = f" ({'attributed to' if any(y['inferred'] for y in d['decided_by']) else 'by'} {names})"
             head = "Closest related history (not the same idea): " if x["match"] == "related" else ""
             if x["kind"] == "thread":
-                s = (f'{head}Discussed on discuss.python.org: "{x["title"]}" ({(x["created"] or "")[:4]}, {x["posts"]} posts, '
+                lead = not (x["peps"] or head or any(o.startswith("No PEP") for o in out))
+                s = (f'{head}{"No PEP in the graph proposed this, but it was d" if lead else "D"}'
+                     f'iscussed on discuss.python.org: "{x["title"]}" ({(x["created"] or "")[:4]}, {x["posts"]} posts, '
                      f'started by {x["started_by"]}) {x["url"]}')
                 if x["peps"]:
                     s += "; it refers to " + ", ".join(f"PEP {p['pep']} ({p['status']})" for p in x["peps"][:3])

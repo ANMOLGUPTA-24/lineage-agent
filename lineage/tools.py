@@ -768,7 +768,9 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
         if r["superseded_by"]:
             lines.append(f"  PEP {r['pep']} was later superseded by {r['superseded_by']}.")
     people = sorted({a for r in same for a in r.get("authors", [])})[:4]
-    lines += ["", "A new proposal would need to answer the reasons above."
+    advice = ("A new proposal should start from these threads and what was said there."
+              if all(r["kind"] == "thread" for r in same) else "A new proposal would need to answer the reasons above.")
+    lines += ["", advice
               + (f" People who know this history: {', '.join(people)}." if people else ""),
               "", "(Drafted by Lineage from the PEP graph. Check the links before posting.)"]
     res["rows"] = [{"draft": "\n".join(lines)}] + res["rows"]

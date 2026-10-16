@@ -151,6 +151,16 @@ started returning PEP 0 as the endpoint of three edges on an unanchored scan, wh
 query returned the right PEP. A fresh build was correct, and the sync diff is what surfaced it. I
 haven't reduced it to a minimal reproduction yet.
 
+## Where ideas go to die: the forum
+
+Most ideas never become PEPs. They are proposed on discuss.python.org, argued over, and dropped. I
+pulled the 2,073 topics in its Ideas category (the public JSON API, rate-limited and cached) and the
+first post and participants of the 1,551 with five or more replies, plus the 197 threads where PEPs
+were discussed. Threads join the candidates for "has this been proposed?", ranked below PEPs (a thread
+is where an idea was discussed, not decided), and 170 PEP authors link up with their forum activity
+by name. "Have multi-line lambdas ever been proposed?" used to end at "the graph doesn't record it";
+it now answers that no PEP did, and points to the 2023 thread and the core developer who replied.
+
 ## What I'd do next
 
 - Calibrate the "same idea" cutoff on a larger labelled set, where the held-out misses were

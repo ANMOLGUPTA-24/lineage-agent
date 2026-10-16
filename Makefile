@@ -7,10 +7,12 @@ data/raw/peps:
 fetch:            ## refresh the cached public data (about 10 min; needs `gh auth login`)
 	curl -sL https://peps.python.org/api/peps.json -o data/raw/peps.json
 	$(PY) -m lineage.ingest.github fetch
+	$(PY) -m lineage.ingest.discourse fetch
 
 ingest: data/raw/peps   ## build the graph from data/raw
 	$(PY) -m lineage.ingest.peps
 	$(PY) -m lineage.ingest.github load
+	$(PY) -m lineage.ingest.discourse load
 	$(PY) -m lineage.ingest.derive
 	$(PY) -m lineage.ingest.sections
 	$(PY) -m lineage.ingest.expertise

@@ -263,3 +263,14 @@ def test_guard_catches_a_paraphrased_rationale():
 def test_router_sends_whats_new_to_changes(monkeypatch):
     monkeypatch.delenv("LLM_API_KEY", raising=False)
     assert agent.ask("What changed recently?")["steps"][-1]["tool"] == "changes"
+
+
+def test_idea_without_a_pep_points_to_its_forum_thread():
+    r = tools.call("already_decided", {"idea": "multi-line lambdas"})
+    threads = [x for x in r["rows"] if x["kind"] == "thread"]
+    if not threads:
+        pytest.skip("graph built without discuss.python.org threads")
+    assert any("lambda" in x["title"].lower() for x in threads)
+    assert not [x for x in r["rows"] if x["kind"] != "thread" and x["match"] == "same"]
+    text = agent.template(r)
+    assert "discuss.python.org" in text and threads[0]["url"] in text
