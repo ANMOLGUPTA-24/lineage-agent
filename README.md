@@ -9,7 +9,8 @@ Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Tra
 The "company" is the Python project, one of the largest open-source organisations, with 25 years of
 decisions on public record.
 
-> Demo video: _link_ · Live: _link_
+> Demo video: _link_ · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
+> (runs the app with the pre-built graph in your browser on GitHub's free Codespaces allowance; port 8000 opens by itself)
 
 ## Why a graph?
 
@@ -177,6 +178,17 @@ Raw API responses are cached in `data/raw/*.json`, so building the graph needs n
 
 ## Run it
 
+**Quickest (about a minute, graph pre-built):**
+
+```bash
+docker compose -f docker-compose.quick.yml up --build      # → http://localhost:8000
+```
+
+`deploy/graph.rdb` is a saved FalkorDB graph (5 MB) written by the same pinned FalkorDB image the
+compose file uses, so nothing is ingested on startup. The **Codespaces** button above runs exactly this.
+
+**Build the graph yourself from the cached public data (about 2 minutes on 8 cores):**
+
 ```bash
 cp .env.example .env              # optional: add a free LLM key
 docker compose up --build         # FalkorDB + ingest + app → http://localhost:8000
@@ -188,8 +200,13 @@ Without Docker for the app:
 ```bash
 docker run -d -p 6379:6379 -p 3000:3000 falkordb/falkordb:latest
 uv sync && make ingest && make app
-make test                         # 33 behaviour tests against the loaded graph
+make test                         # behaviour tests against the loaded graph
+make sync                         # rebuild beside the live graph and swap (see "Keeping it current")
+uv run python -m eval.run         # the evaluation below
 ```
+
+A single-container image (FalkorDB on localhost + the app, graph baked in) for any Docker host is in
+`deploy/` (`sh deploy/bundle.sh`, then build `build/space`).
 
 ### LLM (optional, free options)
 

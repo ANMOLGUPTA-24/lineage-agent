@@ -1,0 +1,20 @@
+# Fastest way to run Lineage: no ingest, the graph is pre-built (deploy/graph.rdb, saved by the
+# same pinned FalkorDB image below). Also what the GitHub Codespaces devcontainer runs.
+#   docker compose -f docker-compose.quick.yml up --build     ->  http://localhost:8000
+services:
+  falkordb:
+    image: falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a   # 4.22.1 / Redis 8.10.2
+    entrypoint: ["sh", "-c", "mkdir -p /data && cp /seed/graph.rdb /data/dump.rdb && exec redis-server --dir /data --dbfilename dump.rdb --protected-mode no --loadmodule /var/lib/falkordb/bin/falkordb.so"]
+    volumes: ["./deploy/graph.rdb:/seed/graph.rdb:ro"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      retries: 30
+
+  app:
+    build: .
+    ports: ["8000:8000"]
+    env_file: [{path: .env, required: false}]
+    environment: [FALKORDB_HOST=falkordb]
+    depends_on:
+      falkordb: {condition: service_healthy}

@@ -1,0 +1,10 @@
+{
+  "name": "Lineage (FalkorDB graph agent)",
+  "dockerComposeFile": ["../docker-compose.quick.yml"],
+  "service": "app",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [8000],
+  "portsAttributes": {"8000": {"label": "Lineage", "onAutoForward": "openBrowser"}},
+  "hostRequirements": {"cpus": 2, "memory": "4gb"}
+}
