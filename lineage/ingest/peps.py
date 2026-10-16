@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from lineage.db import graph
+from lineage.ingest.rst import clip, demarkup
 
 RAW = Path(__file__).resolve().parents[2] / "data" / "raw"
 
@@ -38,7 +39,7 @@ def parse_rst(path: Path) -> dict:
     abstract = ""
     m = re.search(r"^Abstract\n=+\n(.*?)(?:\n\S[^\n]*\n=+\n)", body, re.S | re.M)
     if m:
-        abstract = " ".join(m.group(1).split())[:1500]
+        abstract = clip(demarkup(m.group(1)), 1500)
     mentions = {int(a or b) for a, b in PEP_MENTION.findall(body)}
     return {"headers": headers, "abstract": abstract, "mentions": mentions}
 

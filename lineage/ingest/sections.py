@@ -14,33 +14,16 @@ from fastembed import TextEmbedding
 from lineage.db import graph
 from lineage.ingest.derive import EMBED_MODEL, try_query
 from lineage.ingest.peps import RAW
+from lineage.ingest.rst import clip, demarkup
 
 UNDERLINE = re.compile(r"^([=\-~^\"'`#*+])\1{2,}\s*$")
 REJECTED = re.compile(r"^(rejected|alternative|frequently raised objections|objections|why not|"
                       r"open issues and rejected|discarded)", re.I)
 RATIONALE = re.compile(r"^(motivation|rationale)\b", re.I)
-MAX_TEXT = 900
+# The PEP's own record of its ruling: "Rejection Notice", "PEP Withdrawal", "BDFL Pronouncement"...
+NOTICE = re.compile(r"^((pep )?(rejection|withdrawal|deferral)( notice| note)?|(bdfl[- ])?pronouncements?|"
+                    r"resolution|(pep )?status|notice)\s*$", re.I)
 PEP_MENTION = re.compile(r"\bPEP[\s-]?0*(\d{1,4})\b")
-
-
-def demarkup(text: str) -> str:
-    text = re.sub(r":pep:`(?:[^`<]*<)?(\d+)(?:#[^`>]*)?>?`", r"PEP \1", text)
-    text = re.sub(r":(?:py:)?[a-z]+:`~?([^`<]+?)(?:\s*<[^>]+>)?`", r"\1", text)
-    text = re.sub(r"`([^`<]+?)\s*<[^>]+>`_{1,2}", r"\1", text)
-    text = re.sub(r"``([^`]+)``", r"`\1`", text)
-    text = re.sub(r"\[#?[\w-]*\]_|\[\d+\]_", "", text)
-    text = re.sub(r"^\s*\.\. .*$", "", text, flags=re.M)          # directives
-    text = re.sub(r"::\s*$", ":", text, flags=re.M)
-    paras = [" ".join(p.split()) for p in re.split(r"\n\s*\n", text)]
-    return "\n\n".join(p for p in paras if p)
-
-
-def clip(text: str) -> str:
-    if len(text) <= MAX_TEXT:
-        return text
-    cut = text[:MAX_TEXT]
-    end = max(cut.rfind(". "), cut.rfind(".\n"))
-    return cut[: end + 1] if end > 200 else cut.rstrip() + "…"
 
 
 def citing_sentence(text: str, pep: int, limit: int = 400) -> str:
@@ -88,10 +71,11 @@ def extract(num: int, path: Path) -> tuple[list[dict], list[dict]]:
     for idx, s in enumerate(secs):
         if s["level"] != 0:
             continue
-        if RATIONALE.match(s["title"]):
+        if RATIONALE.match(s["title"]) or NOTICE.match(s["title"]):
             text = demarkup(s["body"])
             if text:
-                found_sections.append({"pep": num, "kind": s["title"].split()[0].lower(), "title": s["title"],
+                kind = "notice" if NOTICE.match(s["title"]) else s["title"].split()[0].lower()
+                found_sections.append({"pep": num, "kind": kind, "title": s["title"],
                                        "text": clip(text), "url": url + "#" + anchor(s["title"])})
         elif REJECTED.match(s["title"]):
             children = []

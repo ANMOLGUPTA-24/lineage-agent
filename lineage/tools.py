@@ -69,19 +69,27 @@ class Run:
     def __init__(self, tenant: str):
         self.g = graph(tenant)
         self.cypher: list[str] = []
+        self.params: list[dict] = []
+
+    def log(self, cypher: str, params: dict | None) -> dict:
+        params = params or {}
+        self.cypher.append(" ".join(cypher.split()))
+        # Embedding vectors are 384 floats; the trace shows their size, not the numbers.
+        self.params.append({k: f"<vector[{len(v)}]>" if k == "v" else v for k, v in params.items()})
+        return params
 
     def q(self, cypher: str, params: dict | None = None):
-        self.cypher.append(" ".join(cypher.split()))
-        return self.g.ro_query(cypher, params or {}).result_set
+        return self.g.ro_query(cypher, self.log(cypher, params)).result_set
 
     def w(self, cypher: str, params: dict | None = None):
-        self.cypher.append(" ".join(cypher.split()))
-        return self.g.query(cypher, params or {}).result_set
+        return self.g.query(cypher, self.log(cypher, params)).result_set
 
 
 def first_sentences(text: str, limit: int = QUOTE_CHARS) -> str:
-    """A verbatim prefix of the source text, cut at a sentence end, so the guard can check it."""
-    text = (text or "").split("\n\n")[0]
+    """Opening text of a source, cut at a sentence end. Stub paragraphs ("Rejected.") are skipped
+    in favour of the first one that says something; the guard checks quotes against these rows."""
+    paras = (text or "").split("\n\n")
+    text = next((p for p in paras if len(p) >= 60), paras[0])
     if len(text) <= limit:
         return text
     cut = text[:limit]
@@ -91,7 +99,7 @@ def first_sentences(text: str, limit: int = QUOTE_CHARS) -> str:
 
 def envelope(tool: str, args: dict, run: Run, outcome: str, rows=None, paths=None, note: str = "") -> dict:
     return {"tool": tool, "args": args, "outcome": outcome, "rows": rows or [], "paths": paths or [],
-            "note": note, "cypher": run.cypher}
+            "note": note, "cypher": run.cypher, "params": run.params}
 
 
 def unknown(tool: str, args: dict, run: Run, what: str) -> dict:
@@ -411,7 +419,188 @@ def remember(pep: str, text: str, session: str, tenant: str = "python") -> dict:
     return envelope("remember", args, run, "answered", rows=[{"saved": True, "pep": n, "at": at}])
 
 
-TOOLS = {f.__name__: f for f in (resolve, why, is_current, who_knows, bus_factor, connection, recall, remember)}
+# ---------------------------------------------------------------- already decided?
+
+# Vector distance alone can't tell "same idea" from "same vocabulary" (multi-line lambdas land
+# 0.21 from conditional expressions, switch statements 0.30 from PEP 3103). Vector + full-text
+# only gather candidates; a cross-encoder scores (idea, candidate) pairs. Bands set on 12
+# hand-checked ideas: true matches scored 6.0-7.9, loosely related history ~2, ideas with no
+# PEP -0.4 or lower. MiniLM-L-6 on 300-char snippets matched L-12's top hits at a third of the
+# latency (~0.45 s for 60 candidates on CPU).
+RERANK_MODEL = "Xenova/ms-marco-MiniLM-L-6-v2"
+SAME_IDEA, RELATED_IDEA = 5.0, 1.0
+SNIPPET = 300
+STOP = {"the", "and", "for", "add", "use", "with", "like", "allow", "make", "new", "python", "should", "can", "why", "not"}
+VERDICT = {"Final": "adopted", "Accepted": "adopted", "Active": "adopted", "Provisional": "adopted provisionally",
+           "Rejected": "rejected", "Withdrawn": "withdrawn by its authors", "Deferred": "deferred, never decided",
+           "Draft": "still a draft", "Superseded": "superseded"}
+
+
+# Question framing around the idea itself. The cross-encoder scores "add a do-while loop" 7.8
+# but "Has anyone proposed a do-while loop?" only ~4, so the framing is removed first.
+FRAMING = re.compile(r"""^\s*(?:(?:can\s+you\s+|please\s+)?(?:draft|write)\s+(?:a\s+)?(?:reply|response|answer)\s+
+                         (?:to\s+)?(?:someone|a\s+user|a\s+post|a\s+thread|the\s+idea)?\s*(?:who\s+is\s+|who's\s+)?
+                         (?:proposing|suggesting|asking\s+for|that\s+proposes|about|for|on)?\s*:?
+                       | (?:reply|respond)\s+to\s*:?
+                       | (?:has|have|did)\s+(?:anyone|someone|python|the\s+core\s+devs?)\s+(?:ever\s+|already\s+)?
+                         (?:proposed|suggested|considered|discussed|decided(?:\s+on|\s+about|\s+whether)?|rejected)
+                       | (?:was|is|were)\s+(?:there\s+(?:ever\s+)?a\s+pep\s+(?:for|about|on|to)|.{0,0})
+                       | why\s+(?:not|doesn't\s+python\s+have|does\s+not\s+python\s+have|no|isn't\s+there)
+                       | (?:idea|proposal)\s*:
+                     )\s*""", re.I | re.X)
+
+
+def idea_text(text: str) -> str:
+    out = FRAMING.sub("", text, count=1).strip().rstrip("?.!").strip()
+    tail = re.compile(r"\s+(?:(?:ever\s+)?(?:been\s+)?(?:proposed|suggested|considered|rejected|decided)(?:\s+before)?"
+                      r"|(?:a\s+)?good\s+idea|worth\s+(?:it|adding))$", re.I)
+    if tail.search(out):
+        out = re.sub(r"^(?:have|has|was|were|is|are)\s+", "", tail.sub("", out), flags=re.I)
+    return out or text
+
+
+@lru_cache(maxsize=1)
+def _reranker():
+    from fastembed.rerank.cross_encoder import TextCrossEncoder
+    return TextCrossEncoder(RERANK_MODEL)
+
+
+def idea_candidates(run: Run, idea: str, k: int = 15) -> list[dict]:
+    vec = list(_embedder().query_embed([idea]))[0].tolist()
+    words = [w for w in re.findall(r"[A-Za-z]{3,}", idea) if w.lower() not in STOP]
+    pep = "RETURN 'pep', node.number, node.title, node.title + '. ' + coalesce(node.abstract, '')"
+    alt = "RETURN 'alt', node.url, node.title, node.title + '. ' + node.text"
+    queries = [(f"CALL db.idx.vector.queryNodes('PEP', 'embedding', $k, vecf32($v)) YIELD node {pep}", True),
+               (f"CALL db.idx.vector.queryNodes('Alternative', 'embedding', $k, vecf32($v)) YIELD node {alt}", True),
+               (f"CALL db.idx.fulltext.queryNodes('PEP', $q) YIELD node {pep} LIMIT $k", False),
+               (f"CALL db.idx.fulltext.queryNodes('Alternative', $q) YIELD node {alt} LIMIT $k", False)]
+    found: dict = {}
+    for cypher, vector in queries:
+        if not vector and not words:
+            continue
+        for kind, key, title, text in run.q(cypher, {"k": k, "v": vec, "q": "|".join(words)}):
+            found[(kind, key)] = {"kind": kind, "key": key, "title": title, "text": text[:SNIPPET]}
+    cands = list(found.values())
+    for c, s in zip(cands, _reranker().rerank(idea, [c["text"] for c in cands])):
+        c["score"] = round(float(s), 2)
+    return sorted(cands, key=lambda c: -c["score"])
+
+
+def pep_context(run: Run, n: int) -> tuple[dict, list]:
+    """Ruling, decider, supersession and later re-rejections of one PEP, in one traversal."""
+    (num, title, status, created, url, abstract, authors, rulings, decisions, lines, notice, backs, later), = run.q("""
+        MATCH (p:PEP {number: $n})
+        OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p)
+        WITH p, collect(DISTINCT au.name) AS authors
+        OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who)
+        WITH p, authors, collect(ruling) AS rulings,
+             collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at,
+                      url: coalesce(d.verdict_url, d.url)}) AS decisions
+        OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP)
+        WITH p, authors, rulings, decisions, collect(line) AS lines
+        OPTIONAL MATCH (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'})
+        WITH p, authors, rulings, decisions, lines, collect({text: s.text, url: s.url, title: s.title})[0] AS notice
+        OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p)
+        RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings,
+               decisions, lines, notice, collect(back),
+               collect({pep: later.number, title: later.title, created: later.created, via: x.via})""", {"n": n})
+    decided = [d for d in decisions if d["by"]]
+    succ = sorted((path_view(l) for l in lines), key=len)
+    row = {"pep": num, "title": title, "status": status, "verdict": VERDICT.get(status, status.lower()),
+           "created": created, "url": url, "quote": first_sentences(abstract), "authors": authors,
+           "reason": ({"section": notice["title"], "quote": first_sentences(notice["text"], 420), "url": notice["url"]}
+                      if notice and notice["text"] else None),
+           "decision": ({"outcome": decided[0]["outcome"], "at": decided[0]["at"], "url": decided[0]["url"],
+                         "decided_by": [{"by": d["by"], "inferred": bool(d["inferred"])} for d in decided]}
+                        if decided else None),
+           "superseded_by": succ[-1][-1]["id"] if succ else None,
+           "came_back": sorted(({"pep": x["pep"], "title": x["title"], "created": x["created"], "url": x["via"][0]}
+                                for x in later if x["pep"]), key=lambda x: x["created"] or "")}
+    return row, [path_view(r) for r in rulings] + succ + [path_view(b) for b in backs]
+
+
+def already_decided(idea: str, tenant: str = "python") -> dict:
+    """Has Python already decided this idea? Finds the PEP or the rejected idea inside a PEP that
+    matches the proposal, then follows the graph: the ruling and who made it, whether it was
+    superseded, which later PEPs set the same approach aside again, and who to ask. Use for
+    "has X been proposed", "why not X", "was X rejected", or any pasted proposal."""
+    run, args = Run(tenant), {"idea": idea}
+    idea = idea_text(idea)
+    if idea != args["idea"]:
+        args["searched_for"] = idea
+    cands = [c for c in idea_candidates(run, idea) if c["score"] >= RELATED_IDEA]
+    # A rejected idea inside a PEP that itself matched is a side discussion of that PEP, not a second answer.
+    peps = {c["key"] for c in cands if c["kind"] == "pep"}
+    hits = [c for c in cands if c["kind"] == "pep" or int(c["key"].split("pep-")[1][:4]) not in peps][:3]
+    if not hits:
+        return envelope("already_decided", args, run, "not_in_graph",
+                        note=f"No PEP or rejected idea in the graph matches {idea!r} closely. That is not proof the "
+                             "idea is new: ideas that never reached a PEP live on discuss.python.org.")
+    rows, paths = [], []
+    for h in hits:
+        match = "same" if h["score"] >= SAME_IDEA else "related"
+        if h["kind"] == "pep":
+            row, ps = pep_context(run, h["key"])
+            rows.append({"kind": "pep", "match": match, "score": h["score"], **row})
+        else:
+            (alt, pep_n, text, earlier), = run.q("""
+                MATCH alt = (a:Alternative {url: $url})-[:REJECTED_IN]->(p:PEP)
+                OPTIONAL MATCH (a)-[c:CITES]->(q:PEP)
+                RETURN alt, p.number, a.text, collect({pep: q.number, status: q.status, quote: c.quote})""",
+                {"url": h["key"]})
+            row, ps = pep_context(run, pep_n)
+            rows.append({"kind": "rejected_idea", "match": match, "score": h["score"], "idea": h["title"],
+                         "idea_url": h["key"], "idea_quote": first_sentences(text),
+                         "earlier_forms": [e for e in earlier if e["pep"]], **row})
+            ps = [path_view(alt)] + ps
+        paths += ps
+    return envelope("already_decided", args, run, "answered", rows=rows, paths=paths)
+
+
+def draft_reply(idea: str, tenant: str = "python") -> dict:
+    """Draft a forum reply to someone proposing `idea`: what was decided before, quoted, with
+    links and who to ask. Built only from already_decided's rows; nothing is posted."""
+    res = already_decided(idea, tenant)
+    res["tool"], res["args"] = "draft_reply", {"idea": idea}
+    same = [r for r in res["rows"] if r["match"] == "same"]
+    if not same:
+        res["note"] = (res["note"] or "Only loosely related history was found, so there is no reply to draft.")
+        return res
+    lines = ["This has come up before."]
+    for r in same:
+        lines.append("")
+        if r["kind"] == "rejected_idea":
+            lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) considered "{r["idea"]}" and set it aside: '
+                         f'"{r["idea_quote"]}" {r["idea_url"]}')
+            for e in r["earlier_forms"][:2]:
+                if e["quote"]:
+                    lines.append(f'  It points back to PEP {e["pep"]} ({e["status"]}): "{e["quote"]}"')
+        else:
+            d = r["decision"]
+            by = ""
+            if d:
+                names = " and ".join(x["by"] for x in d["decided_by"])
+                by = f", {'attributed to' if any(x['inferred'] for x in d['decided_by']) else 'decided by'} {names}"
+            lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) proposed it. Status: {r["verdict"]}{by}. '
+                         f'From the PEP: "{r["quote"]}" {r["url"]}')
+            if r["reason"]:
+                lines.append(f'  Its {r["reason"]["section"]}: "{r["reason"]["quote"]}" {r["reason"]["url"]}')
+            if d and d["url"]:
+                lines.append(f"  The ruling: {d['url']}")
+        for b in r["came_back"][:3]:
+            lines.append(f'  It came up again in PEP {b["pep"]} ({(b["created"] or "")[:4]}), which set it aside: {b["url"]}')
+        if r["superseded_by"]:
+            lines.append(f"  PEP {r['pep']} was later superseded by {r['superseded_by']}.")
+    people = sorted({a for r in same for a in r["authors"]})[:4]
+    lines += ["", "A new proposal would need to answer the reasons above."
+              + (f" People who know this history: {', '.join(people)}." if people else ""),
+              "", "(Drafted by Lineage from the PEP graph. Check the links before posting.)"]
+    res["rows"] = [{"draft": "\n".join(lines)}] + res["rows"]
+    return res
+
+
+TOOLS = {f.__name__: f for f in (resolve, why, is_current, who_knows, bus_factor, connection, recall, remember,
+                                 already_decided, draft_reply)}
 
 
 def call(name: str, args: dict, tenant: str = "python") -> dict:

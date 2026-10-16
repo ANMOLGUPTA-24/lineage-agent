@@ -136,3 +136,66 @@ def test_rejects_approach_only_points_at_unadopted_older_peps():
                                        OR q.created >= p.created
                                     RETURN count(*)""").result_set[0][0]
     assert bad == 0
+
+
+# ---------------------------------------------------------------- already decided?
+
+def test_rejected_idea_comes_with_its_ruling_text():
+    r = tools.call("already_decided", {"idea": "add a do-while loop"})
+    top = r["rows"][0]
+    assert top["pep"] == 315 and top["match"] == "same" and top["verdict"] == "rejected"
+    assert top["reason"]["url"] == "https://peps.python.org/pep-0315/#notice"
+
+
+def test_recurrence_follows_rejects_approach_edges():
+    top = tools.call("already_decided", {"idea": "statement-local name bindings with a given clause"})["rows"][0]
+    assert top["pep"] == 3150
+    assert {572, 403} <= {b["pep"] for b in top["came_back"]}
+
+
+def test_unrecorded_idea_is_not_called_new():
+    r = tools.call("already_decided", {"idea": "add a banana keyword"})
+    assert r["outcome"] == "not_in_graph" and r["rows"] == []
+    assert "not proof" in r["note"]
+
+
+def test_loose_match_is_labelled_related():
+    r = tools.call("already_decided", {"idea": "make type hints mandatory and enforced at runtime"})
+    assert r["rows"] and all(x["match"] == "related" for x in r["rows"])
+
+
+def test_draft_reply_only_links_what_the_graph_returned():
+    r = tools.call("draft_reply", {"idea": "add a switch statement"})
+    draft = r["rows"][0]["draft"]
+    assert "PEP 3103" in draft and "#rejection-notice" in draft
+    import re
+    urls = set(re.findall(r"https://\S+", draft))
+    row_text = str(r["rows"][1:])
+    assert urls and all(u in row_text for u in urls)
+
+
+def test_trace_has_params_but_not_raw_vectors():
+    r = tools.call("already_decided", {"idea": "add a switch statement"})
+    assert len(r["params"]) == len(r["cypher"])
+    assert any(p.get("v") == "<vector[384]>" for p in r["params"])
+
+
+def test_guard_rejects_invented_quote():
+    steps = [tools.call("already_decided", {"idea": "add a switch statement"})]
+    real = 'Guido wrote: "A quick poll during my keynote presentation at PyCon 2007 shows this proposal has no popular support."'
+    fake = 'Guido wrote: "Switch statements are banned because they are slower than dicts."'
+    assert agent.unsupported_quotes(real, steps) == []
+    assert agent.unsupported_quotes(fake, steps) != []
+
+
+def test_router_sends_proposals_to_already_decided(monkeypatch):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    out = agent.ask("Has anyone proposed a do-while loop?")
+    assert out["steps"][-1]["tool"] == "already_decided" and "PEP 315" in out["answer"]
+
+
+@pytest.mark.parametrize("question", ["Has anyone proposed a do-while loop?", "Why doesn't Python have a do-while loop?",
+                                      "Draft a reply to someone proposing a do-while loop"])
+def test_question_framing_does_not_weaken_the_match(question):
+    top = tools.call("already_decided", {"idea": question})["rows"][0]
+    assert top["pep"] == 315 and top["match"] == "same"

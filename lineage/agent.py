@@ -26,7 +26,11 @@ Rules:
 - At the start, call `recall` for the main PEP to see what earlier sessions found.
 - Use `why` for "why/how did X come about", `is_current` for "is X still true/current",
   `who_knows` for "who should I ask / who owns", `bus_factor` for knowledge concentration,
-  `connection` for "how are A and B related".
+  `connection` for "how are A and B related", `already_decided` for "has X been proposed / why
+  not X / was X rejected" or a pasted proposal, and `draft_reply` when asked to answer a proposal.
+- Put text inside double quotes only when it is copied word for word from a tool result; the
+  guard rejects any quote it cannot find there.
+- In already_decided results, match "related" means similar history, not the same idea: say so.
 - If a tool's outcome is "not_in_graph", say the graph does not record it. That is NOT
   evidence that something doesn't exist.
 - If a decision's attribution is marked inferred, say so ("attributed to").
@@ -53,6 +57,12 @@ SCHEMAS = [
      "parameters": {"type": "object", "properties": {
          "a": {"type": "string", "description": "PEP number or exact person name"},
          "b": {"type": "string", "description": "PEP number or exact person name"}}, "required": ["a", "b"]}},
+    {"name": "already_decided", "description": tools.already_decided.__doc__,
+     "parameters": {"type": "object", "properties": {
+         "idea": {"type": "string", "description": "the proposal in plain words, e.g. 'add a do-while loop'"}},
+         "required": ["idea"]}},
+    {"name": "draft_reply", "description": tools.draft_reply.__doc__,
+     "parameters": {"type": "object", "properties": {"idea": {"type": "string"}}, "required": ["idea"]}},
     {"name": "recall", "description": tools.recall.__doc__,
      "parameters": {"type": "object", "properties": {"pep": {"type": "string"}}, "required": ["pep"]}},
     {"name": "remember", "description": tools.remember.__doc__ + " Only when the user asks you to remember or note something.",
@@ -76,8 +86,29 @@ def evidence_text(steps: list[dict]) -> str:
     return json.dumps([{k: s.get(k) for k in ("rows", "paths", "note")} for s in steps], default=str)
 
 
+def evidence_strings(x) -> list[str]:
+    if isinstance(x, str):
+        return [x]
+    if isinstance(x, dict):
+        x = list(x.values())
+    if isinstance(x, list):
+        return [s for v in x for s in evidence_strings(v)]
+    return []
+
+
+QUOTE = re.compile(r"[\"“]([^\"“”]{25,})[\"”]")
+
+
+def unsupported_quotes(answer: str, steps: list[dict]) -> list[str]:
+    """Quoted spans that do not appear word for word in any tool row (whitespace and a trailing
+    ellipsis ignored)."""
+    norm = lambda s: " ".join(s.split()).rstrip("….").strip()
+    ev = [norm(s) for st in steps for s in evidence_strings(st.get("rows", []))]
+    return [f'quote "{q[:50]}"' for q in QUOTE.findall(answer) if not any(norm(q) in e for e in ev)]
+
+
 def guard(answer: str, steps: list[dict]) -> list[str]:
-    """Problems with the model's answer: PEP numbers or names the tools never returned."""
+    """Problems with the model's answer: PEP numbers, names or quotes the tools never returned."""
     ev = evidence_text(steps)
     problems = [f"PEP {n}" for n in sorted(set(re.findall(r"PEP[\s-]?(\d{1,4})", answer)))
                 if not re.search(rf"\bPEP {n}\b|\"(?:pep|number)\": {n}\b", ev)]
@@ -86,7 +117,7 @@ def guard(answer: str, steps: list[dict]) -> list[str]:
     for name in set(names):
         if name not in ev and name.split()[0] in {p.split()[0] for p in known_people} and name not in known_people:
             problems.append(name)
-    return problems
+    return problems + unsupported_quotes(answer, steps)
 
 
 # ---------------------------------------------------------------- templated answers (no LLM)
@@ -135,6 +166,30 @@ def template(step: dict) -> str:
     if t == "connection":
         p = step["paths"][0]
         return "Shortest link: " + " ".join(x["id"] if "id" in x else (f"-[{x['edge']}]->" if x["forward"] else f"<-[{x['edge']}]-") for x in p) + "."
+    if t == "draft_reply":
+        return r.get("draft") or step["note"]
+    if t == "already_decided":
+        out = []
+        for x in rows:
+            d = x["decision"]
+            by = ""
+            if d:
+                names = " and ".join(y["by"] for y in d["decided_by"])
+                by = f" ({'attributed to' if any(y['inferred'] for y in d['decided_by']) else 'by'} {names})"
+            head = "Closest related history (not the same idea): " if x["match"] == "related" else ""
+            if x["kind"] == "rejected_idea":
+                s = (f'{head}PEP {x["pep"]} ({x["title"]}) considered "{x["idea"]}" and set it aside: '
+                     f'"{x["idea_quote"]}" ({x["idea_url"]})')
+            else:
+                s = f"{head}PEP {x['pep']} ({x['title']}, {(x['created'] or '')[:4]}) proposed this; it was {x['verdict']}{by}"
+                if x["reason"]:
+                    s += f'. {x["reason"]["section"]}: "{x["reason"]["quote"]}" ({x["reason"]["url"]})'
+            if x["came_back"]:
+                s += ". It came up again in " + ", ".join(f"PEP {b['pep']} ({(b['created'] or '')[:4]})" for b in x["came_back"])
+            if x["superseded_by"]:
+                s += f". Superseded by {x['superseded_by']}"
+            out.append(s + ".")
+        return " ".join(out)
     if t == "recall":
         return "Earlier finding: " + "; ".join(f"{x['text']} ({x['at'][:10]})" for x in rows) + "."
     if t == "remember":
@@ -143,6 +198,9 @@ def template(step: dict) -> str:
 
 
 ROUTES = [  # (pattern, tool, needs)
+    (r"\b(draft|reply|respond)\b", "draft_reply", "idea"),
+    (r"\b(already|ever|proposed|suggested|why not|why (doesn't|does not|no|isn't) python|"
+     r"been (decided|discussed|rejected)|was there a pep|idea)\b", "already_decided", "idea"),
     (r"\b(remember|note that|save)\b", "remember", "pep"),
     (r"\b(still|current|superseded|outdated|replaced|deprecated)\b", "is_current", "pep"),
     (r"\b(bus factor|leave|left|single point|concentrat)", "bus_factor", "subject"),
@@ -169,7 +227,9 @@ def route(question: str, tenant: str) -> list[dict]:
 
     for pattern, tool, needs in ROUTES:
         if re.search(pattern, question, re.I):
-            if needs == "subject":
+            if needs == "idea":
+                steps.append(tools.call(tool, {"idea": question}, tenant))
+            elif needs == "subject":
                 subject = topic.group(1).lower() if topic else find_pep()
                 if subject:
                     steps.append(tools.call(tool, {"subject": subject}, tenant))
