@@ -106,9 +106,13 @@ def template(step: dict) -> str:
             by = " and ".join(x["by"] for x in d["decided_by"])
             inferred = any(x["inferred"] for x in d["decided_by"])
             s += f"; it was {d['outcome']} {'(attributed to' if inferred else 'by'} {by}{')' if inferred else ''}"
-        anc = [p[-1]["id"] for p in step["paths"] if p[-1].get("label") == "PEP" and p[0]["id"] == f"PEP {r['pep']}"]
-        if anc:
-            s += f". It builds on {', '.join(anc[:6])}"
+        if r.get("builds_on"):
+            s += f". It builds on {', '.join(r['builds_on'][:6])}"
+        if r.get("earlier_proposals"):
+            s += (". Earlier proposals it cites that were never adopted: "
+                  + ", ".join(f"{x['pep']} ({x['status']})" for x in r["earlier_proposals"][:6]))
+        for x in r.get("rejected_approaches", [])[:2]:
+            s += f'. It set aside the approach of PEP {x["pep"]} under "{x["idea"]}": "{x["quote"]}" ({x["url"]})'
         if r.get("superseded_by"):
             s += f". It was later superseded by {', '.join(r['superseded_by'])}"
         return s + "."

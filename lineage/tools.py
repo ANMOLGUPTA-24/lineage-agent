@@ -24,6 +24,8 @@ MAX_DEPTH = 4
 # than this cosine distance from the starting PEP are dropped. Tuned by hand on PEPs 572/634/695.
 MAX_DRIFT = 0.27
 LINEAGE_RELS = "REQUIRES|REFERENCES|SUPERSEDES"
+NOT_ADOPTED = {"Rejected", "Withdrawn", "Deferred"}
+QUOTE_CHARS = 320
 CONNECT_RELS = ["AUTHORED", "DELEGATE_FOR", "REFERENCES", "REQUIRES", "SUPERSEDES",
                 "OPENED", "IMPLEMENTS", "DISCUSSES", "RESOLVED_BY", "MADE_BY", "IN_TOPIC"]
 
@@ -43,6 +45,9 @@ def node_view(n: Node) -> dict:
                 "url": p.get("verdict_url") or p.get("url"), "at": p.get("at")}
     if label == "Finding":
         return {"id": f"Finding {p.get('at')}", "label": "Finding", "title": p.get("text")}
+    if label == "Alternative":
+        return {"id": f"Rejected idea: {p.get('title')} (PEP {p.get('pep')})", "label": "Alternative",
+                "title": p.get("title"), "url": p.get("url")}
     return {"id": p.get("name") or p.get("version") or str(n.id), "label": label}
 
 
@@ -72,6 +77,16 @@ class Run:
     def w(self, cypher: str, params: dict | None = None):
         self.cypher.append(" ".join(cypher.split()))
         return self.g.query(cypher, params or {}).result_set
+
+
+def first_sentences(text: str, limit: int = QUOTE_CHARS) -> str:
+    """A verbatim prefix of the source text, cut at a sentence end, so the guard can check it."""
+    text = (text or "").split("\n\n")[0]
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    end = cut.rfind(". ")
+    return cut[:end + 1] if end > 80 else cut.rstrip() + "…"
 
 
 def envelope(tool: str, args: dict, run: Run, outcome: str, rows=None, paths=None, note: str = "") -> dict:
@@ -189,6 +204,20 @@ def why(pep: str, depth: int = 2, tenant: str = "python") -> dict:
         WITH best, vec.cosineDistance(p.embedding, q.embedding) AS drift
         WHERE drift < $max_drift
         RETURN best ORDER BY drift LIMIT 12""", {"n": n, "max_drift": MAX_DRIFT})]
+
+    # A cited PEP that never shipped is an earlier proposal, not something this PEP builds on.
+    ancestors = [p[-1] for p in paths]
+    rows[0]["builds_on"] = [a["id"] for a in ancestors if a.get("status") not in NOT_ADOPTED]
+    rows[0]["earlier_proposals"] = [{"pep": a["id"], "status": a["status"]} for a in ancestors
+                                    if a.get("status") in NOT_ADOPTED]
+
+    # Approaches this PEP explicitly set aside, quoted from its own rejected-ideas section.
+    rejected = run.q("""MATCH path = (p:PEP {number: $n})<-[:REJECTED_IN]-(a:Alternative)-[c:CITES]->(q:PEP)
+                        WHERE (p)-[:REJECTS_APPROACH_OF]->(q)
+                        RETURN path, q.number, q.status, a.title, CASE WHEN coalesce(c.quote, '') = '' THEN a.text ELSE c.quote END, a.url""", {"n": n})
+    rows[0]["rejected_approaches"] = [{"pep": qn, "status": qs, "idea": t, "quote": first_sentences(txt), "url": u}
+                                      for _, qn, qs, t, txt, u in rejected]
+    paths += [path_view(r[0]) for r in rejected]
 
     paths += [path_view(r[0]) for r in run.q("""
         MATCH path = (p:PEP {number: $n})-[:RESOLVED_BY]->(:Decision)-[:MADE_BY]->()

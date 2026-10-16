@@ -116,3 +116,23 @@ def test_llm_hallucination_is_replaced(monkeypatch):
     out = agent.ask("Is PEP 333 still current?")
     assert out["mode"] == "guarded" and out["rejected"]["unsupported"] == ["PEP 9000"]
     assert "3333" in out["answer"] and "9000" not in out["answer"]
+
+
+def test_never_adopted_ancestors_are_not_foundations():
+    r = tools.call("why", {"pep": "572"})["rows"][0]
+    assert "PEP 3150" not in r["builds_on"]
+    assert {"pep": "PEP 3150", "status": "Deferred"} in r["earlier_proposals"]
+
+
+def test_rejected_approach_is_quoted_with_a_deep_link():
+    r = tools.call("why", {"pep": "572"})["rows"][0]
+    x = next(a for a in r["rejected_approaches"] if a["pep"] == 3150)
+    assert "PEP 3150" in x["quote"] and x["url"].startswith("https://peps.python.org/pep-0572/#")
+
+
+def test_rejects_approach_only_points_at_unadopted_older_peps():
+    bad = tools.graph().ro_query("""MATCH (p:PEP)-[:REJECTS_APPROACH_OF]->(q:PEP)
+                                    WHERE q.type = 'Process' OR q.status IN ['Final', 'Accepted', 'Active']
+                                       OR q.created >= p.created
+                                    RETURN count(*)""").result_set[0][0]
+    assert bad == 0
