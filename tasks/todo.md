@@ -183,7 +183,13 @@ onboarding ("what do I read to understand typing?").
   22,468 concurrent reads during a sync, 0 errors, all complete graphs. Simulated upstream diff exact.
 - Possible FalkorDB 4.22.1 issue: long-lived, repeatedly re-ingested graph returned PEP 0 as the endpoint of
   3 IMPLEMENTS edges on an unanchored scan (anchored query correct); fresh build correct. No minimal repro yet.
-- Still open: deploy (needs HF login), discuss.python.org Ideas threads, video script, blog draft.
+- Deploy: `deploy/` (one container, graph baked in, FalkorDB on localhost only). Built and run as uid 1000 locally: OK.
+  Waiting on: HF login + Space name + LLM key (as Space secrets).
+- discuss.python.org: `ingest/discourse.py` (fetch → cache → load); already_decided includes threads when loaded.
+  Fetch running (2,073 Ideas topics; ~1,748 threads at the forum's pace). Then: load, eval rerun, sync, bundle, deploy.
+- docs/DEMO.md (video script) and docs/BLOG.md (draft) written for the author to edit.
+- UI checked in Chrome: fixed stale server after alias change, example chips, ruling-notice paths for edgeless PEPs.
+- LLM path not exercised against a real model this session (no key): test before deploying.
 
 ## Notes from building
 - rst parsing lives in `ingest/peps.py`; derived structure (reverse edges, hub-aware weights,
