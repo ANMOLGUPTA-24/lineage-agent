@@ -1,5 +1,9 @@
 # Demo video script (target 2:50)
 
+`docs/video/lineage-demo.mp4` (2:26) is a captioned, silent walkthrough built from screenshots of the
+running app, with the same story as below. It can be submitted as is. For a narrated version, record
+the screen while following this script.
+
 Record at 1080p, browser zoom 125%, dark or light theme (both are styled). Have the live Space and a
 terminal open. Every answer below was produced by the current build; re-run each one right before
 recording and use what it says, not this script, if they differ.

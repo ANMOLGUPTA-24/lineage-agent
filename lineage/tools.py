@@ -9,6 +9,7 @@ Every tool returns the same envelope:
   paths     the graph paths that produced those facts (the explanation)
   cypher    the queries that ran, for the trace panel
 """
+import inspect
 import re
 import time
 from datetime import datetime, timezone
@@ -660,7 +661,7 @@ KIND_ORDER = {"pep": 0, "alt": 1, "thread": 2}
 def thread_context(run: Run, tid: int) -> tuple[dict, list]:
     """A discuss.python.org thread: who started it, who took part (committers flagged), and the
     PEPs it discusses or mentions with their status."""
-    (t, starter, people, peps, paths), = run.q("""
+    (t, starter, people, peps, paths, who), = run.q("""
         MATCH (t:Thread {id: $id})
         OPTIONAL MATCH (s:Person)-[:STARTED]->(t)
         WITH t, s.name AS starter
@@ -668,14 +669,18 @@ def thread_context(run: Run, tid: int) -> tuple[dict, list]:
         WITH t, starter, a, e ORDER BY e.posts DESC
         WITH t, starter, collect({name: a.name, posts: e.posts, group: a.forum_group})[0..6] AS people
         OPTIONAL MATCH path = (t)-[r:DISCUSSES|MENTIONS]->(p:PEP)
-        RETURN t, starter, people,
-               collect({pep: p.number, title: p.title, status: p.status, how: type(r)}), collect(path)""", {"id": tid})
+        WITH t, starter, people, collect({pep: p.number, title: p.title, status: p.status, how: type(r)}) AS peps,
+             collect(path) AS paths
+        // Who started it and the committers who posted: drawn even when the thread names no PEP.
+        OPTIONAL MATCH who = (a:Person)-[e:STARTED|POSTED_IN]->(t)
+        WHERE type(e) = 'STARTED' OR a.forum_group = 'committers'
+        RETURN t, starter, people, peps, paths, collect(who)[0..5]""", {"id": tid})
     tp = t.properties
     row = {"pep": None, "thread_id": tid, "title": tp["title"], "url": tp["url"], "created": tp.get("created"),
            "posts": tp.get("posts"), "likes": tp.get("likes"), "quote": first_sentences(tp.get("text") or ""),
            "started_by": starter, "participants": [x for x in people if x["name"]],
            "peps": [x for x in peps if x["pep"] is not None]}
-    return row, [path_view(p) for p in paths]
+    return row, [path_view(p) for p in (paths or []) + (who or [])]
 
 
 def already_decided(idea: str, tenant: str = "python") -> dict:
@@ -786,9 +791,14 @@ def call(name: str, args: dict, tenant: str = "python") -> dict:
     if name not in TOOLS:
         return {"tool": name, "args": args, "outcome": "error", "note": f"Unknown tool {name}", "rows": [], "paths": []}
     try:
-        res = TOOLS[name](**args, tenant=tenant)
+        # Check arguments against the signature first, so a TypeError raised inside a tool is a
+        # bug that surfaces, not something reported back as "bad arguments".
+        inspect.signature(TOOLS[name]).bind(**args, tenant=tenant)
     except TypeError as e:
-        res = {"tool": name, "args": args, "outcome": "error", "note": f"Bad arguments: {e}", "rows": [], "paths": []}
+        return {"tool": name, "args": args, "outcome": "error", "note": f"Bad arguments: {e}", "rows": [], "paths": [],
+                "ms": round((time.perf_counter() - t0) * 1000, 1)}
+    try:
+        res = TOOLS[name](**args, tenant=tenant)
     except ResponseError as e:
         if "empty key" not in str(e):
             raise

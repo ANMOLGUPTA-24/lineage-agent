@@ -9,8 +9,14 @@ Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Tra
 The "company" is the Python project, one of the largest open-source organisations, with 25 years of
 decisions on public record.
 
-> Demo video: _link_ · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
+> **Demo video:** [docs/video/lineage-demo.mp4](docs/video/lineage-demo.mp4) (2:26, captioned walkthrough of the running app) · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
 > (runs the app with the pre-built graph in your browser on GitHub's free Codespaces allowance; port 8000 opens by itself)
+
+![Has anyone proposed a do-while loop? PEP 315, rejected, with its Notice quoted and the graph path drawn](docs/screenshots/already-decided.jpg)
+
+| Did the idea come back? | Who should I ask about typing? |
+|---|---|
+| ![PEP 403 and PEP 572 rejected the approach of PEP 3150](docs/screenshots/came-back.jpg) | ![PageRank over the typing influence graph, with the citations behind it](docs/screenshots/who-knows.jpg) |
 
 ## Why a graph?
 

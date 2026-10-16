@@ -42,7 +42,7 @@ def snapshot(g) -> dict:
         "supersedes": {(a, b) for a, b in q("MATCH (a:PEP)-[:SUPERSEDES]->(b:PEP) RETURN a.number, b.number")},
         "rulings": {(n, o) for n, o in q("MATCH (p:PEP)-[:RESOLVED_BY]->(d:Decision) RETURN p.number, d.outcome")},
         "work": {(n, lbl, x) for n, lbl, x in q(
-            "MATCH (x)-[:IMPLEMENTS|DISCUSSES]->(p:PEP) RETURN p.number, labels(x)[0], x.number")},
+            "MATCH (x)-[:IMPLEMENTS|DISCUSSES]->(p:PEP) RETURN p.number, labels(x)[0], coalesce(x.number, x.id)")},
         "rejects": {(a, b) for a, b in q("MATCH (a:PEP)-[:REJECTS_APPROACH_OF]->(b:PEP) RETURN a.number, b.number")},
     }
 
@@ -60,7 +60,8 @@ def diff(old: dict, new: dict) -> list[dict]:
     for n, outcome in new["rulings"] - old["rulings"]:
         out.append({"pep": n, "kind": "ruling", "detail": f"PEP {n} has a new ruling: {outcome}"})
     for n, lbl, x in new["work"] - old["work"]:
-        out.append({"pep": n, "kind": "work", "detail": f"{lbl} #{x} now linked to PEP {n}"})
+        what = f"discuss.python.org thread {x}" if lbl == "Thread" else f"{lbl} #{x}"
+        out.append({"pep": n, "kind": "work", "detail": f"{what} now linked to PEP {n}"})
     for a, b in new["rejects"] - old["rejects"]:
         out.append({"pep": b, "kind": "set_aside", "detail": f"PEP {a} set aside the approach of PEP {b}"})
     for n in old["peps"].keys() - new["peps"].keys():
