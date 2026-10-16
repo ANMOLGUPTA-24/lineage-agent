@@ -14,9 +14,8 @@ from fastembed import TextEmbedding
 from lineage.db import graph
 from lineage.ingest.derive import EMBED_MODEL, try_query
 from lineage.ingest.peps import RAW
-from lineage.ingest.rst import clip, demarkup
+from lineage.ingest.rst import clip, demarkup, sections
 
-UNDERLINE = re.compile(r"^([=\-~^\"'`#*+])\1{2,}\s*$")
 REJECTED = re.compile(r"^(rejected|alternative|frequently raised objections|objections|why not|"
                       r"open issues and rejected|discarded)", re.I)
 RATIONALE = re.compile(r"^(motivation|rationale)\b", re.I)
@@ -37,31 +36,6 @@ def citing_sentence(text: str, pep: int, limit: int = 400) -> str:
 
 def anchor(title: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", demarkup(title).lower().replace("`", "")).strip("-")
-
-
-def sections(path: Path) -> list[dict]:
-    """Flat list of {level, title, body} using rst's rule: heading levels follow the order in
-    which underline characters first appear."""
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
-    levels: list[str] = []
-    out, cur = [], None
-    i = 0
-    while i < len(lines):
-        if (i + 1 < len(lines) and lines[i].strip() and not lines[i].startswith(" ")
-                and UNDERLINE.match(lines[i + 1]) and len(lines[i + 1].rstrip()) >= len(lines[i].rstrip())):
-            ch = lines[i + 1][0]
-            if ch not in levels:
-                levels.append(ch)
-            cur = {"level": levels.index(ch), "title": lines[i].strip(), "body": []}
-            out.append(cur)
-            i += 2
-            continue
-        if cur is not None:
-            cur["body"].append(lines[i])
-        i += 1
-    for s in out:
-        s["body"] = "\n".join(s["body"])
-    return out
 
 
 def extract(num: int, path: Path) -> tuple[list[dict], list[dict]]:

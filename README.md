@@ -58,6 +58,48 @@ replaced with one built directly from the rows. The UI shows the rejected text c
 Decisions the source data doesn't attribute (pre-2018 rulings without a named delegate, for example)
 are marked `inferred` and drawn dashed.
 
+## Evaluation: does the graph matter?
+
+98 questions with known answers: 49 "has Python already decided this idea?" (22 of them a **held-out**
+set written after the system was built and never tuned on), 36 "is it current?" (generated from the
+raw `peps.json`, not from the graph), plus who decided, did the idea come back, and how two PEPs relate.
+The vector baseline gets the same corpus, the same embedding model, and a no-match cutoff tuned on these
+very questions. With no LLM key in the loop it is scored on **evidence recall** (do its top 5 chunks
+contain the answer?), an upper bound for any LLM answering from them.
+
+| Question type | n | Lineage (tool rows) | Vector baseline | Baseline is credited when |
+|---|---|---|---|---|
+| Already decided? has a PEP · **held-out** | 17 | 13/17 (76%) | 9/17 (53%) | top-1 chunk is an expected PEP (cutoff applied) |
+| Already decided? no PEP · **held-out** | 5 | 5/5 (100%) | 5/5 (100%) | top-1 similarity under the tuned cutoff |
+| Already decided? has a PEP · dev (seen while building) | 20 | 16/20 (80%) | 14/20 (70%) | top-1 chunk is an expected PEP (cutoff applied) |
+| Already decided? no PEP · dev | 7 | 6/7 (86%) | 7/7 (100%) | top-1 similarity under the tuned cutoff |
+| Already decided? has a PEP · all (evidence in top 5) | 37 | 29/37 (78%) | 36/37 (97%) | an expected PEP anywhere in the top 5 |
+| Is it current? (superseded) | 31 | 31/31 (100%) | 29/31 (94%) | top 5 include the latest PEP in the chain |
+| Is it current? (controls) | 5 | 5/5 (100%) | n/a | (nothing to retrieve) |
+| Who decided it? | 6 | 5/6 (83%) | 1/6 (17%) | decider named in the top 5 |
+| Did the idea come back? | 3 | 3/3 (100%) | 0/3 (0%) | a later PEP citing it in the top 5 |
+| How are A and B related? | 4 | 4/4 (100%) | 1/4 (25%) | a chunk of A naming B (or B naming A) in the top 5 |
+
+- **Confidently wrong** (Lineage's top row is a "same idea" match on a PEP that did not propose it): 3/32 confident answers (ad24, ho04, ho06). `draft_reply` only quotes "same idea" matches, so this is the rate at which a draft would cite the wrong PEP.
+- Baseline no-match cutoff (cosine similarity of the top chunk), tuned on these questions: **0.765**.
+- Lineage answers that carry a graph path: 71/79 (90%) of correct answered items (the baseline returns text chunks, never paths, by construction).
+- Keyword router (no LLM) picked the right tool: 98/98 (100%).
+- Median latency: Lineage 515 ms, baseline 26 ms (warm, CPU, local FalkorDB).
+
+**What this says.** Finding the PEP for an idea is a retrieval problem, and vectors are good at it:
+the right PEP is in the baseline's top 5 for 97% of ideas. Lineage's cross-encoder picks it as the
+*top* answer more often on held-out ideas (76% vs 53%) and never invents a match for ideas with no
+PEP on held-out. But every question **after** finding the PEP is a relationship, and that is where
+retrieval stops: who decided it (83% vs 17%), whether the idea came back (100% vs 0%), how two PEPs
+relate (100% vs 25%). Those answers live on edges, not in any chunk.
+
+**Where Lineage is wrong.** 3 of 32 confident "same idea" answers name the wrong PEP (HTTP/3 client →
+PEP 476 on HTTPS verification; function decorators → PEP 647; dataclasses → PEP 681, dataclass
+*transforms*). Several right answers are under-confident ("related"). Two ground-truth labels were
+widened after the first run, both to PEPs that themselves proposed the idea (f-strings: 536, 701;
+positional-only: 457); this is recorded in `eval/questions.jsonl`. Full list of misses:
+[eval/RESULTS.md](eval/RESULTS.md). Reproduce: `uv run python -m eval.run`.
+
 ## Graph model
 
 ```

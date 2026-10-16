@@ -148,6 +148,9 @@ def template(step: dict) -> str:
                   + ", ".join(f"{x['pep']} ({x['status']})" for x in r["earlier_proposals"][:6]))
         for x in r.get("rejected_approaches", [])[:2]:
             s += f'. It set aside the approach of PEP {x["pep"]} under "{x["idea"]}": "{x["quote"]}" ({x["url"]})'
+        if r.get("set_aside_later_by"):
+            s += ". Its approach came up again and was set aside in " + ", ".join(
+                f"PEP {x['pep']} ({(x['created'] or '')[:4]}, {x['url']})" for x in r["set_aside_later_by"])
         if r.get("superseded_by"):
             s += f". It was later superseded by {', '.join(r['superseded_by'])}"
         return s + "."
@@ -219,11 +222,12 @@ def template(step: dict) -> str:
 ROUTES = [  # (pattern, tool, needs)
     (r"\b(draft|reply|respond)\b", "draft_reply", "idea"),
     (r"\b(already|ever|proposed|suggested|why not|why (doesn't|does not|no|isn't) python|"
-     r"been (decided|discussed|rejected)|was there a pep|idea)\b", "already_decided", "idea"),
+     r"been (decided|discussed|rejected)|decided (on|about|whether)|was there a pep|idea)\b", "already_decided", "idea"),
     (r"\b(remember|note that|save)\b", "remember", "pep"),
+    (r"\bwho (decided|accepted|rejected|approved|ruled)\b", "why", "pep"),
     (r"\b(still|current|superseded|outdated|replaced|deprecated)\b", "is_current", "pep"),
     (r"\b(bus factor|leave|left|single point|concentrat)", "bus_factor", "subject"),
-    (r"\b(who (knows|owns|should|to ask|decided)|expert)", "who_knows", "subject"),
+    (r"\b(who (knows|owns|should|to ask)|expert)", "who_knows", "subject"),
     (r"\b(connect\w*|relat\w*|link\w*|between)\b", "connection", "pair"),
 ]
 

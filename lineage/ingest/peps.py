@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 from lineage.db import graph
-from lineage.ingest.rst import clip, demarkup
+from lineage.ingest.rst import clip, demarkup, sections
 
 RAW = Path(__file__).resolve().parents[2] / "data" / "raw"
 
@@ -40,6 +40,15 @@ def parse_rst(path: Path) -> dict:
     m = re.search(r"^Abstract\n=+\n(.*?)(?:\n\S[^\n]*\n=+\n)", body, re.S | re.M)
     if m:
         abstract = clip(demarkup(m.group(1)), 1500)
+    else:
+        # 66 PEPs have no "Abstract" heading (PEP 308 opens with "Adding a conditional
+        # expression"); without text, search and reranking only had the title. Use the first
+        # section that says something.
+        for s in sections(path):
+            text = demarkup(s["body"])
+            if len(text) >= 80 and not re.match(r"(?i)(copyright|references|footnotes)$", s["title"]):
+                abstract = clip(text, 1500)
+                break
     mentions = {int(a or b) for a, b in PEP_MENTION.findall(body)}
     return {"headers": headers, "abstract": abstract, "mentions": mentions}
 

@@ -1,0 +1,2280 @@
+{
+ "cutoff": 0.765,
+ "results": [
+  {
+   "id": "ad01",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed a do-while loop?",
+   "expect": [
+    315
+   ],
+   "lineage": true,
+   "lineage_ms": 846.1,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 315,
+     "match": "same",
+     "score": 7.82
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 315,
+   "baseline_top1_sim": 0.813,
+   "baseline_ms": 27.2,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad02",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Why doesn't Python have a switch statement?",
+   "expect": [
+    3103,
+    275
+   ],
+   "lineage": true,
+   "lineage_ms": 894.0,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 3103,
+     "match": "same",
+     "score": 7.26
+    },
+    {
+     "pep": 622,
+     "match": "related",
+     "score": 2.02
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 3103,
+   "baseline_top1_sim": 0.704,
+   "baseline_ms": 19.7,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ad03",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was there a PEP for None-aware operators like ?. and ???",
+   "expect": [
+    505,
+    824
+   ],
+   "lineage": true,
+   "lineage_ms": 1169.3,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 505,
+     "match": "same",
+     "score": 7.09
+    },
+    {
+     "pep": 823,
+     "match": "same",
+     "score": 6.16
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 823,
+   "baseline_top1_sim": 0.817,
+   "baseline_ms": 26.0,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ad04",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed keyword arguments in indexing, like a[x=1]?",
+   "expect": [
+    637,
+    472
+   ],
+   "lineage": false,
+   "lineage_ms": 1182.1,
+   "lineage_paths": 6,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 472,
+     "match": "related",
+     "score": 4.11
+    },
+    {
+     "pep": 637,
+     "match": "related",
+     "score": 3.23
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 472,
+   "baseline_top1_sim": 0.859,
+   "baseline_ms": 18.5,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad05",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has Python decided on removing the GIL?",
+   "expect": [
+    703,
+    779
+   ],
+   "lineage": true,
+   "lineage_ms": 1325.7,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 779,
+     "match": "same",
+     "score": 7.9
+    },
+    {
+     "pep": 703,
+     "match": "same",
+     "score": 6.33
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 703,
+   "baseline_top1_sim": 0.788,
+   "baseline_ms": 46.9,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad06",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was a | merge operator for dicts ever proposed?",
+   "expect": [
+    584
+   ],
+   "lineage": true,
+   "lineage_ms": 1150.1,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 584,
+     "match": "same",
+     "score": 5.79
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 584,
+   "baseline_top1_sim": 0.784,
+   "baseline_ms": 28.2,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad07",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed statement-local name bindings with a given clause?",
+   "expect": [
+    3150
+   ],
+   "lineage": true,
+   "lineage_ms": 1115.8,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 3150,
+     "match": "same",
+     "score": 6.56
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 572,
+   "baseline_top1_sim": 0.746,
+   "baseline_ms": 22.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ad08",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was there a PEP for class decorators?",
+   "expect": [
+    3129
+   ],
+   "lineage": true,
+   "lineage_ms": 1099.0,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 3129,
+     "match": "same",
+     "score": 6.89
+    },
+    {
+     "pep": 318,
+     "match": "same",
+     "score": 6.28
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 3129,
+   "baseline_top1_sim": 0.826,
+   "baseline_ms": 15.9,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad09",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed string interpolation with f-strings?",
+   "expect": [
+    498,
+    536,
+    701
+   ],
+   "lineage": true,
+   "lineage_ms": 1154.8,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 536,
+     "match": "same",
+     "score": 8.69
+    },
+    {
+     "pep": 498,
+     "match": "same",
+     "score": 5.74
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 536,
+   "baseline_top1_sim": 0.846,
+   "baseline_ms": 23.1,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad10",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was a ternary conditional operator ever proposed?",
+   "expect": [
+    308
+   ],
+   "lineage": false,
+   "lineage_ms": 1089.9,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": true,
+   "baseline_top1": 308,
+   "baseline_top1_sim": 0.753,
+   "baseline_ms": 42.3,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ad11",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed an enum type in the standard library?",
+   "expect": [
+    435
+   ],
+   "lineage": true,
+   "lineage_ms": 1015.3,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 435,
+     "match": "same",
+     "score": 8.13
+    },
+    {
+     "pep": 663,
+     "match": "related",
+     "score": 4.92
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 435,
+   "baseline_top1_sim": 0.823,
+   "baseline_ms": 23.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad12",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was making print a function ever proposed?",
+   "expect": [
+    3105
+   ],
+   "lineage": true,
+   "lineage_ms": 1156.7,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 3105,
+     "match": "same",
+     "score": 9.26
+    },
+    {
+     "pep": 3138,
+     "match": "related",
+     "score": 1.82
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 3105,
+   "baseline_top1_sim": 0.856,
+   "baseline_ms": 22.9,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad13",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed raising several exceptions at once with except*?",
+   "expect": [
+    654
+   ],
+   "lineage": true,
+   "lineage_ms": 977.7,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 654,
+     "match": "same",
+     "score": 9.82
+    },
+    {
+     "pep": 758,
+     "match": "related",
+     "score": 4.69
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 654,
+   "baseline_top1_sim": 0.832,
+   "baseline_ms": 19.2,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad14",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was a match statement for structural pattern matching proposed?",
+   "expect": [
+    634,
+    622,
+    635,
+    636
+   ],
+   "lineage": true,
+   "lineage_ms": 958.7,
+   "lineage_paths": 3,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 634,
+     "match": "same",
+     "score": 7.93
+    },
+    {
+     "pep": 622,
+     "match": "same",
+     "score": 7.3
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 642,
+   "baseline_top1_sim": 0.786,
+   "baseline_ms": 20.2,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ad15",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed underscores in numeric literals?",
+   "expect": [
+    515
+   ],
+   "lineage": false,
+   "lineage_ms": 1065.8,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 515,
+     "match": "related",
+     "score": 4.39
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 515,
+   "baseline_top1_sim": 0.85,
+   "baseline_ms": 25.1,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad16",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was a range literal syntax like [1:10] ever proposed?",
+   "expect": [
+    204
+   ],
+   "lineage": false,
+   "lineage_ms": 1006.6,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 204,
+     "match": "related",
+     "score": 2.09
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 515,
+   "baseline_top1_sim": 0.76,
+   "baseline_ms": 32.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ad17",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed an operator for matrix multiplication?",
+   "expect": [
+    465
+   ],
+   "lineage": true,
+   "lineage_ms": 1156.6,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 465,
+     "match": "same",
+     "score": 9.89
+    },
+    {
+     "pep": 835,
+     "match": "related",
+     "score": 1.11
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 465,
+   "baseline_top1_sim": 0.853,
+   "baseline_ms": 37.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad18",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was there a PEP for positional-only parameters?",
+   "expect": [
+    570,
+    457
+   ],
+   "lineage": true,
+   "lineage_ms": 1052.5,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 457,
+     "match": "same",
+     "score": 9.61
+    },
+    {
+     "pep": 570,
+     "match": "same",
+     "score": 9.21
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 570,
+   "baseline_top1_sim": 0.852,
+   "baseline_ms": 20.4,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad19",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed lazy imports?",
+   "expect": [
+    690,
+    810
+   ],
+   "lineage": true,
+   "lineage_ms": 1042.5,
+   "lineage_paths": 3,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 690,
+     "match": "same",
+     "score": 8.55
+    },
+    {
+     "pep": 810,
+     "match": "same",
+     "score": 8.29
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 810,
+   "baseline_top1_sim": 0.861,
+   "baseline_ms": 90.5,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad20",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Was there a PEP for annotating variables with types?",
+   "expect": [
+    526
+   ],
+   "lineage": true,
+   "lineage_ms": 1144.0,
+   "lineage_paths": 5,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 526,
+     "match": "same",
+     "score": 8.51
+    },
+    {
+     "pep": 593,
+     "match": "same",
+     "score": 6.08
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 526,
+   "baseline_top1_sim": 0.828,
+   "baseline_ms": 20.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad21",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed braces instead of indentation?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 938.4,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 622,
+   "baseline_top1_sim": 0.753,
+   "baseline_ms": 41.7,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad22",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed a banana keyword?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1042.4,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 472,
+   "baseline_top1_sim": 0.699,
+   "baseline_ms": 23.1,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad23",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Have multi-line lambdas ever been proposed?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1123.8,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 312,
+   "baseline_top1_sim": 0.739,
+   "baseline_ms": 29.2,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad24",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed an HTTP/3 client in the standard library?",
+   "expect": [],
+   "lineage": false,
+   "lineage_ms": 921.5,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 476,
+     "match": "same",
+     "score": 6.31
+    }
+   ],
+   "baseline_evidence": null,
+   "baseline_top1": 268,
+   "baseline_top1_sim": 0.727,
+   "baseline_ms": 16.0,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad25",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed tail-call optimization?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1136.3,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 210,
+   "baseline_top1_sim": 0.698,
+   "baseline_ms": 26.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad26",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed a goto statement?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 987.1,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 769,
+   "baseline_top1_sim": 0.652,
+   "baseline_ms": 21.7,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ad27",
+   "kind": "already_decided",
+   "set": "dev",
+   "q": "Has anyone proposed ++ and -- increment operators?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1107.5,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 465,
+   "baseline_top1_sim": 0.754,
+   "baseline_ms": 28.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "dc01",
+   "kind": "decider",
+   "set": null,
+   "q": "Who decided PEP 572?",
+   "expect": "Guido van Rossum",
+   "lineage": true,
+   "lineage_ms": 97.7,
+   "lineage_paths": 10,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 521,
+   "baseline_top1_sim": 0.708,
+   "baseline_ms": 24.4,
+   "router_tool": "why",
+   "router_ok": true
+  },
+  {
+   "id": "dc02",
+   "kind": "decider",
+   "set": null,
+   "q": "Who decided PEP 484?",
+   "expect": "Mark Shannon",
+   "lineage": true,
+   "lineage_ms": 87.7,
+   "lineage_paths": 19,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 8012,
+   "baseline_top1_sim": 0.715,
+   "baseline_ms": 29.2,
+   "router_tool": "why",
+   "router_ok": true
+  },
+  {
+   "id": "dc03",
+   "kind": "decider",
+   "set": null,
+   "q": "Who decided PEP 634?",
+   "expect": "Python Steering Council",
+   "lineage": true,
+   "lineage_ms": 58.3,
+   "lineage_paths": 11,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 8012,
+   "baseline_top1_sim": 0.699,
+   "baseline_ms": 28.9,
+   "router_tool": "why",
+   "router_ok": true
+  },
+  {
+   "id": "dc04",
+   "kind": "decider",
+   "set": null,
+   "q": "Who decided PEP 3103?",
+   "expect": "Guido van Rossum",
+   "lineage": false,
+   "lineage_ms": 36.6,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 275,
+   "baseline_top1_sim": 0.724,
+   "baseline_ms": 23.3,
+   "router_tool": "why",
+   "router_ok": true
+  },
+  {
+   "id": "dc05",
+   "kind": "decider",
+   "set": null,
+   "q": "Who decided PEP 703?",
+   "expect": "Python Steering Council",
+   "lineage": true,
+   "lineage_ms": 77.0,
+   "lineage_paths": 11,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 536,
+   "baseline_top1_sim": 0.724,
+   "baseline_ms": 16.5,
+   "router_tool": "why",
+   "router_ok": true
+  },
+  {
+   "id": "dc06",
+   "kind": "decider",
+   "set": null,
+   "q": "Who decided PEP 695?",
+   "expect": "Python Steering Council",
+   "lineage": true,
+   "lineage_ms": 94.4,
+   "lineage_paths": 18,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 8010,
+   "baseline_top1_sim": 0.698,
+   "baseline_ms": 22.5,
+   "router_tool": "why",
+   "router_ok": true
+  },
+  {
+   "id": "rc01",
+   "kind": "recurrence",
+   "set": null,
+   "q": "Did the given-clause idea of PEP 3150 come up again later?",
+   "expect": [
+    572
+   ],
+   "lineage": true,
+   "lineage_ms": 99.7,
+   "lineage_paths": 5,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 572,
+   "baseline_top1_sim": 0.746,
+   "baseline_ms": 22.5,
+   "router_tool": "already_decided",
+   "router_ok": true
+  },
+  {
+   "id": "rc02",
+   "kind": "recurrence",
+   "set": null,
+   "q": "Did the None-aware operators of PEP 505 come up again later?",
+   "expect": [
+    824
+   ],
+   "lineage": true,
+   "lineage_ms": 51.7,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 823,
+   "baseline_top1_sim": 0.817,
+   "baseline_ms": 22.5,
+   "router_tool": "why",
+   "router_ok": true
+  },
+  {
+   "id": "rc03",
+   "kind": "recurrence",
+   "set": null,
+   "q": "Did the execution context idea of PEP 550 come up again later?",
+   "expect": [
+    567
+   ],
+   "lineage": true,
+   "lineage_ms": 84.9,
+   "lineage_paths": 6,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 789,
+   "baseline_top1_sim": 0.828,
+   "baseline_ms": 29.1,
+   "router_tool": "already_decided",
+   "router_ok": true
+  },
+  {
+   "id": "cn01",
+   "kind": "connection",
+   "set": null,
+   "q": "How is PEP 333 related to PEP 3333?",
+   "expect": "SUPERSEDES",
+   "lineage": true,
+   "lineage_ms": 52.7,
+   "lineage_paths": 3,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 444,
+   "baseline_top1_sim": 0.724,
+   "baseline_ms": 14.7,
+   "router_tool": "connection",
+   "router_ok": true
+  },
+  {
+   "id": "cn02",
+   "kind": "connection",
+   "set": null,
+   "q": "How is PEP 484 related to PEP 695?",
+   "expect": "REFERENCES",
+   "lineage": true,
+   "lineage_ms": 183.6,
+   "lineage_paths": 3,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 483,
+   "baseline_top1_sim": 0.729,
+   "baseline_ms": 47.0,
+   "router_tool": "connection",
+   "router_ok": true
+  },
+  {
+   "id": "cn03",
+   "kind": "connection",
+   "set": null,
+   "q": "How is PEP 3150 related to PEP 572?",
+   "expect": "REJECTS_APPROACH_OF",
+   "lineage": true,
+   "lineage_ms": 105.6,
+   "lineage_paths": 3,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 402,
+   "baseline_top1_sim": 0.7,
+   "baseline_ms": 35.5,
+   "router_tool": "connection",
+   "router_ok": true
+  },
+  {
+   "id": "cn04",
+   "kind": "connection",
+   "set": null,
+   "q": "How is PEP 622 related to PEP 634?",
+   "expect": "SUPERSEDES",
+   "lineage": true,
+   "lineage_ms": 183.9,
+   "lineage_paths": 3,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 636,
+   "baseline_top1_sim": 0.737,
+   "baseline_ms": 60.5,
+   "router_tool": "connection",
+   "router_ok": true
+  },
+  {
+   "id": "ho01",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed async and await keywords for coroutines?",
+   "expect": [
+    492
+   ],
+   "lineage": true,
+   "lineage_ms": 1087.5,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 492,
+     "match": "same",
+     "score": 6.96
+    },
+    {
+     "pep": 530,
+     "match": "same",
+     "score": 6.27
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 530,
+   "baseline_top1_sim": 0.851,
+   "baseline_ms": 26.7,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ho02",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Was a with statement for managing resources ever proposed?",
+   "expect": [
+    343
+   ],
+   "lineage": false,
+   "lineage_ms": 1109.8,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 340,
+     "match": "related",
+     "score": 2.16
+    },
+    {
+     "pep": 343,
+     "match": "related",
+     "score": 1.58
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 806,
+   "baseline_top1_sim": 0.717,
+   "baseline_ms": 29.3,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ho03",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed yield from for delegating to a subgenerator?",
+   "expect": [
+    380
+   ],
+   "lineage": true,
+   "lineage_ms": 1192.3,
+   "lineage_paths": 4,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 380,
+     "match": "same",
+     "score": 7.39
+    },
+    {
+     "pep": 828,
+     "match": "related",
+     "score": 4.03
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 380,
+   "baseline_top1_sim": 0.854,
+   "baseline_ms": 23.5,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho04",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Was there a PEP for function decorators?",
+   "expect": [
+    318
+   ],
+   "lineage": false,
+   "lineage_ms": 1083.0,
+   "lineage_paths": 4,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 647,
+     "match": "same",
+     "score": 5.38
+    },
+    {
+     "pep": 810,
+     "match": "same",
+     "score": 5.07
+    }
+   ],
+   "baseline_evidence": false,
+   "baseline_top1": 403,
+   "baseline_top1_sim": 0.81,
+   "baseline_ms": 27.9,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ho05",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed keyword-only arguments?",
+   "expect": [
+    3102
+   ],
+   "lineage": true,
+   "lineage_ms": 1218.3,
+   "lineage_paths": 5,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 3102,
+     "match": "same",
+     "score": 9.96
+    },
+    {
+     "pep": 637,
+     "match": "related",
+     "score": 4.33
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 3102,
+   "baseline_top1_sim": 0.848,
+   "baseline_ms": 16.7,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho06",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Was there a PEP for dataclasses?",
+   "expect": [
+    557
+   ],
+   "lineage": false,
+   "lineage_ms": 1150.6,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 681,
+     "match": "same",
+     "score": 5.65
+    },
+    {
+     "pep": 649,
+     "match": "related",
+     "score": 1.73
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 593,
+   "baseline_top1_sim": 0.791,
+   "baseline_ms": 25.6,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ho07",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed a built-in breakpoint() function?",
+   "expect": [
+    553
+   ],
+   "lineage": true,
+   "lineage_ms": 1073.4,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 553,
+     "match": "same",
+     "score": 8.69
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 553,
+   "baseline_top1_sim": 0.757,
+   "baseline_ms": 31.6,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ho08",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Was a function for approximate float equality ever proposed?",
+   "expect": [
+    485
+   ],
+   "lineage": true,
+   "lineage_ms": 1080.7,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 485,
+     "match": "same",
+     "score": 6.65
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 485,
+   "baseline_top1_sim": 0.783,
+   "baseline_ms": 23.4,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho09",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed an object-oriented filesystem path module?",
+   "expect": [
+    428
+   ],
+   "lineage": true,
+   "lineage_ms": 1124.8,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 428,
+     "match": "same",
+     "score": 9.34
+    },
+    {
+     "pep": 355,
+     "match": "same",
+     "score": 8.62
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 355,
+   "baseline_top1_sim": 0.804,
+   "baseline_ms": 38.0,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ho10",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Was a nonlocal statement for outer-scope names proposed?",
+   "expect": [
+    3104
+   ],
+   "lineage": false,
+   "lineage_ms": 1103.4,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 3104,
+     "match": "related",
+     "score": 3.21
+    },
+    {
+     "pep": 845,
+     "match": "related",
+     "score": 1.13
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 572,
+   "baseline_top1_sim": 0.824,
+   "baseline_ms": 36.4,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ho11",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed a statistics module in the standard library?",
+   "expect": [
+    450
+   ],
+   "lineage": true,
+   "lineage_ms": 1024.5,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 450,
+     "match": "same",
+     "score": 8.63
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 450,
+   "baseline_top1_sim": 0.813,
+   "baseline_ms": 36.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho12",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Was IANA time zone support in the standard library proposed?",
+   "expect": [
+    615
+   ],
+   "lineage": true,
+   "lineage_ms": 1180.0,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 615,
+     "match": "same",
+     "score": 9.49
+    },
+    {
+     "pep": 431,
+     "match": "related",
+     "score": 4.32
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 615,
+   "baseline_top1_sim": 0.862,
+   "baseline_ms": 51.3,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho13",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed TOML parsing in the standard library?",
+   "expect": [
+    680
+   ],
+   "lineage": true,
+   "lineage_ms": 1122.8,
+   "lineage_paths": 8,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 680,
+     "match": "same",
+     "score": 8.18
+    },
+    {
+     "pep": 665,
+     "match": "related",
+     "score": 4.33
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 680,
+   "baseline_top1_sim": 0.855,
+   "baseline_ms": 24.9,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho14",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Was removing old unmaintained standard library modules ever proposed?",
+   "expect": [
+    594
+   ],
+   "lineage": true,
+   "lineage_ms": 1326.7,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 594,
+     "match": "same",
+     "score": 6.14
+    },
+    {
+     "pep": 4,
+     "match": "related",
+     "score": 3.67
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 594,
+   "baseline_top1_sim": 0.791,
+   "baseline_ms": 30.4,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho15",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed a frozendict built-in?",
+   "expect": [
+    416,
+    814,
+    603
+   ],
+   "lineage": true,
+   "lineage_ms": 1185.7,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 814,
+     "match": "same",
+     "score": 8.96
+    },
+    {
+     "pep": 416,
+     "match": "related",
+     "score": 4.64
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 841,
+   "baseline_top1_sim": 0.858,
+   "baseline_ms": 27.7,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": false
+  },
+  {
+   "id": "ho16",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Was writing union types as X | Y ever proposed?",
+   "expect": [
+    604
+   ],
+   "lineage": true,
+   "lineage_ms": 1230.4,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 604,
+     "match": "same",
+     "score": 8.5
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 604,
+   "baseline_top1_sim": 0.901,
+   "baseline_ms": 28.9,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho17",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed extended unpacking like a, *rest = items?",
+   "expect": [
+    3132
+   ],
+   "lineage": true,
+   "lineage_ms": 1125.5,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 3132,
+     "match": "same",
+     "score": 5.53
+    },
+    {
+     "pep": 448,
+     "match": "related",
+     "score": 2.62
+    }
+   ],
+   "baseline_evidence": true,
+   "baseline_top1": 3132,
+   "baseline_top1_sim": 0.822,
+   "baseline_ms": 26.5,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho18",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed a built-in YAML parser?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1220.6,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 332,
+   "baseline_top1_sim": 0.758,
+   "baseline_ms": 42.0,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho19",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed an unless keyword?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1068.4,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 654,
+     "match": "related",
+     "score": 3.82
+    }
+   ],
+   "baseline_evidence": null,
+   "baseline_top1": 572,
+   "baseline_top1_sim": 0.762,
+   "baseline_ms": 38.6,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho20",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed JSON5 support in the json module?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1080.5,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": [
+    {
+     "pep": 837,
+     "match": "related",
+     "score": 1.69
+    }
+   ],
+   "baseline_evidence": null,
+   "baseline_top1": 837,
+   "baseline_top1_sim": 0.74,
+   "baseline_ms": 46.9,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho21",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed a repeat N times loop statement?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1226.3,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 601,
+   "baseline_top1_sim": 0.683,
+   "baseline_ms": 27.8,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "ho22",
+   "kind": "already_decided",
+   "set": "held-out",
+   "q": "Has anyone proposed a built-in Excel spreadsheet reader?",
+   "expect": [],
+   "lineage": true,
+   "lineage_ms": 1214.9,
+   "lineage_paths": 0,
+   "lineage_outcome": "not_in_graph",
+   "lineage_top": [],
+   "baseline_evidence": null,
+   "baseline_top1": 210,
+   "baseline_top1_sim": 0.67,
+   "baseline_ms": 25.9,
+   "router_tool": "already_decided",
+   "router_ok": true,
+   "baseline_answer_ok": true
+  },
+  {
+   "id": "cu5",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 5 (Guidelines for Language Evolution) still current, or was it superseded?",
+   "expect": 387,
+   "lineage": true,
+   "lineage_ms": 74.5,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 5,
+   "baseline_top1_sim": 0.864,
+   "baseline_ms": 27.2,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu102",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 102 (Doing Python Micro Releases) still current, or was it superseded?",
+   "expect": 101,
+   "lineage": true,
+   "lineage_ms": 80.0,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 102,
+   "baseline_top1_sim": 0.847,
+   "baseline_ms": 63.4,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu215",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 215 (String Interpolation) still current, or was it superseded?",
+   "expect": 292,
+   "lineage": true,
+   "lineage_ms": 51.9,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 292,
+   "baseline_top1_sim": 0.822,
+   "baseline_ms": 41.1,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu216",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 216 (Docstring Format) still current, or was it superseded?",
+   "expect": 287,
+   "lineage": true,
+   "lineage_ms": 82.2,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 287,
+   "baseline_top1_sim": 0.829,
+   "baseline_ms": 34.8,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu241",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 241 (Metadata for Python Software Packages) still current, or was it superseded?",
+   "expect": 566,
+   "lineage": true,
+   "lineage_ms": 80.8,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 241,
+   "baseline_top1_sim": 0.902,
+   "baseline_ms": 49.9,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu248",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 248 (Python Database API Specification v1.0) still current, or was it superseded?",
+   "expect": 249,
+   "lineage": true,
+   "lineage_ms": 65.5,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 249,
+   "baseline_top1_sim": 0.882,
+   "baseline_ms": 35.2,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu291",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 291 (Backward Compatibility for the Python 2 Standard Library) still current, or was it superseded?",
+   "expect": 387,
+   "lineage": true,
+   "lineage_ms": 46.2,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 291,
+   "baseline_top1_sim": 0.887,
+   "baseline_ms": 28.3,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu314",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 314 (Metadata for Python Software Packages 1.1) still current, or was it superseded?",
+   "expect": 566,
+   "lineage": true,
+   "lineage_ms": 24.8,
+   "lineage_paths": 3,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 345,
+   "baseline_top1_sim": 0.888,
+   "baseline_ms": 31.1,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu333",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 333 (Python Web Server Gateway Interface v1.0) still current, or was it superseded?",
+   "expect": 3333,
+   "lineage": true,
+   "lineage_ms": 58.9,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 333,
+   "baseline_top1_sim": 0.88,
+   "baseline_ms": 17.2,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu345",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 345 (Metadata for Python Software Packages 1.2) still current, or was it superseded?",
+   "expect": 566,
+   "lineage": true,
+   "lineage_ms": 82.0,
+   "lineage_paths": 3,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 345,
+   "baseline_top1_sim": 0.904,
+   "baseline_ms": 16.9,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu354",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 354 (Enumerations in Python) still current, or was it superseded?",
+   "expect": 435,
+   "lineage": true,
+   "lineage_ms": 83.9,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 354,
+   "baseline_top1_sim": 0.842,
+   "baseline_ms": 21.7,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu386",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 386 (Changing the version comparison module in Distutils) still current, or was it superseded?",
+   "expect": 440,
+   "lineage": true,
+   "lineage_ms": 75.5,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 386,
+   "baseline_top1_sim": 0.883,
+   "baseline_ms": 23.2,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu409",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 409 (Suppressing exception context) still current, or was it superseded?",
+   "expect": 415,
+   "lineage": true,
+   "lineage_ms": 70.6,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 409,
+   "baseline_top1_sim": 0.884,
+   "baseline_ms": 19.0,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu426",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 426 (Metadata for Python Software Packages 2.0) still current, or was it superseded?",
+   "expect": 566,
+   "lineage": true,
+   "lineage_ms": 82.8,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 426,
+   "baseline_top1_sim": 0.904,
+   "baseline_ms": 29.5,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu431",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 431 (Time zone support improvements) still current, or was it superseded?",
+   "expect": 615,
+   "lineage": true,
+   "lineage_ms": 86.6,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 431,
+   "baseline_top1_sim": 0.875,
+   "baseline_ms": 23.8,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu433",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 433 (Easier suppression of file descriptor inheritance) still current, or was it superseded?",
+   "expect": 446,
+   "lineage": true,
+   "lineage_ms": 69.2,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 446,
+   "baseline_top1_sim": 0.821,
+   "baseline_ms": 13.8,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu438",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 438 (Transitioning to release-file hosting on PyPI) still current, or was it superseded?",
+   "expect": 470,
+   "lineage": true,
+   "lineage_ms": 90.5,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 438,
+   "baseline_top1_sim": 0.867,
+   "baseline_ms": 19.4,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu501",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 501 (General purpose template literal strings) still current, or was it superseded?",
+   "expect": 750,
+   "lineage": true,
+   "lineage_ms": 81.3,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 501,
+   "baseline_top1_sim": 0.842,
+   "baseline_ms": 26.2,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu509",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 509 (Add a private version to dict) still current, or was it superseded?",
+   "expect": 699,
+   "lineage": true,
+   "lineage_ms": 54.4,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 699,
+   "baseline_top1_sim": 0.867,
+   "baseline_ms": 23.2,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu513",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 513 (A Platform Tag for Portable Linux Built Distributions) still current, or was it superseded?",
+   "expect": 600,
+   "lineage": true,
+   "lineage_ms": 86.2,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 513,
+   "baseline_top1_sim": 0.893,
+   "baseline_ms": 31.3,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu543",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 543 (A Unified TLS API for Python) still current, or was it superseded?",
+   "expect": 748,
+   "lineage": true,
+   "lineage_ms": 73.3,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 543,
+   "baseline_top1_sim": 0.891,
+   "baseline_ms": 28.3,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu554",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 554 (Multiple Interpreters in the Stdlib) still current, or was it superseded?",
+   "expect": 734,
+   "lineage": true,
+   "lineage_ms": 70.0,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 554,
+   "baseline_top1_sim": 0.841,
+   "baseline_ms": 18.8,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu563",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 563 (Postponed Evaluation of Annotations) still current, or was it superseded?",
+   "expect": 649,
+   "lineage": true,
+   "lineage_ms": 65.9,
+   "lineage_paths": 2,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 649,
+   "baseline_top1_sim": 0.825,
+   "baseline_ms": 18.8,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu571",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 571 (The manylinux2010 Platform Tag) still current, or was it superseded?",
+   "expect": 600,
+   "lineage": true,
+   "lineage_ms": 71.2,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 571,
+   "baseline_top1_sim": 0.902,
+   "baseline_ms": 25.0,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu599",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 599 (The manylinux2014 Platform Tag) still current, or was it superseded?",
+   "expect": 600,
+   "lineage": true,
+   "lineage_ms": 76.9,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 599,
+   "baseline_top1_sim": 0.899,
+   "baseline_ms": 32.9,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu601",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 601 (Forbid return/break/continue breaking out of finally) still current, or was it superseded?",
+   "expect": 765,
+   "lineage": true,
+   "lineage_ms": 67.1,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 765,
+   "baseline_top1_sim": 0.894,
+   "baseline_ms": 21.7,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu622",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 622 (Structural Pattern Matching) still current, or was it superseded?",
+   "expect": 634,
+   "lineage": true,
+   "lineage_ms": 82.7,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 642,
+   "baseline_top1_sim": 0.877,
+   "baseline_ms": 22.4,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu631",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 631 (Dependency specification in pyproject.toml based on PEP 508) still current, or was it superseded?",
+   "expect": 621,
+   "lineage": true,
+   "lineage_ms": 88.6,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 631,
+   "baseline_top1_sim": 0.916,
+   "baseline_ms": 28.6,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu665",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 665 (A file format to list Python dependencies for reproducibility of an application) still current, or was it superseded?",
+   "expect": 751,
+   "lineage": true,
+   "lineage_ms": 48.0,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 665,
+   "baseline_top1_sim": 0.886,
+   "baseline_ms": 46.1,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu722",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 722 (Dependency specification for single-file scripts) still current, or was it superseded?",
+   "expect": 723,
+   "lineage": true,
+   "lineage_ms": 86.4,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": false,
+   "baseline_top1": 722,
+   "baseline_top1_sim": 0.883,
+   "baseline_ms": 20.4,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu3153",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 3153 (Asynchronous IO support) still current, or was it superseded?",
+   "expect": 3156,
+   "lineage": true,
+   "lineage_ms": 51.9,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": true,
+   "baseline_top1": 3153,
+   "baseline_top1_sim": 0.886,
+   "baseline_ms": 15.8,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu8",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 8 (Style Guide for Python Code) still current, or was it superseded?",
+   "expect": null,
+   "lineage": true,
+   "lineage_ms": 53.2,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": null,
+   "baseline_top1": 8,
+   "baseline_top1_sim": 0.868,
+   "baseline_ms": 15.7,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu484",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 484 (Type Hints) still current, or was it superseded?",
+   "expect": null,
+   "lineage": true,
+   "lineage_ms": 54.7,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": null,
+   "baseline_top1": 483,
+   "baseline_top1_sim": 0.84,
+   "baseline_ms": 16.5,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu572",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 572 (Assignment Expressions) still current, or was it superseded?",
+   "expect": null,
+   "lineage": true,
+   "lineage_ms": 70.7,
+   "lineage_paths": 0,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": null,
+   "baseline_top1": 577,
+   "baseline_top1_sim": 0.824,
+   "baseline_ms": 37.5,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu634",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 634 (Structural Pattern Matching: Specification) still current, or was it superseded?",
+   "expect": null,
+   "lineage": true,
+   "lineage_ms": 80.7,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": null,
+   "baseline_top1": 634,
+   "baseline_top1_sim": 0.909,
+   "baseline_ms": 25.3,
+   "router_tool": "is_current",
+   "router_ok": true
+  },
+  {
+   "id": "cu3333",
+   "kind": "currency",
+   "set": null,
+   "q": "Is PEP 3333 (Python Web Server Gateway Interface v1.0.1) still current, or was it superseded?",
+   "expect": null,
+   "lineage": true,
+   "lineage_ms": 40.0,
+   "lineage_paths": 1,
+   "lineage_outcome": "answered",
+   "lineage_top": null,
+   "baseline_evidence": null,
+   "baseline_top1": 3333,
+   "baseline_top1_sim": 0.883,
+   "baseline_ms": 24.2,
+   "router_tool": "is_current",
+   "router_ok": true
+  }
+ ]
+}

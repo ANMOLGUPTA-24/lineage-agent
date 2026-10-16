@@ -235,6 +235,12 @@ def why(pep: str, depth: int = 2, tenant: str = "python") -> dict:
                                       for _, qn, qs, t, txt, u in rejected]
     paths += [path_view(r[0]) for r in rejected]
 
+    # The other direction: later PEPs that set this PEP's approach aside (the idea came back).
+    later = run.q("""MATCH path = (p:PEP {number: $n})<-[x:REJECTS_APPROACH_OF]-(l:PEP)
+                     RETURN path, l.number, l.created, x.via ORDER BY l.created""", {"n": n})
+    rows[0]["set_aside_later_by"] = [{"pep": ln, "created": lc, "url": via[0]} for _, ln, lc, via in later]
+    paths += [path_view(r[0]) for r in later]
+
     paths += [path_view(r[0]) for r in run.q("""
         MATCH path = (p:PEP {number: $n})-[:RESOLVED_BY]->(:Decision)-[:MADE_BY]->()
         RETURN path""", {"n": n})]
@@ -614,7 +620,11 @@ def already_decided(idea: str, tenant: str = "python") -> dict:
     cands = [c for c in idea_candidates(run, idea) if c["score"] >= RELATED_IDEA]
     # A rejected idea inside a PEP that itself matched is a side discussion of that PEP, not a second answer.
     peps = {c["key"] for c in cands if c["kind"] == "pep"}
-    hits = [c for c in cands if c["kind"] == "pep" or int(c["key"].split("pep-")[1][:4]) not in peps][:3]
+    cands = [c for c in cands if c["kind"] == "pep" or int(c["key"].split("pep-")[1][:4]) not in peps]
+    # Among "same idea" matches, a PEP whose subject is the idea outranks an idea rejected inside
+    # some other PEP ("type annotations for variables": PEP 526 over a sub-idea of PEP 622).
+    band = lambda c: 0 if c["score"] >= SAME_IDEA else 1
+    hits = sorted(cands, key=lambda c: (band(c), c["kind"] != "pep", -c["score"]))[:3]
     if not hits:
         return envelope("already_decided", args, run, "not_in_graph",
                         note=f"No PEP or rejected idea in the graph matches {idea!r} closely. That is not proof the "
