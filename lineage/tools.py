@@ -45,6 +45,8 @@ def node_view(n: Node) -> dict:
                 "url": p.get("verdict_url") or p.get("url"), "at": p.get("at")}
     if label == "Finding":
         return {"id": f"Finding {p.get('at')}", "label": "Finding", "title": p.get("text")}
+    if label == "Thread":
+        return {"id": f"Thread: {p.get('title', '')[:60]}", "label": "Thread", "title": p.get("title"), "url": p.get("url")}
     if label == "Change":
         return {"id": f"Change {p.get('at', '')[:10]}: {p.get('kind')}", "label": "Change", "title": p.get("detail")}
     if label == "Alternative":
@@ -589,11 +591,20 @@ def idea_candidates(run: Run, idea: str, k: int = 15) -> list[dict]:
                (f"CALL db.idx.vector.queryNodes('Alternative', 'embedding', $k, vecf32($v)) YIELD node {alt}", True),
                (f"CALL db.idx.fulltext.queryNodes('PEP', $q) YIELD node {pep} LIMIT $k", False),
                (f"CALL db.idx.fulltext.queryNodes('Alternative', $q) YIELD node {alt} LIMIT $k", False)]
+    thread = "RETURN 'thread', node.id, node.title, node.title + '. ' + coalesce(node.text, '')"
+    optional = [(f"CALL db.idx.vector.queryNodes('Thread', 'embedding', $k, vecf32($v)) YIELD node {thread}", True),
+                (f"CALL db.idx.fulltext.queryNodes('Thread', $q) YIELD node {thread} LIMIT $k", False)]
     found: dict = {}
-    for cypher, vector in queries:
+    for i, (cypher, vector) in enumerate(queries + optional):
         if not vector and not words:
             continue
-        for kind, key, title, text in run.q(cypher, {"k": k, "v": vec, "q": "|".join(words)}):
+        try:
+            got = run.q(cypher, {"k": k, "v": vec, "q": "|".join(words)})
+        except ResponseError:
+            if i < len(queries):
+                raise
+            got = []  # a graph built without discuss.python.org threads has no Thread index
+        for kind, key, title, text in got:
             found[(kind, key)] = {"kind": kind, "key": key, "title": title, "text": text[:SNIPPET]}
     cands = list(found.values())
     for c, s in zip(cands, _reranker().rerank(idea, [c["text"] for c in cands])):
@@ -634,6 +645,30 @@ def pep_context(run: Run, n: int) -> tuple[dict, list]:
     return row, [path_view(r) for r in rulings] + succ + [path_view(b) for b in backs]
 
 
+KIND_ORDER = {"pep": 0, "alt": 1, "thread": 2}
+
+
+def thread_context(run: Run, tid: int) -> tuple[dict, list]:
+    """A discuss.python.org thread: who started it, who took part (committers flagged), and the
+    PEPs it discusses or mentions with their status."""
+    (t, starter, people, peps, paths), = run.q("""
+        MATCH (t:Thread {id: $id})
+        OPTIONAL MATCH (s:Person)-[:STARTED]->(t)
+        WITH t, s.name AS starter
+        OPTIONAL MATCH (a:Person)-[e:POSTED_IN]->(t)
+        WITH t, starter, a, e ORDER BY e.posts DESC
+        WITH t, starter, collect({name: a.name, posts: e.posts, group: a.forum_group})[0..6] AS people
+        OPTIONAL MATCH path = (t)-[r:DISCUSSES|MENTIONS]->(p:PEP)
+        RETURN t, starter, people,
+               collect({pep: p.number, title: p.title, status: p.status, how: type(r)}), collect(path)""", {"id": tid})
+    tp = t.properties
+    row = {"pep": None, "thread_id": tid, "title": tp["title"], "url": tp["url"], "created": tp.get("created"),
+           "posts": tp.get("posts"), "likes": tp.get("likes"), "quote": first_sentences(tp.get("text") or ""),
+           "started_by": starter, "participants": [x for x in people if x["name"]],
+           "peps": [x for x in peps if x["pep"] is not None]}
+    return row, [path_view(p) for p in paths]
+
+
 def already_decided(idea: str, tenant: str = "python") -> dict:
     """Has Python already decided this idea? Finds the PEP or the rejected idea inside a PEP that
     matches the proposal, then follows the graph: the ruling and who made it, whether it was
@@ -646,21 +681,25 @@ def already_decided(idea: str, tenant: str = "python") -> dict:
     cands = [c for c in idea_candidates(run, idea) if c["score"] >= RELATED_IDEA]
     # A rejected idea inside a PEP that itself matched is a side discussion of that PEP, not a second answer.
     peps = {c["key"] for c in cands if c["kind"] == "pep"}
-    cands = [c for c in cands if c["kind"] == "pep" or int(c["key"].split("pep-")[1][:4]) not in peps]
+    cands = [c for c in cands if c["kind"] != "alt" or int(c["key"].split("pep-")[1][:4]) not in peps]
     # Among "same idea" matches, a PEP whose subject is the idea outranks an idea rejected inside
-    # some other PEP ("type annotations for variables": PEP 526 over a sub-idea of PEP 622).
+    # some other PEP ("type annotations for variables": PEP 526 over a sub-idea of PEP 622), and
+    # both outrank a forum thread: a thread is where an idea was discussed, not decided.
     band = lambda c: 0 if c["score"] >= SAME_IDEA else 1
-    hits = sorted(cands, key=lambda c: (band(c), c["kind"] != "pep", -c["score"]))[:3]
+    hits = sorted(cands, key=lambda c: (band(c), KIND_ORDER[c["kind"]], -c["score"]))[:3]
     if not hits:
         return envelope("already_decided", args, run, "not_in_graph",
-                        note=f"No PEP or rejected idea in the graph matches {idea!r} closely. That is not proof the "
-                             "idea is new: ideas that never reached a PEP live on discuss.python.org.")
+                        note=f"No PEP, rejected idea or discuss.python.org thread in the graph matches {idea!r} "
+                             "closely. That is not proof the idea is new.")
     rows, paths = [], []
     for h in hits:
         match = "same" if h["score"] >= SAME_IDEA else "related"
         if h["kind"] == "pep":
             row, ps = pep_context(run, h["key"])
             rows.append({"kind": "pep", "match": match, "score": h["score"], **row})
+        elif h["kind"] == "thread":
+            row, ps = thread_context(run, h["key"])
+            rows.append({"kind": "thread", "match": match, "score": h["score"], **row})
         else:
             (alt, pep_n, text, earlier), = run.q("""
                 MATCH alt = (a:Alternative {url: $url})-[:REJECTED_IN]->(p:PEP)
@@ -688,6 +727,14 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
     lines = ["This has come up before."]
     for r in same:
         lines.append("")
+        if r["kind"] == "thread":
+            core = [x["name"] for x in r["participants"] if x["group"] == "committers"][:3]
+            lines.append(f'- It was discussed on discuss.python.org: "{r["title"]}" ({(r["created"] or "")[:4]}, '
+                         f'{r["posts"]} posts) {r["url"]}' + (f". Core developers in that thread: {', '.join(core)}." if core else ""))
+            for x in r["peps"][:2]:
+                lines.append(f"  The thread {'is the discussion of' if x['how'] == 'DISCUSSES' else 'refers to'} "
+                             f"PEP {x['pep']} ({x['title']}, {x['status']}).")
+            continue
         if r["kind"] == "rejected_idea":
             lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) considered "{r["idea"]}" and set it aside: '
                          f'"{r["idea_quote"]}" {r["idea_url"]}')
@@ -710,7 +757,7 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
             lines.append(f'  It came up again in PEP {b["pep"]} ({(b["created"] or "")[:4]}), which set it aside: {b["url"]}')
         if r["superseded_by"]:
             lines.append(f"  PEP {r['pep']} was later superseded by {r['superseded_by']}.")
-    people = sorted({a for r in same for a in r["authors"]})[:4]
+    people = sorted({a for r in same for a in r.get("authors", [])})[:4]
     lines += ["", "A new proposal would need to answer the reasons above."
               + (f" People who know this history: {', '.join(people)}." if people else ""),
               "", "(Drafted by Lineage from the PEP graph. Check the links before posting.)"]

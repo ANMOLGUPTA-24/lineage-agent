@@ -132,10 +132,12 @@ def lineage_call(item: dict) -> dict:
 def lineage_correct(item: dict, res: dict) -> bool:
     k, rows = item["kind"], res["rows"]
     if k == "already_decided":
-        same = [r for r in rows if r["match"] == "same"]
+        # Thread rows say "discussed on the forum", never "a PEP proposed this", so PEP claims are
+        # judged on PEP / rejected-idea rows only.
+        claims = [r for r in rows if r["kind"] != "thread"]
         if not item["expect"]:
-            return not same
-        return bool(rows) and rows[0]["match"] == "same" and rows[0]["pep"] in item["expect"]
+            return not [r for r in claims if r["match"] == "same"]
+        return bool(claims) and claims[0]["match"] == "same" and claims[0]["pep"] in item["expect"]
     if k == "currency":
         r = rows[0] if rows else {}
         if item["expect"] is None:
@@ -179,7 +181,8 @@ def main() -> None:
             "id": it["id"], "kind": it["kind"], "set": it.get("set"), "q": it["q"], "expect": it["expect"],
             "lineage": lineage_correct(it, res), "lineage_ms": res["ms"], "lineage_paths": len(res["paths"]),
             "lineage_outcome": res["outcome"],
-            "lineage_top": [{k: r.get(k) for k in ("pep", "match", "score")} for r in res["rows"][:2]]
+            "lineage_threads": [r["title"] for r in res["rows"] if r.get("kind") == "thread"] if it["kind"] == "already_decided" else None,
+            "lineage_top": [{k: r.get(k) for k in ("pep", "match", "score", "kind")} for r in res["rows"] if r["kind"] != "thread"][:2]
                            if it["kind"] == "already_decided" else None,
             "baseline_evidence": baseline_evidence(it, hits) if it.get("expect") not in (None, []) else None,
             "baseline_top1": hits[0]["pep"], "baseline_top1_sim": round(hits[0]["sim"], 3), "baseline_ms": round(b_ms, 1),

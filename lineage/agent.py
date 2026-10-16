@@ -208,6 +208,13 @@ def template(step: dict) -> str:
                 names = " and ".join(y["by"] for y in d["decided_by"])
                 by = f" ({'attributed to' if any(y['inferred'] for y in d['decided_by']) else 'by'} {names})"
             head = "Closest related history (not the same idea): " if x["match"] == "related" else ""
+            if x["kind"] == "thread":
+                s = (f'{head}Discussed on discuss.python.org: "{x["title"]}" ({(x["created"] or "")[:4]}, {x["posts"]} posts, '
+                     f'started by {x["started_by"]}) {x["url"]}')
+                if x["peps"]:
+                    s += "; it refers to " + ", ".join(f"PEP {p['pep']} ({p['status']})" for p in x["peps"][:3])
+                out.append(s + ".")
+                continue
             if x["kind"] == "rejected_idea":
                 s = (f'{head}PEP {x["pep"]} ({x["title"]}) considered "{x["idea"]}" and set it aside: '
                      f'"{x["idea_quote"]}" ({x["idea_url"]})')
