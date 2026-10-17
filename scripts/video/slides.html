@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Lineage slides</title>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+/* Video slides in the app's dark theme. The recorder adds .on to [data-step] elements in time with the voice. */
+:root { --paper: #18222d; --card: #1f2b38; --ink: #e8edf2; --muted: #9aa8b6; --rule: #33424f; --blue: #7fb0dc;
+  --mark: #ffd43b; --rejected: #f08a8f; --deferred: #e2b35c; --final: #6fcf97; --person: #e8a15e; --thread: #6cc7c8;
+  --serif: "Source Serif 4", Georgia, serif; --sans: "Public Sans", system-ui, sans-serif; --mono: "JetBrains Mono", monospace; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); font: 22px/1.45 var(--sans); }
+.slide { display: none; height: 100vh; padding: 64px 88px; flex-direction: column; }
+.slide.show { display: flex; }
+h1 { font: 600 52px/1.1 var(--serif); margin: 0 0 8px; letter-spacing: -.015em; }
+.sub { color: var(--muted); margin: 0 0 36px; font-size: 22px; }
+[data-step] { opacity: .12; transition: opacity .5s ease, transform .5s ease; transform: translateY(6px); }
+[data-step].on { opacity: 1; transform: none; }
+/* how it works */
+.flow { display: grid; grid-template-columns: 1fr 1.25fr 1fr; gap: 28px; flex: 1; min-height: 0; }
+.col { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; padding: 22px 26px; }
+.col h2 { font: 600 17px var(--sans); color: var(--muted); margin: 0 0 14px; letter-spacing: .01em; }
+.src li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--rule); }
+.src li:last-child { border-bottom: 0; }
+.src b { font-variant-numeric: tabular-nums; }
+ul { list-style: none; margin: 0; padding: 0; }
+.edge { font: 17px/1.4 var(--mono); padding: 8px 0; color: var(--ink); }
+.edge i { font-style: normal; color: var(--blue); }
+.edge .n { color: var(--person); } .edge .t { color: var(--thread); } .edge .r { color: var(--rejected); }
+.steps li { padding: 9px 0 9px 16px; border-left: 3px solid var(--blue); margin-bottom: 12px; }
+.steps li b { display: block; font-size: 19px; }
+.steps li span { color: var(--muted); font-size: 17px; }
+/* results */
+table { border-collapse: collapse; width: 100%; font-size: 23px; }
+th { text-align: left; color: var(--muted); font: 600 17px var(--sans); padding: 0 0 12px; }
+td { padding: 13px 0; border-top: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+td.l { color: var(--final); font-weight: 700; } td.b { color: var(--muted); }
+.guard { background: var(--card); border: 1px solid var(--rule); border-left: 4px solid var(--mark); border-radius: 12px;
+         padding: 18px 24px; margin: 0 0 30px; font-size: 22px; }
+.honest { margin-top: 26px; color: var(--muted); font-size: 20px; }
+.honest b { color: var(--deferred); }
+/* end */
+.end { justify-content: center; }
+.end h1 { font-size: 104px; margin-bottom: 14px; }
+.end .q { font: 400 44px/1.2 var(--serif); margin: 0 0 56px; }
+.links { display: grid; grid-template-columns: max-content 1fr; gap: 14px 28px; font-size: 26px; }
+.links dt { color: var(--muted); } .links dd { margin: 0; }
+.links code { font: 22px var(--mono); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 4px 10px; }
+.foot { position: absolute; left: 88px; bottom: 56px; color: var(--muted); font-size: 19px; margin: 0; }
+</style></head>
+<body>
+<section class="slide" id="how">
+  <h1>How it works</h1>
+  <p class="sub">One FalkorDB graph; every answer is a set of read-only, parameterized Cypher queries.</p>
+  <div class="flow">
+    <div class="col" data-step="0"><h2>In the graph</h2><ul class="src">
+      <li>PEPs <b>745</b></li><li>Rejected ideas <b>1,085</b></li><li>Forum threads <b>1,748</b></li>
+      <li>Rulings <b>257</b></li><li>CPython PRs <b>505</b></li><li>People <b>2,175</b></li></ul></div>
+    <div class="col"><h2>Edges that carry the evidence</h2>
+      <div class="edge" data-step="1">(<span class="r">:Alternative</span>)-[<i>:REJECTED_IN</i>]-&gt;(:PEP)</div>
+      <div class="edge" data-step="1">(:PEP)-[<i>:REJECTS_APPROACH_OF</i> {via}]-&gt;(:PEP)</div>
+      <div class="edge" data-step="1">(<span class="r">:Alternative</span>)-[<i>:CITES</i> {quote}]-&gt;(:PEP)</div>
+      <div class="edge" data-step="0">(:PEP)-[<i>:RESOLVED_BY</i>]-&gt;(:Decision)-[<i>:MADE_BY</i>]-&gt;(<span class="n">:Person</span>)</div>
+      <div class="edge" data-step="0">(<span class="t">:Thread</span>)-[<i>:DISCUSSES</i>]-&gt;(:PEP)</div>
+      <div class="edge" data-step="3">(<span class="n">:Person</span>)-[<i>:EXPERT_IN</i> {rank}]-&gt;(:Topic)</div>
+    </div>
+    <div class="col"><h2>Per question</h2><ul class="steps">
+      <li data-step="2"><b>Vector + full-text indexes</b><span>about 90 candidates</span></li>
+      <li data-step="2"><b>Local cross-encoder</b><span>same idea, or only related?</span></li>
+      <li data-step="2"><b>Cypher traversal</b><span>ruling, decider, came back, superseded</span></li>
+      <li data-step="3"><b>PageRank, WCC, SPpaths</b><span>who to ask, bus factor, connections</span></li>
+      <li data-step="4"><b>Web UI and MCP server</b><span>the same tools for people and agents</span></li></ul></div>
+  </div>
+</section>
+
+<section class="slide" id="results">
+  <h1>Can you trust it?</h1>
+  <p class="sub">98 questions with known answers. Baseline: vector search over the same data and embedding model.</p>
+  <div class="guard" data-step="0">No language model required. With one, a guard rejects any PEP number, name, verdict or quote the graph didn't return.</div>
+  <table data-step="1">
+    <tr><th>Question</th><th>Lineage</th><th>Vector baseline</th></tr>
+    <tr><td>Who decided it?</td><td class="l">5 / 6</td><td class="b">1 / 6</td></tr>
+    <tr><td>Did the idea come back?</td><td class="l">3 / 3</td><td class="b">0 / 3</td></tr>
+    <tr><td>How are two PEPs related?</td><td class="l">4 / 4</td><td class="b">1 / 4</td></tr>
+    <tr><td>Held-out ideas: right PEP as the top answer</td><td class="l">13 / 17</td><td class="b">9 / 17</td></tr>
+    <tr><td>Is it still current?</td><td class="l">31 / 31</td><td class="b">29 / 31</td></tr>
+  </table>
+  <p class="honest" data-step="2"><b>Wrong on 3 of 32</b> confident "same idea" matches. Every miss is listed in eval/RESULTS.md.</p>
+</section>
+
+<section class="slide end" id="end">
+  <h1 data-step="0">Lineage</h1>
+  <p class="q" data-step="0">Has Python already decided this?</p>
+  <dl class="links" data-step="1">
+    <dt>Live demo</dt><dd>anmolgupta-24.github.io/lineage-agent</dd>
+    <dt>Code</dt><dd>github.com/ANMOLGUPTA-24/lineage-agent</dd>
+    <dt>Run it</dt><dd><code>docker compose -f docker-compose.quick.yml up</code></dd>
+  </dl>
+  <p class="foot">Graph Hacks: Context for AI Agents · Track 03, Company Brain · built on FalkorDB</p>
+</section>
+<script>
+const s = new URLSearchParams(location.search).get("s") || "how";
+document.getElementById(s).classList.add("show");
+window.reveal = (k) => document.querySelectorAll(`#${s} [data-step="${k}"]`).forEach((e) => e.classList.add("on"));
+</script>
+</body></html>

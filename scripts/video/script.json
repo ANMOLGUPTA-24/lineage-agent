@@ -1,0 +1,56 @@
+[
+ {
+  "id": "hook",
+  "shot": "home",
+  "say": "Between twenty nineteen and twenty twenty-six, new lambda syntax was proposed on Python's Ideas forum eight times. The history was already there, spread across seven hundred and forty-five PEPs, over a thousand rejected ideas, and over seventeen hundred forum threads. Lineage finds it.",
+  "show": "Between 2019 and 2026, new lambda syntax was proposed on Python's Ideas forum eight times. The history was already there, spread across 745 PEPs, over a thousand rejected ideas, and over 1,700 forum threads. Lineage finds it."
+ },
+ {
+  "id": "what",
+  "shot": "home-hero",
+  "say": "Lineage is a company brain for the Python project, built on Falkor D B. Paste an idea, and it answers from a graph: who proposed it, what was ruled and by whom, every time it came back, and who to ask.",
+  "show": "Lineage is a company brain for the Python project, built on FalkorDB. Paste an idea, and it answers from a graph: who proposed it, what was ruled and by whom, every time it came back, and who to ask."
+ },
+ {
+  "id": "hero",
+  "shot": "hero-timeline",
+  "say": "Null coalescing. PEP five oh five proposed it in twenty fifteen, and it was deferred. It came back as PEP eight twenty-four in twenty twenty-six, and in two forum threads, with the people who took part. Documents, chats and people, in one graph.",
+  "show": "Null coalescing. PEP 505 proposed it in 2015, and it was deferred. It came back as PEP 824 in 2026, and in two forum threads, with the people who took part. Documents, chats and people, in one graph."
+ },
+ {
+  "id": "switch",
+  "shot": "ask-switch",
+  "say": "Should Python add a switch statement? Lineage finds PEP thirty-one oh three, rejected in two thousand six, and quotes Guido's rejection notice, linked to the exact section. Then it follows the graph. PEP six twenty-two took the idea up again, and was replaced by PEP six thirty-four, the match statement Python has today.",
+  "show": "Should Python add a switch statement? Lineage finds PEP 3103, rejected in 2006, and quotes Guido's rejection notice, linked to the exact section. Then it follows the graph. PEP 622 took the idea up again, and was replaced by PEP 634, the match statement Python has today."
+ },
+ {
+  "id": "chain",
+  "shot": "ask-kwindex",
+  "say": "Some ideas keep coming back. Keyword arguments in indexing were rejected in twenty fourteen, proposed again in twenty twenty, and rejected by the Steering Council. Later typing PEPs cite that rejection. Lineage walks those links, and drafts a forum reply built only from what it found.",
+  "show": "Some ideas keep coming back. Keyword arguments in indexing were rejected in 2014, proposed again in 2020, and rejected by the Steering Council. Later typing PEPs cite that rejection. Lineage walks those links, and drafts a forum reply built only from what it found."
+ },
+ {
+  "id": "explain",
+  "shot": "explain",
+  "say": "Every answer shows its work: the subgraph the queries walked, each index search, what the cross-encoder kept, and the exact Cypher that ran, with its parameters.",
+  "show": "Every answer shows its work: the subgraph the queries walked, each index search, what the cross-encoder kept, and the exact Cypher that ran, with its parameters."
+ },
+ {
+  "id": "how",
+  "shot": "slide-how",
+  "say": "Falkor D B holds PEPs, rejected ideas, rulings, pull requests, forum threads and people. Each rejected idea is its own node, linked to the earlier PEP it set aside. Vector and full-text indexes find candidates, a local cross-encoder checks they are the same idea, and Cypher traversals do the rest. PageRank finds who to ask. The same tools run as an M C P server, so any agent can use them.",
+  "show": "FalkorDB holds PEPs, rejected ideas, rulings, pull requests, forum threads and people. Each rejected idea is its own node, linked to the earlier PEP it set aside. Vector and full-text indexes find candidates, a local cross-encoder checks they are the same idea, and Cypher traversals do the rest. PageRank finds who to ask. The same tools run as an MCP server, so any agent can use them."
+ },
+ {
+  "id": "trust",
+  "shot": "slide-results",
+  "say": "No language model is required. When one writes the answer, a guard rejects any PEP number, name, verdict or quote the graph didn't return. On ninety-eight questions, against vector search over the same data: who decided, five of six, against one of six. Did the idea come back: three of three, against none. Lineage is wrong on three of thirty-two confident matches, and every miss is published.",
+  "show": "No language model is required. When one writes the answer, a guard rejects any PEP number, name, verdict or quote the graph didn't return. On 98 questions, against vector search over the same data: who decided, 5 of 6, against 1 of 6. Did the idea come back: 3 of 3, against none. Lineage is wrong on 3 of 32 confident matches, and every miss is published."
+ },
+ {
+  "id": "close",
+  "shot": "slide-end",
+  "say": "Lineage. Has Python already decided this? Try the live demo, or run it with Docker in about a minute. The links are below.",
+  "show": "Lineage. Has Python already decided this? Try the live demo, or run it with Docker in about a minute. The links are below."
+ }
+]
