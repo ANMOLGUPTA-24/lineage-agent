@@ -18,7 +18,15 @@ from lineage.db import graph
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs" / "demo"
+HERO = "Has anyone proposed null coalescing in Python?"   # must match HERO_Q in lineage/web/index.html
 SEEDS = [
+    HERO,
+    "Should Python add a switch statement?",
+    "Can I customise how a class is created without writing a metaclass?",
+    "Draft a reply to someone proposing keyword arguments in indexing",
+    "Why does Python have vectorcall?",
+    "How are PEP 472 and PEP 696 related?",
+    "Is PEP 563 still current?",
     "Has anyone proposed a do-while loop?",
     "Was there a PEP for None-aware operators (?. and ??)",
     "Draft a reply to someone proposing a switch statement",
@@ -64,8 +72,9 @@ def follow_ups(res: dict) -> list[str]:
 
 
 def main() -> None:
+    agent.ask("warm up", session="snapwarmup")   # load the models first, so recorded timings are real ones
     answers, queue, seen = {}, [(q, 0) for q in SEEDS], set()
-    sessions = []
+    sessions = ["snapwarmup"]
     while queue:
         q, depth = queue.pop(0)
         if norm(q) in seen:
@@ -82,6 +91,9 @@ def main() -> None:
                   {"ids": sessions})
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "answers.json").write_text(json.dumps(answers, default=str))
+    # The home page's opening answer, for the live server and the snapshot alike.
+    for where in (ROOT / "lineage" / "web", OUT):
+        (where / "hero.json").write_text(json.dumps(answers[norm(HERO)], default=str))
     page = (ROOT / "lineage" / "web" / "index.html").read_text()
     flag = f'<script>window.LINEAGE_STATIC = {{date: "{date.today().isoformat()}", count: {len(answers)}}};</script>\n'
     (OUT / "index.html").write_text(page.replace("<script>\nconst $ =", flag + "<script>\nconst $ =", 1))

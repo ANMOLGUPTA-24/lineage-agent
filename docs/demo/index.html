@@ -13,7 +13,7 @@
    Python-yellow highlight; status colours carry meaning (rejected / deferred / final). */
 :root {
   --paper: #eef1f4; --card: #ffffff; --ink: #14212e; --muted: #5a6877; --rule: #d3d9e0; --soft: #e3e8ee;
-  --blue: #306998; --blue-ink: #24557c; --mark: #ffd43b; --mark-soft: #fff1b8;
+  --blue: #306998; --blue-ink: #24557c; --on-blue: #fff; --mark: #ffd43b; --mark-soft: #fff1b8;
   --rejected: #a4262c; --deferred: #8a5a00; --final: #1d6b40; --draft: #5a6877; --superseded: #6b4fa0;
   --person: #b5651d; --decision: #1d6b40; --pr: #6b4fa0; --thread: #2c7a7b; --idea: #a4262c; --memory: #306998;
   --serif: "Source Serif 4", Georgia, serif; --sans: "Public Sans", system-ui, sans-serif;
@@ -22,14 +22,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --paper: #18222d; --card: #1f2b38; --ink: #e8edf2; --muted: #9aa8b6; --rule: #33424f; --soft: #2a3846;
-    --blue: #7fb0dc; --blue-ink: #a9cbea; --mark: #ffd43b; --mark-soft: rgba(255, 212, 59, .13);
+    --blue: #7fb0dc; --blue-ink: #a9cbea; --on-blue: #0f1b26; --mark: #ffd43b; --mark-soft: rgba(255, 212, 59, .13);
     --rejected: #f08a8f; --deferred: #e2b35c; --final: #6fcf97; --draft: #9aa8b6; --superseded: #b9a2ee;
     --person: #e8a15e; --decision: #6fcf97; --pr: #b9a2ee; --thread: #6cc7c8; --idea: #f08a8f; --memory: #7fb0dc;
   }
 }
 :root[data-theme="dark"] {
   --paper: #18222d; --card: #1f2b38; --ink: #e8edf2; --muted: #9aa8b6; --rule: #33424f; --soft: #2a3846;
-  --blue: #7fb0dc; --blue-ink: #a9cbea; --mark: #ffd43b; --mark-soft: rgba(255, 212, 59, .13);
+  --blue: #7fb0dc; --blue-ink: #a9cbea; --on-blue: #0f1b26; --mark: #ffd43b; --mark-soft: rgba(255, 212, 59, .13);
   --rejected: #f08a8f; --deferred: #e2b35c; --final: #6fcf97; --draft: #9aa8b6; --superseded: #b9a2ee;
   --person: #e8a15e; --decision: #6fcf97; --pr: #b9a2ee; --thread: #6cc7c8; --idea: #f08a8f; --memory: #7fb0dc;
 }
@@ -69,11 +69,18 @@ button { font: inherit; color: inherit; }
 .verdict .stamp { font-size: 13px; top: -4px; margin-right: 4px; }
 .verdict.none { color: var(--muted); font-size: 21px; }
 .funnel { margin: 4px 0 2px; font-size: 15px; }
-.specimen { margin: 0 0 26px; background: var(--card); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; cursor: pointer; }
-.specimen:hover { border-color: var(--blue); }
-.specimen figcaption { padding: 10px 16px 14px; color: var(--muted); font-size: 15px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
-.specimen code { font: 14px var(--mono); color: var(--ink); }
-.specimen .run { margin-left: auto; color: var(--blue-ink); font-weight: 600; white-space: nowrap; }
+.feature { margin: 0; background: var(--card); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+.feature-h { padding: 16px 18px 0; }
+.feature-q { margin: 0 0 8px; font: 600 19px/1.3 var(--serif); }
+.feature .verdict { font-size: 18px; margin: 0 0 4px; }
+.feature .canvas { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); margin-top: 12px; }
+.feature .history { padding: 14px 18px 4px; }
+.feature figcaption { padding: 4px 18px 16px; color: var(--muted); font-size: 14.5px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.feature .run { margin-left: auto; }
+.history .timeline li { padding-bottom: 9px; }
+.a-main .history { margin: 0 0 18px; padding: 14px 16px 6px; background: var(--card); border: 1px solid var(--rule); border-radius: 10px; }
+.history .what { font-weight: 600; }
+.history .meta { color: var(--muted); font-size: 14.5px; }
 .scale { margin-top: 26px; font: 17px/1.5 var(--serif); color: var(--ink); font-variant-numeric: tabular-nums; }
 .tries .why { display: inline-flex; gap: 8px; align-items: baseline; }
 .tries .why .stamp { top: 0; }
@@ -90,7 +97,7 @@ body.home .bar .data { display: none; }
 .people .bar-w { height: 6px !important; border-radius: 3px; margin: 2px 0 10px; }
 .snapnote { margin-left: auto; font-size: 13px; color: var(--muted); }
 .snapnote a { color: var(--blue-ink); }
-.btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); font-weight: 600; }
+.btn.primary { background: var(--blue); color: var(--on-blue); border-color: var(--blue); font-weight: 600; }
 .working { color: var(--muted); font-size: 17px; }
 .record { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; margin: 0 0 14px; }
 .record.related { background: transparent; border-style: dashed; }
@@ -175,7 +182,7 @@ body.home main { padding-bottom: 48px; }
            border: 1px solid var(--rule); border-radius: 12px; padding: 13px 15px; }
 #f input::placeholder { color: var(--muted); }
 #f input:focus { outline: 3px solid color-mix(in srgb, var(--blue) 35%, transparent); border-color: var(--blue); }
-#f button { border: 0; border-radius: 12px; padding: 0 20px; background: var(--blue); color: #fff; font-weight: 700; cursor: pointer; }
+#f button { border: 0; border-radius: 12px; padding: 0 20px; background: var(--blue); color: var(--on-blue); font-weight: 700; cursor: pointer; }
 #f button:disabled { opacity: .6; cursor: progress; }
 .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 24px 24px 18px;
         background: linear-gradient(transparent, var(--paper) 45%); }
@@ -226,8 +233,19 @@ body.home .dock #f { box-shadow: none; }
 #ov-canvas { position: relative; }
 #ov-cy { position: absolute; inset: 0; }
 
+/* Narrow screens: the graph comes right after the verdict, not after every card. */
+@media (max-width: 1179px) {
+  .answer { display: flex; flex-direction: column; }
+  .a-head { order: 0; } .a-side { order: 1; margin-bottom: 14px; } .a-main { order: 2; }
+  .a-side .fig-note { display: none; }
+  .hero-side { margin-top: 36px; }
+}
 @media (max-width: 700px) {
   main { padding: 0 16px 140px; }
+  .a-side .canvas { height: 240px !important; }
+  .tries button { flex-wrap: wrap; row-gap: 4px; }
+  .tries .idea { flex-basis: 100%; }
+  #f input::placeholder { font-size: 15px; }
   .bar { padding-left: 16px; padding-right: 16px; }
   .bar .data { margin-left: 0; width: 100%; }
   .dock { padding: 10px 12px 12px; }
@@ -250,7 +268,7 @@ body.home .dock #f { box-shadow: none; }
 <div class="dock" id="dock">
   <form id="f">
     <input id="q" type="text" aria-label="Paste an idea, or ask about a PEP, a person or a topic"
-           placeholder="Paste an idea, or ask about a PEP, a person or a topic" autocomplete="off" required>
+           placeholder="Paste an idea or ask a question" autocomplete="off" required>
     <button id="go">Ask</button>
   </form>
 </div>
@@ -265,7 +283,7 @@ body.home .dock #f { box-shadow: none; }
   </div>
   <div id="ov-canvas"><div id="ov-cy"></div><div class="info" id="ov-info"></div></div>
 </div>
-<script>window.LINEAGE_STATIC = {date: "2026-10-17", count: 45};</script>
+<script>window.LINEAGE_STATIC = {date: "2026-10-17", count: 67};</script>
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -276,14 +294,15 @@ const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v
 let session = Math.random().toString(16).slice(2, 10);
 try { session = localStorage.getItem("lineage-session") || session; localStorage.setItem("lineage-session", session); } catch (e) {}
 
+// Harder questions first: each needs more than one hop, and none names the PEP it lands on.
 const TRIES = [
-  ["Has anyone proposed a do-while loop?", "Rejected, PEP 315"],
-  ["Was there a PEP for None-aware operators (?. and ??)", "Deferred, PEP 505"],
-  ["Draft a reply to someone proposing a switch statement", "Rejected, PEP 3103"],
-  ["Have multi-line lambdas ever been proposed?", "Forum only"],
+  ["Should Python add a switch statement?", "Rejected, PEP 3103 → match"],
+  ["Can I customise how a class is created without writing a metaclass?", "Withdrawn, PEP 422 → 487"],
+  ["Draft a reply to someone proposing keyword arguments in indexing", "Rejected, twice"],
+  ["Why does Python have vectorcall?", "Final, PEP 590 over 580 and 576"],
 ];
-const MORE = ["Why does Python have the walrus operator?", "Who should I ask about typing?",
-              "How is PEP 484 related to PEP 695?", "Is PEP 333 still current?", "What did I ask earlier?"];
+const MORE = ["How are PEP 472 and PEP 696 related?", "Is PEP 563 still current?", "Who should I ask about typing?",
+              "Has anyone proposed a do-while loop?", "What did I ask earlier?"];
 const turns = [];
 let overlayCy = null;
 
@@ -320,11 +339,14 @@ function decided(d) {
     + (inferred ? ` <span style="color:var(--muted)">(attributed from the date)</span>` : "")
     + (link ? ` <a href="${esc(link)}" target="_blank" rel="noopener">ruling</a>` : "");
 }
+const times = (n) => ({1: "once", 2: "twice"})[n] || `${n} times`;
 function cameBack(r, items) {
   if (!items || !items.length) return "";
   const first = `<li><span class="yr">${esc(year(r.created))}</span>Proposed in ${pepLink(r.pep)}</li>`;
   return `<dt>Came back</dt><dd><ol class="timeline">${first}${items.map((b) => `<li><span class="yr">${esc(year(b.created))}</span>`
-    + `${pepLink(b.pep, b.title)} set it aside${b.quote ? quote(b.quote, b.url, "The sentence that says so") : b.url ? ` <a href="${esc(b.url)}" target="_blank" rel="noopener">where</a>` : ""}</li>`).join("")}</ol></dd>`;
+    + `${pepLink(b.pep, b.title)}${b.status ? ` (${esc(b.status)})` : ""}`
+    + (b.idea ? `, under its rejected idea “${esc(b.idea)}”${b.through ? `, which cites PEP ${esc(b.through)}` : ""}` : b.through ? `, through PEP ${esc(b.through)}` : "")
+    + `${b.quote ? quote(b.quote, b.url, "The sentence that cites it") : b.url ? ` <a href="${esc(b.url)}" target="_blank" rel="noopener">where</a>` : ""}</li>`).join("")}</ol></dd>`;
 }
 const field = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
 
@@ -383,10 +405,22 @@ function leadFor(step) {
     const same = recs.filter((r) => r.match === "same");
     if (!same.length) return {text: "Nothing in the record is the same idea. The closest history is below."};
     if (same.every((r) => r.kind === "thread"))
-      return {text: `No PEP has proposed this. It came up on the forum ${({1: "once", 2: "twice"})[same.length] || `${same.length} times`}.`};
+      return {text: `No PEP has proposed this. It came up on the forum ${times(same.length)}.`};
     const p = same.find((r) => r.kind !== "thread");
-    if (p.kind === "rejected_idea") return {text: `Yes. It was considered inside PEP ${p.pep} and set aside.`};
-    return {text: `Yes. PEP ${p.pep} proposed it in ${year(p.created)}, and it was ${p.verdict}.`};
+    let text = p.kind === "rejected_idea" ? `Yes. It was considered inside PEP ${p.pep} and set aside.`
+      : `Yes. PEP ${p.pep} proposed it in ${year(p.created)}, and it was ${p.verdict}.`;
+    // What happened next: a later PEP that came back to it, another PEP that took it up, the forum.
+    const back = p.came_back || [], last = back[back.length - 1];
+    const other = same.find((r) => r !== p && r.kind !== "thread" && r.pep !== p.pep);
+    const before = p.earlier_tries || [];
+    if (before.length) text += ` ${before.map((e) => `PEP ${e.pep}`).join(" and ")} had proposed it before, in ${year(before[0].created)}.`;
+    if (last) text += back.length === 1 ? ` It came up again in PEP ${last.pep} (${year(last.created)}, ${last.status.toLowerCase()}).`
+      : ` It came up again in ${back.length} later PEPs, most recently PEP ${last.pep} (${year(last.created)}, ${last.status.toLowerCase()}).`;
+    else if (other) text += ` PEP ${other.pep} (${year(other.created)}) took it up again${other.superseded_by ? ` and was replaced by ${other.superseded_by}` : `; it is ${other.verdict}`}.`;
+    else if (p.superseded_by) text += ` It was replaced by ${p.superseded_by}.`;
+    const threads = same.filter((r) => r.kind === "thread").length;
+    if (threads) text += ` The forum has taken it up ${times(threads)}.`;
+    return {text};
   }
   if (t === "why") {
     const r = rows[0];
@@ -406,7 +440,15 @@ function leadFor(step) {
     return {text: c ? (c.cut_off_if_they_leave ? `Without ${r.most_involved.name}, ${c.cut_off_if_they_leave} people lose their link to the rest of ${subj}.`
                                                  : `${subj[0].toUpperCase() + subj.slice(1)} doesn't depend on one person: without ${r.most_involved.name}, no one else is cut off.`)
                     : `${r.single_person_peps} PEPs in ${subj} depend on a single person.`}; }
-  if (t === "connection") { const r = rows[0]; return {text: `They connect in ${r.hops} hop${r.hops === 1 ? "" : "s"}.`}; }
+  if (t === "connection") {
+    // Say what the link is: the first path, read as a sentence.
+    const r = rows[0], p = (step.paths || [])[0] || [];
+    const said = (e) => e.edge.toLowerCase().replaceAll("_", " ");
+    if (r.strength === "weak") return {text: `No close relationship is recorded. The cheapest link runs through ${r.hops - 1} other records.`};
+    if (p.length === 3) return {text: p[1].forward ? `${p[0].id} ${said(p[1])} ${p[2].id}.` : `${p[2].id} ${said(p[1])} ${p[0].id}.`};
+    if (p.length === 5) return {text: `They're linked through ${p[2].id}.`};
+    return {text: `They connect in ${r.hops} hops.`};
+  }
   if (t === "changes") { const r = rows[0]; return {text: `The last sync recorded ${r.changes_at_last_sync} changes.`}; }
   if (t === "my_session") return {text: `You've asked ${rows.length} question${rows.length === 1 ? "" : "s"} in this session.`};
   return {text: ""};
@@ -431,7 +473,7 @@ function chain(path) {
 function body(step) {
   const t = step.tool, rows = step.rows || [];
   if (!rows.length) return "";
-  if (t === "already_decided") return decidedRecords(rows);
+  if (t === "already_decided") return historyHTML(rows) + decidedRecords(rows);
   if (t === "draft_reply") {
     const d = rows[0].draft;
     return (d ? `<article class="record"><h3>Ready-to-post reply</h3><div class="letter">${letter(d)}</div>
@@ -481,11 +523,11 @@ function body(step) {
       ${field("Key person", `${esc(r.most_involved.name)}, on ${esc(r.most_involved.peps)} of them`)}
       ${field("One-person PEPs", esc(r.single_person_peps))}
       ${field("Orphaned", (r.orphaned_if_they_leave || []).map((x) => pepLink(x.pep)).join(", "))}
-      ${c ? field("If they leave", `Largest connected group goes from ${esc(c.largest_group)} to ${esc(c.largest_without_them)} people (WCC)`) : ""}
+      ${c ? field("If they leave", `In the area's influence graph (who builds on whose work), the largest connected group goes from ${esc(c.largest_group)} to ${esc(c.largest_without_them)} people (WCC)`) : ""}
     </dl></article>`;
   }
   if (t === "connection") return `<article class="record"><h3>Shortest link</h3>${step.paths.slice(0, 3).map((p, i) =>
-      `<div style="margin:8px 0">${chain(p)}<div class="how" style="margin-top:4px">cost ${esc(rows[i] && rows[i].cost)}</div></div>`).join("")}</article>`;
+      `<div style="margin:8px 0">${chain(p)}</div>`).join("")}</article>`;
   if (t === "changes") return `<article class="record"><ul class="people">${rows[0].changes.slice(0, 12).map((c) => `<li><span>${esc(c.detail)}</span><span class="n">${esc((c.at || "").slice(0, 10))}</span></li>`).join("")}</ul></article>`;
   if (t === "my_session") return `<article class="record"><ol class="timeline">${rows.map((x) => `<li>${esc(x.question)}${x.peps.length ? ` <span class="n" style="color:var(--muted)">(PEP ${x.peps.join(", ")})</span>` : ""}</li>`).join("")}</ol></article>`;
   return "";
@@ -658,10 +700,9 @@ docker compose -f docker-compose.quick.yml up</pre>
       : `<p class="verdict${lead.none ? " none" : ""}" style="--v:var(${lead.none ? "--rule" : statusVar})">${st ? stamp(st) + " " : ""}${esc(lead.text)}</p>`}</header>
     <div class="a-main">
     ${r.rejected ? `<div class="guarded">The guard replaced the model's answer because it named ${esc(r.rejected.unsupported.join(", "))}, which no tool returned:<br><s>${esc(r.rejected.answer)}</s></div>` : ""}
-    ${link ? `<div class="memory">Connects to what you asked earlier, PEP ${esc(link.rows[0].earlier)}:${chain(link.paths[0])}</div>` : ""}
-
     ${rendered}
     ${!rendered && !lead.none && r.answer && r.mode !== "llm" ? `<p class="plain-a">${esc(r.answer)}</p>` : ""}
+    ${link ? `<div class="memory">Connects to what you asked earlier, PEP ${esc(link.rows[0].earlier)}:${chain(link.paths[0])}</div>` : ""}
     ${steps.length ? stepsSummary(steps, r.mode) : ""}
     ${nexts.length ? `<div class="next"><h4>Ask next</h4>${nexts.map((n) => `<button type="button" data-q="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
     ${r.mode !== "llm" && r.answer ? `<details class="plain"><summary>Plain-text answer</summary><p>${esc(r.answer)}</p></details>` : ""}
@@ -678,39 +719,67 @@ docker compose -f docker-compose.quick.yml up</pre>
 }
 
 /* ---------------------------------------------------------------- home: show the product, not a description of it */
-// A real answer from the graph, drawn small: PEP 3150's given-clause idea was set aside again by PEP 403 and PEP 572.
-const SPECIMEN = {steps: [{paths: [
-  [{id: "PEP 403", label: "PEP", status: "Deferred", title: "General purpose decorator clause"}, {edge: "REJECTS_APPROACH_OF", forward: true, label: "set it aside, 2011"},
-   {id: "PEP 3150", label: "PEP", status: "Deferred", title: "Statement local namespaces (given clause)"}],
-  [{id: "PEP 572", label: "PEP", status: "Final", title: "Assignment Expressions"}, {edge: "REJECTS_APPROACH_OF", forward: true, label: "set it aside, 2018"},
-   {id: "PEP 3150", label: "PEP", status: "Deferred"}],
-  [{id: "Alyssa Coghlan", label: "Person"}, {edge: "AUTHORED", forward: true, label: "proposed, 2010"}, {id: "PEP 3150", label: "PEP", status: "Deferred"}],
-]}]};
-const SPECIMEN_Q = "Has anyone proposed statement-local name bindings with a given clause?";
+// The opening is a real answer, recorded from the graph by scripts/build_static_demo.py (hero.json):
+// an idea that crosses PEPs, forum threads and people, and is still being argued.
+const HERO_Q = "Has anyone proposed null coalescing in Python?";
 function hero() {
   return `<section class="hero"><div class="hero-main"><h2>Has Python already decided this?</h2>
-    <p>Paste an idea and get the PEP that proposed it, the ruling and who made it, whether it came back, and who to ask.
-       Every answer shows the graph path it came from.</p>
+    <p>Paste an idea. Lineage finds where it was proposed, what was decided and by whom, every time it came back, and who to ask,
+       with the graph path behind each claim.</p>
     <div class="hero-ask" id="hero-ask"></div>
     <ul class="tries">${TRIES.map(([q, v]) => { const [status, pep] = v.split(", "); return `<li><button type="button" data-q="${esc(q)}"><span class="idea">${esc(q)}</span>`
-      + `<span class="why">${stamp(status === "Forum only" ? "Forum" : status)}${pep ? ` <span>${esc(pep)}</span>` : ""}</span></button></li>`; }).join("")}</ul>
+      + `<span class="why">${stamp(status)}${pep ? ` <span>${esc(pep)}</span>` : ""}</span></button></li>`; }).join("")}</ul>
     <div class="more">Or ask ${MORE.map((m) => `<button type="button" data-q="${esc(m)}">${esc(m)}</button>`).join("")}</div>
     </div>
-    <div class="hero-side"><figure class="specimen" tabindex="0" role="button" aria-label="Run the example: ${esc(SPECIMEN_Q)}" data-q="${esc(SPECIMEN_Q)}">
-      <div class="canvas" style="height:300px"><div class="cy" id="cy-specimen"></div></div>
-      <figcaption><span>An answer, drawn: the <code>given:</code> clause proposed in PEP 3150 came back twice and was set aside both times.</span>
-        <span class="run">Ask it</span></figcaption>
-    </figure>
+    <div class="hero-side"><figure class="feature" id="feature" aria-label="A recorded answer: ${esc(HERO_Q)}">
+      <div class="feature-h"><p class="feature-q">${esc(HERO_Q)}</p><p class="verdict none">Loading a recorded answer…</p></div></figure>
     <p class="scale">745 PEPs, 1,085 rejected ideas, 1,748 forum threads and 2,175 people in one FalkorDB graph.</p></div></section>`;
 }
-function drawSpecimen() {
-  const el = document.getElementById("cy-specimen"); if (!el) return;
-  const cy = makeCy(el, elementsFor(SPECIMEN, new Set(["PEP 3150"])), null, false, {labels: true, still: true});
+// Every proposal, comeback and forum thread for one idea, in date order, from already_decided's rows.
+function ideaEvents(rows) {
+  const ev = [], same = rows.filter((x) => x.match === "same" && !x.draft);
+  // One event per PEP: a PEP that is itself a matched row shows once, as the proposal it is.
+  const seen = new Set(same.filter((x) => x.kind === "pep").map((x) => x.pep));
+  const once = (n) => !seen.has(n) && seen.add(n);
+  for (const r of same) {
+    if (r.kind === "thread") ev.push([r.created, `Forum thread: “${r.title}”`, `${r.posts} posts${r.started_by ? `, started by ${r.started_by}` : ""}`]);
+    else if (r.kind === "rejected_idea") ev.push([r.created, `Considered inside PEP ${r.pep}`, `set aside under “${r.idea}”`]);
+    else {
+      for (const e of (r.earlier_tries || []).filter((x) => once(x.pep))) ev.push([e.created, `PEP ${e.pep} proposed it first`, e.status]);
+      ev.push([r.created, `PEP ${r.pep} proposed it`, `${r.status}${(r.authors || []).length ? `, by ${r.authors.join(" and ")}` : ""}`]);
+      for (const b of (r.came_back || []).filter((x) => once(x.pep))) ev.push([b.created, `PEP ${b.pep} brought it up again`, `${b.status}${b.idea ? `, under its rejected idea “${b.idea}”` : ""}`]);
+    }
+  }
+  return ev.sort((x, y) => (x[0] || "").localeCompare(y[0] || ""));
+}
+function historyHTML(rows, min = 3) {
+  const ev = ideaEvents(rows);
+  if (ev.length < min) return "";
+  return `<div class="history"><ol class="timeline">${ev.map(([d, what, meta]) =>
+    `<li><span class="yr">${esc(year(d))}</span><span class="what">${esc(what)}</span> <span class="meta">${esc(meta)}</span></li>`).join("")}</ol></div>`;
+}
+async function drawFeature() {
+  const fig = document.getElementById("feature"); if (!fig) return;
+  let res;
+  try { res = await (await fetch("hero.json")).json(); } catch (e) { fig.remove(); return; }
+  if (!document.getElementById("feature")) return;   // the person already asked something
+  const steps = res.steps || [], main = steps.find((x) => x.tool === "already_decided");
+  if (!main) { fig.remove(); return; }
+  const lead = leadFor(main), st = leadStatus(main);
+  const queries = steps.reduce((a, x) => a + (x.cypher || []).length, 0), ms = steps.reduce((a, x) => a + (x.ms || 0), 0);
+  fig.innerHTML = `<div class="feature-h"><p class="feature-q">${esc(HERO_Q)}</p>
+      <p class="verdict" style="--v:var(--${(st || "").toLowerCase() || "rule"})">${st ? stamp(st) + " " : ""}${esc(lead.text)}</p></div>
+    <div class="canvas" style="height:300px"><div class="cy" id="cy-feature"></div></div>
+    ${historyHTML(main.rows, 1)}
+    <figcaption><span>A real answer, recorded from the graph: ${queries} graph queries, ${fmtMs(ms)}, no language model.</span>
+      <button class="btn primary run" type="button" data-q="${esc(HERO_Q)}">Open the full answer</button></figcaption>`;
+  wire(fig);
+  const cy = makeCy(document.getElementById("cy-feature"), elementsFor(res, focusFor(main)), null, false, {labels: true, still: true});
   cy.userPanningEnabled(false);
-  // One orchestrated moment: the path lights up edge by edge.
+  requestAnimationFrame(() => refit(cy));
   if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
     cy.edges().style("opacity", 0);
-    cy.edges().forEach((e, k) => setTimeout(() => e.animate({style: {opacity: 1}}, {duration: 350}), 300 + k * 320));
+    cy.edges().forEach((e, k) => setTimeout(() => e.animate({style: {opacity: 1}}, {duration: 300}), 200 + k * 120));
   }
 }
 function wire(root) {
@@ -723,7 +792,7 @@ function showHome() {
   $("#view").innerHTML = hero();
   $("#hero-ask").append($("#f"));
   wire($("#view"));
-  drawSpecimen();
+  drawFeature();
 }
 function ensureThread() {
   if (!document.body.classList.contains("home")) return;
@@ -755,7 +824,7 @@ function fillTurn(t, i) {
 function refit(cy) {
   if (!cy) return;
   const cap = cy.nodes().length <= 6 ? 1.6 : 1.25;
-  cy.resize(); cy.fit(undefined, 30);
+  cy.resize(); cy.fit(undefined, 40);
   if (cy.zoom() > cap) { cy.zoom(cap); cy.center(); }
 }
 let resizeTimer;

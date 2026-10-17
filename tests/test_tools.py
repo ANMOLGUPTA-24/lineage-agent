@@ -322,3 +322,46 @@ def test_search_indexes_exist():
         assert need in have, need
     if tools.graph().ro_query("MATCH (t:Thread) RETURN count(t)").result_set[0][0]:
         assert ("Thread", "VECTOR") in have and ("Thread", "FULLTEXT") in have
+
+
+# ---------------------------------------------------------------- advisor round 3 regressions
+
+@pytest.mark.parametrize("question,idea", [
+    ("Did anyone ever suggest multi-line lambdas?", "multi-line lambdas"),
+    ("Should Python add a switch statement?", "a switch statement"),
+    ("Has anyone proposed allowing keyword arguments in indexing?", "allowing keyword arguments in indexing"),
+    ("Why can't I write a lambda with several statements?", "write a lambda with several statements"),
+])
+def test_paraphrased_proposals_are_routed_and_unframed(question, idea):
+    assert tools.idea_text(question) == idea
+    assert agent.route(question, "python")[-1]["tool"] == "already_decided"
+
+
+def test_who_decided_resolves_the_feature_once():
+    steps = agent.route("Who decided the walrus operator?", "python")
+    assert [s["tool"] for s in steps].count("resolve") == 1
+    assert steps[-1]["tool"] == "why" and steps[-1]["rows"][0]["pep"] == 572
+
+
+def test_came_back_follows_chains_and_quotes_the_citing_idea():
+    row, _ = tools.pep_context(tools.Run("python"), 472)
+    back = {b["pep"]: b for b in row["came_back"]}
+    assert 637 in back and back[696]["through"] == 637 and back[696]["idea"] and back[696]["quote"]
+    text = tools.came_back_text(back[696])
+    assert "set it aside" not in text and "cites PEP 637" in text
+
+
+def test_pep_named_by_a_same_idea_thread_is_promoted():
+    rows = tools.call("already_decided", {"idea": "null coalescing"})["rows"]
+    assert rows[0]["kind"] == "pep" and rows[0]["pep"] == 505 and rows[0]["match"] == "same"
+
+
+def test_connection_same_pep_and_weak_links():
+    assert tools.call("connection", {"a": "572", "b": "572"})["outcome"] == "not_in_graph"
+    assert tools.call("connection", {"a": "484", "b": "695"})["rows"][0]["strength"] == "direct"
+
+
+def test_unclear_resolve_is_worded_as_a_guess():
+    step = tools.call("resolve", {"text": "zzqx flurb"})
+    if step["rows"] and not any(r["confident"] for r in step["rows"]):
+        assert agent.template(step).startswith("I couldn't tell")

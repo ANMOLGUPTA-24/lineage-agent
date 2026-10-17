@@ -134,7 +134,12 @@ def template(step: dict) -> str:
         return step["note"]
     r = rows[0] if rows else {}
     if t == "resolve":
-        return "Matches: " + "; ".join(f"PEP {x['number']} ({x['title']})" if x["kind"] == "PEP" else f"{x['kind']} {x['name']}" for x in rows)
+        names = "; ".join(f"PEP {x['number']} ({x['title']})" if x["kind"] == "PEP" else f"{x['kind']} {x['name']}" for x in rows)
+        # Only a confident match is an answer; anything else is a guess and is worded as one.
+        if any(x.get("confident") for x in rows):
+            return "Matches: " + names
+        return ("I couldn't tell what that question is about. The nearest names in the graph are: " + names
+                + ". Try asking about one of them by name or PEP number.")
     if t == "why":
         people = ", ".join(p["name"] for p in r["people"] if p["role"] == "author")
         s = f"PEP {r['pep']} ({r['title']}) is {r['status']}, written by {people}"
@@ -152,10 +157,15 @@ def template(step: dict) -> str:
         if r.get("earlier_proposals"):
             s += (". Earlier proposals it cites that were never adopted: "
                   + ", ".join(f"{x['pep']} ({x['status']})" for x in r["earlier_proposals"][:6]))
-        for x in r.get("rejected_approaches", [])[:2]:
-            s += f'. It set aside the approach of PEP {x["pep"]} under "{x["idea"]}": "{x["quote"]}" ({x["url"]})'
+        # One rejected idea can cite several PEPs ("PEP 576 and PEP 580"): say its sentence once.
+        grouped = {}
+        for x in r.get("rejected_approaches", []):
+            grouped.setdefault((x["idea"], x["quote"], x["url"]), []).append(f"PEP {x['pep']}")
+        for (idea, quote, url), names in list(grouped.items())[:2]:
+            s += (f'. It set aside the approach{"es" if len(names) > 1 else ""} of {" and ".join(names)} '
+                  f'under "{idea}": "{quote}" ({url})')
         if r.get("set_aside_later_by"):
-            s += ". Its approach came up again and was set aside in " + ", ".join(
+            s += ". It came up again in later PEPs that cite it among their rejected ideas: " + ", ".join(
                 f"PEP {x['pep']} ({(x['created'] or '')[:4]}, {x['url']})" for x in r["set_aside_later_by"])
         if r.get("superseded_by"):
             s += f". It was later superseded by {', '.join(r['superseded_by'])}"
@@ -187,13 +197,16 @@ def template(step: dict) -> str:
         if r["orphaned_if_they_leave"]:
             s += f"; if {m['name']} left, these would have no one: " + ", ".join(f"PEP {x['pep']}" for x in r["orphaned_if_they_leave"])
         if c := r.get("connected"):
-            s += (f". Without {m['name']}, the largest connected group of people goes from {c['largest_group']} to "
+            s += (f". In the wider influence graph of this area (people whose work builds on each other's, including "
+                  f"PRs and rulings), the largest connected group goes from {c['largest_group']} to "
                   f"{c['largest_without_them']}" + (f", cutting off {c['cut_off_if_they_leave']}" if c["cut_off_if_they_leave"] else
                                                      ", so no one else is cut off"))
         return s + "."
     if t == "connection":
         p = step["paths"][0]
-        return "Shortest link: " + " ".join(x["id"] if "id" in x else (f"-[{x['edge']}]->" if x["forward"] else f"<-[{x['edge']}]-") for x in p) + "."
+        lead = ("No close relationship is recorded; the cheapest indirect link: " if r.get("strength") == "weak"
+                else "Shortest link: ")
+        return lead + " ".join(x["id"] if "id" in x else (f"-[{x['edge']}]->" if x["forward"] else f"<-[{x['edge']}]-") for x in p) + "."
     if t == "session_link":
         p = step["paths"][0]
         chain = " ".join(x["id"] if "id" in x else (f"-[{x['edge']}]->" if x["forward"] else f"<-[{x['edge']}]-") for x in p)
@@ -218,7 +231,8 @@ def template(step: dict) -> str:
                 by = f" ({'attributed to' if any(y['inferred'] for y in d['decided_by']) else 'by'} {names})"
             head = "Closest related history (not the same idea): " if x["match"] == "related" else ""
             if x["kind"] == "thread":
-                lead = not (x["peps"] or head or any(o.startswith("No PEP") for o in out))
+                lead = not (x["peps"] or head or any(o.startswith("No PEP") for o in out)
+                            or any(y["kind"] != "thread" and y["match"] == "same" for y in rows))
                 s = (f'{head}{"No PEP in the graph proposed this, but it was d" if lead else "D"}'
                      f'iscussed on discuss.python.org: "{x["title"]}" ({(x["created"] or "")[:4]}, {x["posts"]} posts, '
                      f'started by {x["started_by"]}) {x["url"]}')
@@ -233,10 +247,11 @@ def template(step: dict) -> str:
                 s = f"{head}PEP {x['pep']} ({x['title']}, {(x['created'] or '')[:4]}) proposed this; it was {x['verdict']}{by}"
                 if x["reason"]:
                     s += f'. {x["reason"]["section"]}: "{x["reason"]["quote"]}" ({x["reason"]["url"]})'
+            if x.get("earlier_tries"):
+                s += ". It had been proposed before: " + ", ".join(
+                    f"PEP {e['pep']} ({e['title']}, {(e['created'] or '')[:4]}, {e['status']})" for e in x["earlier_tries"])
             if x.get("came_back"):
-                s += ". It came up again: " + "; ".join(
-                    f"PEP {b['pep']} ({(b['created'] or '')[:4]})" + (f' set it aside: "{b["quote"]}" ({b["url"]})' if b.get("quote") else "")
-                    for b in x["came_back"])
+                s += ". It came up again in " + "; ".join(tools.came_back_text(b) for b in x["came_back"])
             if x.get("superseded_by"):
                 s += f". Superseded by {x['superseded_by']}"
             out.append(s + ".")
@@ -251,7 +266,8 @@ def template(step: dict) -> str:
 ROUTES = [  # (pattern, tool, needs)
     (r"\b(draft|reply|respond)\b", "draft_reply", "idea"),
     (r"\b(already|ever|proposed|suggested|why not|why (doesn't|does not|no|isn't) python|"
-     r"been (decided|discussed|rejected)|decided (on|about|whether)|was there a pep|idea)\b", "already_decided", "idea"),
+     r"been (decided|discussed|rejected)|decided (on|about|whether)|was there a pep|idea|suggest|propose|why can'?t (i|we|you)|"
+     r"(should|could|can|will|why doesn't) (python|we) (add|have|get|support|allow)|add(ing)? .{3,60} to python)\b", "already_decided", "idea"),
     (r"\b(remember|note that|save)\b", "remember", "pep"),
     (r"\b(what('s| is| has)? (new|changed)|recent changes|changed (lately|recently)|last sync|synced)\b", "changes", "none"),
     (r"\bwho (decided|accepted|rejected|approved|ruled)\b", "why", "pep"),
@@ -268,15 +284,20 @@ def route(question: str, tenant: str) -> list[dict]:
     topic = re.search(r"\b(typing|packaging|governance|release)\b", question, re.I)
     peps = re.findall(r"PEP[\s-]?(\d{1,4})", question, re.I)
 
+    resolved = {}
+
     def find_pep() -> str | None:
         if peps:
             return peps[0]
-        subject = re.sub(r"(?i)\b(why|how|did|does|do|is|are|was|the|python|still|current|who|knows|about|"
-                         r"what|come|about|have|has|a|an|of|in|to|we|remember|that|deep|history)\b|\?", " ", question)
-        res = tools.call("resolve", {"text": " ".join(subject.split())}, tenant)
-        steps.append(res)
-        top = [r for r in res["rows"] if r["kind"] == "PEP" and r["confident"]]
-        return str(top[0]["number"]) if top else None
+        if "pep" not in resolved:   # resolve once, even when the fallback asks again
+            subject = re.sub(r"(?i)\b(why|how|did|does|do|is|are|was|the|python|still|current|who|knows|about|"
+                             r"what|come|have|has|a|an|of|in|to|we|i|remember|that|deep|history|decided|accepted|"
+                             r"rejected|approved|ruled|should|ask|expert|owns)\b|\?", " ", question)
+            res = tools.call("resolve", {"text": " ".join(subject.split())}, tenant)
+            steps.append(res)
+            top = [r for r in res["rows"] if r["kind"] == "PEP" and r["confident"]]
+            resolved["pep"] = str(top[0]["number"]) if top else None
+        return resolved["pep"]
 
     for pattern, tool, needs in ROUTES:
         if re.search(pattern, question, re.I):

@@ -206,3 +206,17 @@ onboarding ("what do I read to understand typing?").
 
 ## Review
 _(filled at the end)_
+
+## Round 4: harder opening + advisor round 3 (Oct 17)
+Scores: Impact 7, Presentation 6, UX 7, Technical 7, FalkorDB 8, Creativity 8.
+- [x] came_back wording: quote the later PEP's rejected idea + status, never "set it aside" (824 revives 505)
+- [x] Promote a related PEP to same when a same-idea forum thread refers to it; PEPs first
+- [x] Router paraphrases: suggest/propose, "should Python add", "why can't I"; strip "decided" in find_pep; no double resolve
+- [x] came_back transitive (REJECTS_APPROACH_OF*1..3); say when a later PEP was adopted (Final)
+- [x] Switch verdict mentions match (PEP 634) when a same-idea row is superseded/adopted
+- [x] vectorcall duplicate quote
+- [x] bus_factor: populations labelled (named-person override still open)
+- [x] connection: same PEP; flag hub-only weak paths
+- [x] session_link only when short/cheap; low-confidence resolve = "did you mean"
+- [x] Home: real recorded hard answer as hero (None-aware), harder examples, compact; phone graph under verdict
+- [x] README numbers, lambda claim; rebuild demo; tests for each bug

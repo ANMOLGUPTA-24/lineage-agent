@@ -24,6 +24,12 @@ def index():
     return FileResponse(WEB / "index.html")
 
 
+@app.get("/hero.json")
+def hero():
+    """The recorded answer the home page opens with (scripts/build_static_demo.py)."""
+    return FileResponse(WEB / "hero.json")
+
+
 @app.get("/api/health")
 def health():
     last = graph().ro_query("MATCH (s:Sync) RETURN s.at, s.changes ORDER BY s.at DESC LIMIT 1").result_set

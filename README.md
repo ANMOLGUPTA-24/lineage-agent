@@ -13,6 +13,8 @@ forum threads and Steering Council issues.
 > **Run it in a minute:** `docker compose -f docker-compose.quick.yml up` → http://localhost:8000 (pre-built graph, no API key) ·
 > [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
 
+![The home page opens on a real recorded answer: null coalescing, proposed in PEP 505 (2015, deferred), raised again in PEP 824 (2026) and in two forum threads, with the people and the graph path behind it](docs/screenshots/home.jpg)
+
 ### The problem is real
 
 > "Research whether your idea has been proposed before. There are many suggestions that have been made and
@@ -24,12 +26,12 @@ forum threads and Steering Council issues.
 > — David Lord, replying on [discuss.python.org](https://discuss.python.org/t/why-not-real-anonymous-functions/44513/14)
 > to a proposer who had "searched this forum as well as all of the PEPs" and found nothing
 
-It keeps happening: better lambda syntax alone came up **10 times on the Ideas forum between 2019 and 2026**
-(384 posts), each time from someone who hadn't found the earlier threads.
+It keeps happening: new lambda or anonymous-function syntax alone was proposed in **8 Ideas topics between 2019
+and 2026** (355 posts; titles and counts from the forum's own JSON, in `data/raw/discourse.json`).
 
 Keyword search over PEP titles and forum posts misses rejected ideas buried inside other PEPs (1,085 of them)
 and ideas phrased differently. Lineage reads the rejected-ideas sections, links them to what they rejected,
-and walks those links: "multi-line lambdas" returns the 2023 forum thread and the core developer who answered it.
+and walks those links: "multi-line lambdas" returns the 2023 and 2025 forum threads and the core developer who answered.
 
 ### How it maps to the Company Brain brief
 
@@ -60,7 +62,7 @@ the tools that answer "has this team already decided this?" don't change.
 3 of 32 confident matches; every miss is listed in [eval/RESULTS.md](eval/RESULTS.md). Details below.
 
 **Scale:** 745 PEPs, 1,085 rejected ideas and 866 quotable sections parsed from the PEP sources, 1,748
-discuss.python.org threads, 507 CPython PRs and 466 issues, 252 rulings, 2,175 people, built deterministically
+discuss.python.org threads, 505 CPython PRs and 460 issues, 257 rulings, 2,175 people, built deterministically
 from public data in under 4 minutes (`make ingest`), with a 48-test suite.
 
 **What the graph does per answer:** typed traversals over evidence edges extracted from the PEPs' own text
@@ -68,11 +70,11 @@ from public data in under 4 minutes (`make ingest`), with a 48-test suite.
 projections, and session memory as graph nodes. Every answer lists the steps that ran, draws the subgraph it
 walked, and shows the exact Cypher with its parameters.
 
-![Has anyone proposed a do-while loop? PEP 315, rejected: the answer reads like a PEP header, the deciding sentence highlighted, with the graph path and the steps that ran alongside](docs/screenshots/already-decided.jpg)
+![Should Python add a switch statement? PEP 3103, rejected with Guido's rejection notice quoted; PEP 622 took it up again and was replaced by PEP 634 (match). The graph path sits beside the evidence](docs/screenshots/already-decided.jpg)
 
 | Did the idea come back? | Who should I ask about typing? | Memory in the graph |
 |---|---|---|
-| ![PEP 403 and PEP 572 set aside the approach of PEP 3150, each quoted](docs/screenshots/came-back.jpg) | ![PageRank over the typing influence graph, with the citations behind it](docs/screenshots/who-knows.jpg) | ![Session, asked, Query, accessed, PEP](docs/screenshots/memory.jpg) |
+| ![Keyword arguments in indexing: PEP 472 (2014), PEP 637 (2020), then PEP 647 and PEP 696 citing it, each from a REJECTS_APPROACH_OF chain](docs/screenshots/came-back.jpg) | ![PageRank over the typing influence graph, with the citations behind it](docs/screenshots/who-knows.jpg) | ![Session, asked, Query, accessed, PEP](docs/screenshots/memory.jpg) |
 
 ## Why a graph?
 
@@ -240,7 +242,7 @@ Without Docker for the app:
 ```bash
 docker run -d -p 6379:6379 -p 3000:3000 falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
 uv sync && make ingest && make app
-make test                         # 48 behaviour tests against the loaded graph
+make test                         # 58 behaviour tests against the loaded graph
 make sync                         # rebuild beside the live graph and swap (see "Keeping it current")
 uv run python -m eval.run         # the evaluation below
 ```

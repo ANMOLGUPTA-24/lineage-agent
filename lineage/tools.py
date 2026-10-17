@@ -225,8 +225,9 @@ def why(pep: str, depth: int = 2, tenant: str = "python") -> dict:
         WITH p, path, q, reduce(w = 0.0, e IN relationships(path) | w + e.weight) AS cost
         ORDER BY cost
         WITH p, q, collect(path)[0] AS best
-        WITH best, vec.cosineDistance(p.embedding, q.embedding) AS drift
-        WHERE drift < $max_drift
+        WITH best, p, q, vec.cosineDistance(p.embedding, q.embedding) AS drift
+        // A PEP can only build on what came before it; a later PEP it mentions replaced or followed it.
+        WHERE drift < $max_drift AND coalesce(q.created, '') <= coalesce(p.created, '9999')
         RETURN best ORDER BY drift LIMIT 12""", {"n": n, "max_drift": MAX_DRIFT})]
 
     # The PEP's own words: why it exists (Rationale, else Motivation) and, if any, its ruling notice.
@@ -493,6 +494,8 @@ def connection(a: str, b: str, tenant: str = "python") -> dict:
     if not lb:
         return unknown("connection", args, run, b)
     ka, kb = next(iter(pa)), next(iter(pb))
+    if (la, pa) == (lb, pb):
+        return envelope("connection", args, run, "not_in_graph", note=f"Both sides are the same {la.lower()}: {a}.")
     rows = run.q(f"""MATCH (x:{la} {{{ka}: $va}}), (y:{lb} {{{kb}: $vb}})
                      CALL algo.SPpaths({{sourceNode: x, targetNode: y, relTypes: $rels, weightProp: 'weight',
                                          maxLen: 6, relDirection: 'both', pathCount: 3}})
@@ -505,8 +508,15 @@ def connection(a: str, b: str, tenant: str = "python") -> dict:
     run.say(f"algo.SPpaths: weighted shortest paths (up to 6 hops, both directions) over {len(CONNECT_RELS)} "
             f"relationship types; {len(rows)} path(s), cheapest cost {rows[0][1]:.2f} in {len(rows[0][0].edges())} hop(s). "
             "Person and topic edges cost 1 + ln(1 + degree), so hubs don't win by default")
+    # Any two PEPs connect through enough hub PEPs, so a long path is reported as weak, not as a relationship.
+    hops = len(rows[0][0].edges())
+    strength = "direct" if hops == 1 else "close" if hops == 2 else "weak"
+    if strength == "weak":
+        run.say(f"The cheapest link takes {hops} hops through other records: the graph has no close relationship "
+                "between them, only an indirect one")
     return envelope("connection", args, run, "answered",
-                    rows=[{"hops": len(r[0].edges()), "cost": round(r[1], 2)} for r in rows],
+                    rows=[{"hops": len(r[0].edges()), "cost": round(r[1], 2), "strength": strength if k == 0 else None}
+                          for k, r in enumerate(rows)],
                     paths=[path_view(r[0]) for r in rows])
 
 
@@ -586,9 +596,10 @@ FRAMING = re.compile(r"""^\s*(?:(?:can\s+you\s+|please\s+)?(?:draft|write)\s+(?:
                          (?:proposing|suggesting|asking\s+for|that\s+proposes|about|for|on)?\s*:?
                        | (?:reply|respond)\s+to\s*:?
                        | (?:has|have|did)\s+(?:anyone|someone|python|the\s+core\s+devs?)\s+(?:ever\s+|already\s+)?
-                         (?:proposed|suggested|considered|discussed|decided(?:\s+on|\s+about|\s+whether)?|rejected)
+                         (?:propos(?:ed|e)|suggest(?:ed)?|consider(?:ed)?|discuss(?:ed)?|decided(?:\s+on|\s+about|\s+whether)?|reject(?:ed)?)
                        | (?:was|is|were)\s+(?:there\s+(?:ever\s+)?a\s+pep\s+(?:for|about|on|to)|.{0,0})
-                       | why\s+(?:not|doesn't\s+python\s+have|does\s+not\s+python\s+have|no|isn't\s+there)
+                       | why\s+(?:not|doesn't\s+python\s+have|does\s+not\s+python\s+have|no|isn't\s+there|can'?t\s+(?:i|we|you))
+                       | (?:should|could|can|will|would)\s+(?:python|we)\s+(?:ever\s+)?(?:add|have|get|support|allow)
                        | (?:idea|proposal)\s*:
                      )\s*""", re.I | re.X)
 
@@ -596,7 +607,7 @@ FRAMING = re.compile(r"""^\s*(?:(?:can\s+you\s+|please\s+)?(?:draft|write)\s+(?:
 def idea_text(text: str) -> str:
     out = FRAMING.sub("", text, count=1).strip().rstrip("?.!").strip()
     tail = re.compile(r"\s+(?:(?:ever\s+)?(?:been\s+)?(?:proposed|suggested|considered|rejected|decided)(?:\s+before)?"
-                      r"|(?:a\s+)?good\s+idea|worth\s+(?:it|adding))$", re.I)
+                      r"|(?:a\s+)?good\s+idea|worth\s+(?:it|adding)|to\s+python)$", re.I)
     if tail.search(out):
         out = re.sub(r"^(?:have|has|was|were|is|are)\s+", "", tail.sub("", out), flags=re.I)
     return out or text
@@ -662,10 +673,14 @@ def pep_context(run: Run, n: int) -> tuple[dict, list]:
         OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'})
         WITH p, authors, apaths, rulings, decisions, lines, collect(npath) AS npaths,
              collect({text: s.text, url: s.url, title: s.title})[0] AS notice
-        OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p)
+        OPTIONAL MATCH back = (later:PEP)-[:REJECTS_APPROACH_OF*1..3]->(p)
+        WHERE later <> p
+        WITH p, authors, apaths, rulings, decisions, lines, npaths, notice, later, back,
+             relationships(back)[0] AS x, nodes(back)[1] AS through
         RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, apaths, rulings,
                decisions, lines, npaths, notice, collect(back),
-               collect({pep: later.number, title: later.title, created: later.created, via: x.via})""", {"n": n})
+               collect({pep: later.number, title: later.title, status: later.status, created: later.created,
+                        via: x.via, through: through.number, hops: length(back)})""", {"n": n})
     decided = [d for d in decisions if d["by"]]
     succ = sorted((path_view(l) for l in lines), key=len)
     row = {"pep": num, "title": title, "status": status, "verdict": VERDICT.get(status, status.lower()),
@@ -676,15 +691,36 @@ def pep_context(run: Run, n: int) -> tuple[dict, list]:
                          "decided_by": [{"by": d["by"], "inferred": bool(d["inferred"])} for d in decided]}
                         if decided else None),
            "superseded_by": succ[-1][-1]["id"] if succ else None,
-           "came_back": sorted(({"pep": x["pep"], "title": x["title"], "created": x["created"], "url": x["via"][0]}
-                                for x in later if x["pep"]), key=lambda x: x["created"] or "")}
+           # Later PEPs that set an approach of this one aside, directly or through a PEP that did (472 <- 637 <- 696).
+           "came_back": sorted({x["pep"]: {"pep": x["pep"], "title": x["title"], "status": x["status"],
+                                           "created": x["created"], "url": x["via"][0], "through": x["through"]}
+                                for x in sorted(later, key=lambda x: -(x["hops"] or 0)) if x["pep"]}.values(),
+                               key=lambda x: x["created"] or "")}
     if row["came_back"]:
-        # The sentence in each later PEP that set this one aside, so the comeback is quoted, not asserted.
-        quotes = dict(run.q("""MATCH (a:Alternative)-[c:CITES]->(:PEP {number: $n}) WHERE a.url IN $urls
-                               RETURN a.url, c.quote""", {"n": n, "urls": [b["url"] for b in row["came_back"]]}))
+        # The later PEP's rejected idea that cites this one, and the sentence that does, so the comeback is
+        # quoted, not asserted. The edge says the later PEP set an approach of this one aside; it does not say
+        # whether the later PEP revived the idea itself (PEP 824 revives PEP 505 and drops its ??= variant).
+        found = {(u, t): (a, q) for u, t, a, q in run.q("""
+            MATCH (a:Alternative)-[c:CITES]->(q:PEP) WHERE a.url IN $urls
+            RETURN a.url, q.number, a.title, c.quote""", {"urls": [b["url"] for b in row["came_back"]]})}
         for b in row["came_back"]:
-            b["quote"] = quotes.get(b["url"]) or ""
-    return row, [path_view(r) for r in apaths + rulings + npaths] + succ + [path_view(b) for b in backs]
+            b["idea"], b["quote"] = found.get((b["url"], b["through"]), ("", ""))
+            if b["through"] == n:
+                b.pop("through")
+    # The other direction: older, never-adopted PEPs whose approach this one set aside (472 before 637).
+    earlier = run.q("""MATCH e = (p:PEP {number: $n})-[x:REJECTS_APPROACH_OF]->(q:PEP)
+                       RETURN e, q.number, q.title, q.status, q.created, x.via[0] ORDER BY q.created""", {"n": n})
+    row["earlier_tries"] = [{"pep": qn, "title": qt, "status": qs, "created": qc, "url": u} for _, qn, qt, qs, qc, u in earlier]
+    return row, ([path_view(r) for r in apaths + rulings + npaths] + succ + [path_view(b) for b in backs]
+                 + [path_view(r[0]) for r in earlier])
+
+
+def came_back_text(b: dict) -> str:
+    """'PEP 824 (2026, Draft), whose rejected idea "Add ?? as AugAssign" cites it: "..." url'."""
+    s = f"PEP {b['pep']} ({(b['created'] or '')[:4]}, {b.get('status') or '?'})"
+    if b.get("idea"):
+        s += f', whose rejected idea "{b["idea"]}" cites ' + (f"PEP {b['through']}" if b.get("through") else "it")
+    return s + (f': "{b["quote"]}"' if b.get("quote") else "") + f" {b['url']}"
 
 
 # ---------------------------------------------------------------- session memory (in the graph)
@@ -710,7 +746,7 @@ def record_turn(session: str, question: str, mode: str, peps: list[int], tenant:
 
 def session_link(session: str, peps: list[int], tenant: str = "python") -> dict:
     """How the PEPs in this answer connect to PEPs asked about earlier in the same session:
-    a weighted shortest path (algo.SPpaths, at most 3 hops) to the nearest earlier PEP."""
+    a weighted shortest path (algo.SPpaths, at most 2 hops: longer chains link almost anything) to the nearest earlier PEP."""
     run, args = Run(tenant), {"session": session, "peps": peps}
     if not SESSION_ID.fullmatch(session or "") or not peps:
         return envelope("session_link", args, run, "not_in_graph", note="No earlier questions in this session.")
@@ -718,13 +754,13 @@ def session_link(session: str, peps: list[int], tenant: str = "python") -> dict:
                     WITH DISTINCT e LIMIT 10
                     MATCH (c:PEP) WHERE c.number IN $peps
                     CALL algo.SPpaths({sourceNode: c, targetNode: e, relTypes: $rels, weightProp: 'weight',
-                                       maxLen: 3, relDirection: 'both', pathCount: 1})
+                                       maxLen: 2, relDirection: 'both', pathCount: 1})
                     YIELD path, pathWeight
                     RETURN path, pathWeight, c.number, e.number ORDER BY pathWeight LIMIT 1""",
                  {"sid": session, "peps": peps, "rels": CONNECT_RELS})
     if not rows:
         return envelope("session_link", args, run, "not_in_graph",
-                        note="Nothing asked earlier in this session is within 3 hops of this answer.")
+                        note="Nothing asked earlier in this session is within 2 hops of this answer.")
     path, cost, now, earlier = rows[0]
     run.say(f"Session memory: PEPs this session asked about before, then algo.SPpaths from PEP {now} to the nearest "
             f"(PEP {earlier}, {len(path.edges())} hop(s), cost {cost:.2f})")
@@ -829,6 +865,15 @@ def already_decided(idea: str, tenant: str = "python") -> dict:
                          "earlier_forms": [e for e in earlier if e["pep"]], **row})
             ps = [path_view(alt)] + ps
         paths += ps
+    # A forum thread judged the same idea that refers to a PEP we also matched (only as related) is graph
+    # evidence the PEP is the same idea too: "None-coalescing operator" (2026) refers to PEP 505.
+    cited = {(p["pep"], r["thread_id"]) for r in rows if r["kind"] == "thread" and r["match"] == "same" for p in r["peps"]}
+    for r in rows:
+        via = next((t for n, t in cited if r["kind"] == "pep" and r["match"] == "related" and n == r["pep"]), None)
+        if via:
+            r["match"], r["via_thread"] = "same", via
+            run.say(f"PEP {r['pep']} promoted to the same idea: forum thread {via}, a same-idea match, refers to it")
+    rows.sort(key=lambda r: (r["match"] != "same", KIND_ORDER["alt" if r["kind"] == "rejected_idea" else r["kind"]]))
     return envelope("already_decided", args, run, "answered", rows=rows, paths=paths)
 
 
@@ -873,9 +918,10 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
                              f'From the PEP: "{r["quote"]}" {r["url"]}')
             if d and d["url"]:
                 lines.append(f"  The ruling: {d['url']}")
+        for e in r.get("earlier_tries", [])[:2]:
+            lines.append(f'  It had been proposed before, in PEP {e["pep"]} ("{e["title"]}", {(e["created"] or "")[:4]}, {e["status"]}).')
         for b in r["came_back"][:3]:
-            said = f' "{b["quote"]}"' if b.get("quote") else ""
-            lines.append(f'  It came up again in PEP {b["pep"]} ({(b["created"] or "")[:4]}), which set it aside:{said} {b["url"]}')
+            lines.append(f"  It came up again in {came_back_text(b)}")
         if r["superseded_by"]:
             lines.append(f"  PEP {r['pep']} was later superseded by {r['superseded_by']}.")
     people = sorted({a for r in same for a in r.get("authors", [])})[:4]
