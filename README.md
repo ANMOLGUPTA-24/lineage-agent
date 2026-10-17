@@ -9,6 +9,7 @@ Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Tra
 company is the Python project: one of the largest open-source organisations, with its decisions in public PEPs,
 forum threads and Steering Council issues.
 
+> **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers recorded from the graph; run it locally to ask anything) ·
 > **Demo video:** [watch (2:28)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@master/docs/video/lineage-demo.mp4) ·
 > **Run it in a minute:** `docker compose -f docker-compose.quick.yml up` → http://localhost:8000 (pre-built graph, no API key) ·
 > [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
