@@ -161,6 +161,19 @@ is where an idea was discussed, not decided), and 170 PEP authors link up with t
 by name. "Have multi-line lambdas ever been proposed?" used to end at "the graph doesn't record it";
 it now answers that no PEP did, and points to the 2023 thread and the core developer who replied.
 
+## Memory that lives in the graph
+
+Every answer is recorded as `(:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP)`. The next answer then
+asks the graph how its PEP connects to what the same session asked before (`algo.SPpaths`, at most three
+hops), so after "why the walrus operator?" a question about statement-local bindings ends with "Earlier in
+this session you asked about PEP 572; the graph links it to this answer: PEP 3150 <-[REJECTS_APPROACH_OF]-
+PEP 572." "What did I ask earlier?" is read back from those nodes, and `make sync` carries sessions
+across the swap like everything else that isn't rebuilt from source.
+
+The UI also lists, for every answer, the steps that actually ran, written from the results rather than
+from a script: which indexes returned how many candidates, what the cross-encoder kept, and what each
+traversal found.
+
 ## What I'd do next
 
 - Calibrate the "same idea" cutoff on a larger labelled set, where the held-out misses were
