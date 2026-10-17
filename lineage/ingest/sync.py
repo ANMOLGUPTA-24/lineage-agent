@@ -81,6 +81,14 @@ def copy_findings(src, dst, since: str = "") -> int:
     return len(rows)
 
 
+SESSION_DAYS = 30   # session memory older than this is not carried into a new build
+
+
+def session_cutoff() -> str:
+    from datetime import datetime, timedelta, timezone
+    return (datetime.now(timezone.utc) - timedelta(days=SESSION_DAYS)).isoformat(timespec="seconds")
+
+
 def copy_sessions(src, dst, since: str = "") -> int:
     """Session memory: (:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP)."""
     rows = src.ro_query("""MATCH (s:Session)-[:ASKED]->(q:Query) WHERE q.at >= $since
@@ -150,7 +158,7 @@ def swap(tenant: str, new: str, build_fn=build) -> dict:
         if has_live:
             copy_history(live, fresh)
             copy_findings(live, fresh)
-            copy_sessions(live, fresh)
+            copy_sessions(live, fresh, since=session_cutoff())
         write_changes(fresh, changes, started)
         fresh.query("CREATE (:Sync {at: $at, graph: $g, previous: $p, changes: $n})",
                     {"at": started, "g": new, "p": live_name if has_live else "", "n": len(changes)})

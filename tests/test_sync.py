@@ -64,11 +64,15 @@ def test_rollback_points_back_at_the_previous_graph(monkeypatch):
     assert sync.rollback(T) == T and resolve(T) == T
 
 
-def test_session_memory_survives_the_swap():
+def test_session_memory_survives_the_swap_and_stale_sessions_expire():
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
     g = tiny(T, [(1, "Final"), (2, "Draft")])
-    g.query("""CREATE (s:Session {id: 'abc', started: '2026-01-01'})-[:ASKED]->(q:Query {text: 'why 1', at: '2026-01-01'})
-               WITH q MATCH (p:PEP {number: 1}) CREATE (q)-[:ACCESSED]->(p)""")
+    g.query("""CREATE (s:Session {id: 'abc', started: $now})-[:ASKED]->(q:Query {text: 'why 1', at: $now})
+               WITH q MATCH (p:PEP {number: 1}) CREATE (q)-[:ACCESSED]->(p)""", {"now": now})
+    g.query("""CREATE (:Session {id: 'old', started: '2020-01-01'})-[:ASKED]->(:Query {text: 'stale', at: '2020-01-01'})""")
     sync.swap(T, f"{T}__v2", build_fn=lambda n: tiny(n, [(1, "Final"), (2, "Draft")]))
     new = connect().select_graph(f"{T}__v2")
     assert new.ro_query("""MATCH (:Session {id: 'abc'})-[:ASKED]->(:Query {text: 'why 1'})-[:ACCESSED]->(p:PEP)
                            RETURN p.number""").result_set == [[1]]
+    assert new.ro_query("MATCH (s:Session {id: 'old'}) RETURN count(s)").result_set == [[0]]

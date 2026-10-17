@@ -318,7 +318,8 @@ def test_search_indexes_exist():
     # Every index already_decided searches; a missing one fails silently at query time, so check here.
     rows = tools.graph().ro_query("CALL db.indexes() YIELD label, types RETURN label, types").result_set
     have = {(label, t) for label, types in rows for field, ts in types.items() for t in ts}
-    for need in [("PEP", "VECTOR"), ("PEP", "FULLTEXT"), ("Alternative", "VECTOR"), ("Alternative", "FULLTEXT")]:
+    for need in [("PEP", "VECTOR"), ("PEP", "FULLTEXT"), ("Alternative", "VECTOR"), ("Alternative", "FULLTEXT"),
+                 ("PEP", "RANGE"), ("Alternative", "RANGE"), ("Person", "RANGE"), ("Session", "RANGE")]:
         assert need in have, need
     if tools.graph().ro_query("MATCH (t:Thread) RETURN count(t)").result_set[0][0]:
         assert ("Thread", "VECTOR") in have and ("Thread", "FULLTEXT") in have
@@ -365,3 +366,53 @@ def test_unclear_resolve_is_worded_as_a_guess():
     step = tools.call("resolve", {"text": "zzqx flurb"})
     if step["rows"] and not any(r["confident"] for r in step["rows"]):
         assert agent.template(step).startswith("I couldn't tell")
+
+
+@pytest.mark.parametrize("answer,flag", [
+    ("PEP 572 was rejected by Elon Musk in 2010.", "Elon Musk"),
+    ("PEP 572 was rejected by Elon Musk in 2010.", "PEP 572 called rejected (recorded: Final)"),
+    ("PEP 572 was rejected by Elon Musk in 2010.", "year 2010"),
+    ("PEP 572 was accepted by Guido Musk.", "Guido Musk"),
+])
+def test_guard_catches_invented_people_verdicts_and_years(answer, flag):
+    assert flag in agent.guard(answer, [tools.call("why", {"pep": "572"})])
+
+
+def test_guard_passes_a_faithful_answer():
+    steps = [tools.call("why", {"pep": "572"})]
+    ok = ("PEP 572 (Assignment Expressions) is Final, written by Tim Peters, Guido van Rossum and Chris Angelico; "
+          "it was accepted, attributed to Guido van Rossum. The Steering Council era came later. "
+          "It set aside PEP 3150, which was deferred.")
+    assert agent.guard(ok, steps) == []
+
+
+@pytest.mark.parametrize("question", ["Is PEP -1 still current?", "Is PEP 99999999999999999999 still current?"])
+def test_malformed_pep_numbers_are_unknown_not_guessed(question):
+    step = agent.route(question, "python")[-1]
+    assert step["outcome"] == "unknown_entity" and not step.get("rows")
+
+
+def test_unknown_person_in_a_connection_fails_loudly():
+    step = agent.route("How is Zaphod Beeblebrox connected to PEP 572?", "python")[-1]
+    assert step["tool"] == "connection" and step["outcome"] == "unknown_entity"
+    assert "Zaphod" in agent.template(step)
+
+
+def test_person_to_pep_connection():
+    step = agent.route("How is Guido van Rossum connected to PEP 572?", "python")[-1]
+    assert step["tool"] == "connection" and step["outcome"] == "answered"
+
+
+def test_session_memory_is_capped(monkeypatch, session):
+    monkeypatch.setattr(tools, "SESSION_CAP", 2)
+    for i in range(4):
+        tools.record_turn(session, f"q{i}", "router", [8])
+    n = tools.graph().ro_query("MATCH (:Session {id: $s})-[:ASKED]->(q) RETURN count(q)", {"s": session}).result_set[0][0]
+    assert n == 2
+
+
+def test_rate_limit():
+    from lineage import server
+    server._hits.clear()
+    assert not any(server.throttled("t") for _ in range(server.RATE))
+    assert server.throttled("t")

@@ -127,6 +127,7 @@ def main() -> None:
     try_query(g, "CALL db.idx.fulltext.createNodeIndex('Alternative', 'title', 'text')")
     try_query(g, "CREATE VECTOR INDEX FOR (a:Alternative) ON (a.embedding) OPTIONS {dimension: 384, similarityFunction: 'cosine'}")
     try_query(g, "CREATE INDEX FOR (s:Section) ON (s.pep)")
+    try_query(g, "CREATE INDEX FOR (a:Alternative) ON (a.url)")
     print({"sections": len(secs), "alternatives": len(alts), "peps_with_alternatives": len({a["pep"] for a in alts})})
 
 

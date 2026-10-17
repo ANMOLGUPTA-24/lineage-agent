@@ -864,7 +864,8 @@ $("#f").onsubmit = async (ev) => {
     if (STATIC) t.res = await snapshotAnswer(q);
     else {
       const r = await fetch("/api/ask", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question: q, session})});
-      t.res = r.ok ? await r.json() : {answer: `The server answered ${r.status}. Try again, or rephrase the question.`, mode: "error", steps: []};
+      const detail = r.ok ? "" : await r.json().then((x) => typeof x.detail === "string" ? x.detail : "").catch(() => "");
+      t.res = r.ok ? await r.json() : {answer: detail || `The server answered ${r.status}. Try again, or rephrase the question.`, mode: "error", steps: []};
     }
   } catch (e) {
     t.res = {answer: "Couldn't reach the server. Check that it is running, then ask again.", mode: "error", steps: []};

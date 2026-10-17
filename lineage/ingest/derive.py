@@ -75,6 +75,10 @@ def main() -> None:
 
     try_query(g, "CALL db.idx.fulltext.createNodeIndex('PEP', 'title', 'abstract')")
     try_query(g, "CALL db.idx.fulltext.createNodeIndex('Person', 'name')")
+    # Exact, case-insensitive person lookup (connection endpoints) without a label scan.
+    g.query("MATCH (a:Person) SET a.name_lc = toLower(a.name)")
+    try_query(g, "CREATE INDEX FOR (a:Person) ON (a.name_lc)")
+    try_query(g, "CREATE INDEX FOR (s:Session) ON (s.id)")   # session memory looks this up on every answer
     try_query(g, f"CREATE VECTOR INDEX FOR (p:PEP) ON (p.embedding) OPTIONS {{dimension: {DIM}, similarityFunction: 'cosine'}}")
 
     peps = g.ro_query("MATCH (p:PEP) RETURN p.number, p.title, p.abstract").result_set

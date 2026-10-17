@@ -122,12 +122,17 @@ def unknown(tool: str, args: dict, run: Run, what: str) -> dict:
     return envelope(tool, args, run, "unknown_entity", note=f"No PEP, person or topic in the graph matches {what!r}.")
 
 
+# "PEP 8", "PEP-8", "pep #8", "8", and malformed ones like "PEP -1" or a 20-digit number, which must
+# resolve to nothing rather than fall through to a full-text guess ("PEP -1" used to find PEP 0).
+PEP_REF = re.compile(r"\s*(?:PEP(?:-(?=\d)|[\s#]*))?(-?\d+)\s*", re.I)
+
+
 def pep_number(run: Run, ref: str | int) -> int | None:
     """Resolve to an existing PEP number, or None. Never guesses."""
-    m = re.fullmatch(r"\s*(?:PEP[\s-]?)?(\d{1,4})\s*", str(ref), re.I)
+    m = PEP_REF.fullmatch(str(ref))
     if m:
         n = int(m.group(1))
-        return n if run.q("MATCH (p:PEP {number: $n}) RETURN p.number", {"n": n}) else None
+        return n if 0 <= n <= 99999 and run.q("MATCH (p:PEP {number: $n}) RETURN p.number", {"n": n}) else None
     hits = resolve_rows(run, str(ref), kinds=("PEP",))
     return hits[0]["number"] if hits and hits[0]["confident"] else None
 
@@ -145,9 +150,10 @@ def _fulltext_query(text: str) -> str:
 
 def resolve_rows(run: Run, text: str, kinds=("PEP", "Person", "Topic"), k: int = 5) -> list[dict]:
     out: list[dict] = []
-    m = re.fullmatch(r"\s*(?:PEP[\s-]?)?(\d{1,4})\s*", text, re.I)
+    m = PEP_REF.fullmatch(text)
     if m and "PEP" in kinds:
-        for n, t, s in run.q("MATCH (p:PEP {number: $n}) RETURN p.number, p.title, p.status", {"n": int(m.group(1))}):
+        n = int(m.group(1))
+        for n, t, s in (run.q("MATCH (p:PEP {number: $n}) RETURN p.number, p.title, p.status", {"n": n}) if 0 <= n <= 99999 else []):
             out.append({"kind": "PEP", "number": n, "title": t, "status": s, "via": "number", "confident": True})
         return out
     ft = _fulltext_query(text)
@@ -472,14 +478,13 @@ def bus_factor(subject: str, tenant: str = "python") -> dict:
 
 def _endpoint(run: Run, ref: str):
     """Match clause + params for a PEP or a Person."""
-    n = None
-    if re.fullmatch(r"\s*(?:PEP[\s-]?)?\d{1,4}\s*", ref, re.I):
+    if PEP_REF.fullmatch(ref):
         n = pep_number(run, ref)
-    if n is None:
-        people = run.q("MATCH (a:Person) WHERE toLower(a.name) = toLower($s) RETURN a.name", {"s": ref.strip()})
-        if people:
-            return "Person", {"name": people[0][0]}
-        n = pep_number(run, ref)
+        return ("PEP", {"number": n}) if n is not None else (None, None)
+    people = run.q("MATCH (a:Person) WHERE a.name_lc = $s RETURN a.name", {"s": " ".join(ref.lower().split())})
+    if people:
+        return "Person", {"name": people[0][0]}
+    n = pep_number(run, ref)   # a confident PEP match only; an unknown name fails loudly
     return ("PEP", {"number": n}) if n is not None else (None, None)
 
 
@@ -731,17 +736,21 @@ def came_back_text(b: dict) -> str:
 # answered connects to PEPs asked about earlier in the same session. make sync carries these over.
 
 SESSION_ID = re.compile(r"[A-Za-z0-9_-]{1,32}")
+SESSION_CAP = 100
 
 
 def record_turn(session: str, question: str, mode: str, peps: list[int], tenant: str = "python") -> None:
     if not SESSION_ID.fullmatch(session or ""):
         return
     at = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    graph(tenant).query("""MERGE (s:Session {id: $sid}) ON CREATE SET s.started = $at
+    # At most SESSION_CAP questions per session, counted on the node, so one client can't grow the graph without bound.
+    graph(tenant).query("""MERGE (s:Session {id: $sid}) ON CREATE SET s.started = $at, s.asked = 0
+                           WITH s WHERE coalesce(s.asked, 0) < $cap
+                           SET s.asked = coalesce(s.asked, 0) + 1
                            CREATE (s)-[:ASKED {weight: 1.0}]->(q:Query {text: $text, at: $at, mode: $mode})
                            WITH q UNWIND $peps AS n MATCH (p:PEP {number: n})
                            CREATE (q)-[:ACCESSED {weight: 1.0}]->(p)""",
-                        {"sid": session, "at": at, "text": question[:500], "mode": mode, "peps": peps[:5]})
+                        {"sid": session, "at": at, "text": question[:500], "mode": mode, "peps": peps[:5], "cap": SESSION_CAP})
 
 
 def session_link(session: str, peps: list[int], tenant: str = "python") -> dict:
