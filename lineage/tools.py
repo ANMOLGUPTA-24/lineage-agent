@@ -46,6 +46,10 @@ def node_view(n: Node) -> dict:
                 "url": p.get("verdict_url") or p.get("url"), "at": p.get("at")}
     if label == "Finding":
         return {"id": f"Finding {p.get('at')}", "label": "Finding", "title": p.get("text")}
+    if label == "Session":
+        return {"id": f"Session {p.get('id')}", "label": "Session"}
+    if label == "Query":
+        return {"id": f"Asked: {(p.get('text') or '')[:48]}", "label": "Query", "title": p.get("text")}
     if label == "Section":
         return {"id": f"{p.get('title')} (PEP {p.get('pep')})", "label": "Section", "title": p.get("title"), "url": p.get("url")}
     if label == "Thread":
@@ -739,7 +743,9 @@ def my_session(session: str = "", tenant: str = "python") -> dict:
     if not rows:
         return envelope("my_session", args, run, "not_in_graph", note="Nothing has been asked in this session yet.")
     run.say(f"Read this session's Query nodes from the graph: {len(rows)} earlier question(s)")
-    return envelope("my_session", args, run, "answered",
+    paths = [path_view(r[0]) for r in run.q("""MATCH path = (:Session {id: $sid})-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP)
+                                                RETURN path LIMIT 12""", {"sid": session})]
+    return envelope("my_session", args, run, "answered", paths=paths,
                     rows=[{"question": t, "at": a, "peps": sorted(set(p))} for t, a, p in rows])
 
 

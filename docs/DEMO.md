@@ -1,6 +1,6 @@
 # Demo video script (target 2:50)
 
-`docs/video/lineage-demo.mp4` (2:26) is a captioned, silent walkthrough built from screenshots of the
+`docs/video/lineage-demo.mp4` (2:47) is a captioned, silent walkthrough built from screenshots of the
 running app, with the same story as below. It can be submitted as is. For a narrated version, record
 the screen while following this script.
 

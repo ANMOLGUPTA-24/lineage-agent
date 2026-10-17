@@ -9,7 +9,7 @@ Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Tra
 The "company" is the Python project, one of the largest open-source organisations, with 25 years of
 decisions on public record.
 
-> **Demo video:** [docs/video/lineage-demo.mp4](docs/video/lineage-demo.mp4) (2:26, captioned walkthrough of the running app) · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
+> **Demo video:** [docs/video/lineage-demo.mp4](docs/video/lineage-demo.mp4) (2:47, captioned walkthrough of the running app) · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
 > (runs the app with the pre-built graph in your browser on GitHub's free Codespaces allowance; port 8000 opens by itself)
 
 ### Does the graph matter? Measured against vector search on the same data
