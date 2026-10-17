@@ -13,7 +13,7 @@ Copy into the submission form. Every number here is from the repo; re-check if t
 **Live demo:** https://anmolgupta-24.github.io/lineage-agent/demo/ (static: the real UI with 67 answers recorded from the
 graph, opening on a multi-hop example; anything else shows how to run it locally in a minute)
 
-**Demo video:** https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@5e78d51ffd522aeaa6b9639c3daff0aa48256fa2/docs/video/lineage-demo.mp4 (2:51, narrated, captions burned in; `docs/video/lineage-demo.srt` for upload)
+**Demo video:** https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4 (2:51, narrated, captions burned in; `docs/video/lineage-demo.srt` for upload)
 
 **How to run (live deployment alternative):**
 `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (about a minute; the graph is

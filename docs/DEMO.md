@@ -1,6 +1,6 @@
 # Demo video
 
-[`docs/video/lineage-demo.mp4`](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@5e78d51ffd522aeaa6b9639c3daff0aa48256fa2/docs/video/lineage-demo.mp4): 2:51, 1080p, narrated (Kokoro-82M, local), captions burned in
+[`docs/video/lineage-demo.mp4`](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4): 2:51, 1080p, narrated (Kokoro-82M, local), captions burned in
 (also `docs/video/lineage-demo.srt`). Recorded from the real UI against the live graph; rebuild with
 `scripts/video/` (voice.py, record.py, build.py).
 
