@@ -649,21 +649,21 @@ def idea_candidates(run: Run, idea: str, k: int = 15) -> list[dict]:
 
 def pep_context(run: Run, n: int) -> tuple[dict, list]:
     """Ruling, decider, supersession and later re-rejections of one PEP, in one traversal."""
-    (num, title, status, created, url, abstract, authors, rulings, decisions, lines, npaths, notice, backs, later), = run.q("""
+    (num, title, status, created, url, abstract, authors, apaths, rulings, decisions, lines, npaths, notice, backs, later), = run.q("""
         MATCH (p:PEP {number: $n})
-        OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p)
-        WITH p, collect(DISTINCT au.name) AS authors
+        OPTIONAL MATCH apath = (au:Person)-[:AUTHORED]->(p)
+        WITH p, collect(DISTINCT au.name) AS authors, collect(apath)[0..4] AS apaths
         OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who)
-        WITH p, authors, collect(ruling) AS rulings,
+        WITH p, authors, apaths, collect(ruling) AS rulings,
              collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at,
                       url: coalesce(d.verdict_url, d.url)}) AS decisions
         OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP)
-        WITH p, authors, rulings, decisions, collect(line) AS lines
+        WITH p, authors, apaths, rulings, decisions, collect(line) AS lines
         OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'})
-        WITH p, authors, rulings, decisions, lines, collect(npath) AS npaths,
+        WITH p, authors, apaths, rulings, decisions, lines, collect(npath) AS npaths,
              collect({text: s.text, url: s.url, title: s.title})[0] AS notice
         OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p)
-        RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings,
+        RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, apaths, rulings,
                decisions, lines, npaths, notice, collect(back),
                collect({pep: later.number, title: later.title, created: later.created, via: x.via})""", {"n": n})
     decided = [d for d in decisions if d["by"]]
@@ -684,7 +684,7 @@ def pep_context(run: Run, n: int) -> tuple[dict, list]:
                                RETURN a.url, c.quote""", {"n": n, "urls": [b["url"] for b in row["came_back"]]}))
         for b in row["came_back"]:
             b["quote"] = quotes.get(b["url"]) or ""
-    return row, [path_view(r) for r in rulings + npaths] + succ + [path_view(b) for b in backs]
+    return row, [path_view(r) for r in apaths + rulings + npaths] + succ + [path_view(b) for b in backs]
 
 
 # ---------------------------------------------------------------- session memory (in the graph)

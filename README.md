@@ -1,25 +1,55 @@
-# Lineage
+# Lineage: a company brain for the Python project
 
-**Why does Python work the way it does?** Lineage is an agent that answers questions about the
-Python language's decisions (who proposed what, who decided it, what it builds on, whether it's
-still current, and who to ask) by walking a FalkorDB graph of PEPs, people, rulings and CPython
-pull requests. Every answer comes with the graph path that produced it.
+**Has Python already decided this?** Paste an idea and Lineage answers from a FalkorDB graph of 25 years of
+Python's decisions: the PEP that proposed it, the ruling and who made it, whether the idea came back later,
+the sentence from the source that says so, and who to ask. It can draft the reply. Every answer comes with
+the graph path that produced it and the exact Cypher that ran.
 
-Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Track 03: Company Brain**.
-The "company" is the Python project, one of the largest open-source organisations, with 25 years of
-decisions on public record.
+Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Track 03: Company Brain**. The
+company is the Python project: one of the largest open-source organisations, with every decision on public record.
 
-> **Demo video:** [docs/video/lineage-demo.mp4](docs/video/lineage-demo.mp4) (2:28, captioned walkthrough of the running app) · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
-> (runs the app with the pre-built graph in your browser on GitHub's free Codespaces allowance; port 8000 opens by itself)
+> **Demo video:** [watch (2:28)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@master/docs/video/lineage-demo.mp4) ·
+> **Run it in a minute:** `docker compose -f docker-compose.quick.yml up` → http://localhost:8000 (pre-built graph, no API key) ·
+> [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
+
+### The problem is real
+
+> "Research whether your idea has been proposed before. There are many suggestions that have been made and
+> rejected in the past. … Previously rejected ideas are especially unlikely to get accepted."
+> — [CPython Developer's Guide, *Changing Python*](https://devguide.python.org/developer-workflow/lang-changes/)
+
+> "The problem is that people have asked it. Then asked it again. And again. And again. … As a maintainer,
+> it's not very fun to keep having to say no over and over in slightly different ways."
+> — David Lord, replying on [discuss.python.org](https://discuss.python.org/t/why-not-real-anonymous-functions/44513/14)
+> to a proposer who had "searched this forum as well as all of the PEPs" and found nothing
+
+Keyword search over PEP titles and forum posts misses rejected ideas buried inside other PEPs (1,085 of them)
+and ideas phrased differently. Lineage reads the rejected-ideas sections, links them to what they rejected,
+and walks those links: "multi-line lambdas" returns the 2023 forum thread and the core developer who answered it.
+
+### How it maps to the Company Brain brief
+
+| The brief asks for | In Lineage |
+|---|---|
+| Knowledge from docs, tickets and chats in one graph | PEPs and their sections (docs), CPython PRs and issues (tickets), discuss.python.org threads (chats) |
+| Who owns what, and who knows what | `who_knows`: PageRank over who builds on whom, per area; `bus_factor`: WCC with and without the key person |
+| Tracing decisions back to their source | `Decision -[MADE_BY]->` person or council, quoted rulings, `REJECTS_APPROACH_OF` chains across PEPs |
+| Keeping knowledge current | `make sync`: rebuild beside the live graph, record `Change` events, swap atomically |
+| Answers with clear sources | every claim quoted from the source with a deep link; a guard rejects anything the graph didn't return |
+| Gets work done | `draft_reply` writes the forum reply, built only from graph rows |
+
+The ingest is a schema, not a Python special case: point it at an organisation's RFCs or ADRs (with their
+"rejected alternatives" sections), its tracker and its chat, and the same tools answer "has this team
+already decided this?".
 
 ### Does the graph matter? Measured against vector search on the same data
 
 | 98 questions with known answers | Lineage (graph) | Vector baseline* |
 |---|---|---|
-| Has this idea been decided? Right PEP as the top answer (**held-out** set) | **76%** | 53% |
-| Who decided it? | **83%** | 17% |
 | Did the idea come back later? | **100%** | 0% |
 | How are two PEPs related? | **100%** | 25% |
+| Who decided it? | **83%** | 17% |
+| Has this idea been decided? Right PEP as the top answer (**held-out** set) | **76%** | 53% |
 | Is it still current? (31 superseded PEPs) | **100%** | 94% |
 
 \*Same corpus, same embedding model, its no-match cutoff tuned on these very questions. Lineage is wrong on
@@ -88,46 +118,20 @@ replaced with one built directly from the rows. The UI shows the rejected text c
 Decisions the source data doesn't attribute (pre-2018 rulings without a named delegate, for example)
 are marked `inferred` and drawn dashed.
 
-## Evaluation: does the graph matter?
+## Evaluation, briefly
 
-98 questions with known answers: 49 "has Python already decided this idea?" (22 of them a **held-out**
-set written after the system was built and never tuned on), 36 "is it current?" (generated from the
-raw `peps.json`, not from the graph), plus who decided, did the idea come back, and how two PEPs relate.
-The vector baseline gets the same corpus, the same embedding model, and a no-match cutoff tuned on these
-very questions. With no LLM key in the loop it is scored on **evidence recall** (do its top 5 chunks
-contain the answer?), an upper bound for any LLM answering from them.
+98 questions with known answers (table at the top). The "has this been decided?" set has a **held-out** part
+written after the system was built and never tuned on; currency questions are generated from the raw
+`peps.json`, not from the graph. The vector baseline gets the same corpus, the same embedding model and a
+no-match cutoff tuned on these questions; with no LLM in the loop it is scored on evidence recall (do its top
+5 chunks contain the answer?), an upper bound for any LLM answering from them.
 
-| Question type | n | Lineage (tool rows) | Vector baseline | Baseline is credited when |
-|---|---|---|---|---|
-| Already decided? has a PEP · **held-out** | 17 | 13/17 (76%) | 9/17 (53%) | top-1 chunk is an expected PEP (cutoff applied) |
-| Already decided? no PEP · **held-out** | 5 | 5/5 (100%) | 5/5 (100%) | top-1 similarity under the tuned cutoff |
-| Already decided? has a PEP · dev (seen while building) | 20 | 16/20 (80%) | 14/20 (70%) | top-1 chunk is an expected PEP (cutoff applied) |
-| Already decided? no PEP · dev | 7 | 6/7 (86%) | 7/7 (100%) | top-1 similarity under the tuned cutoff |
-| Already decided? has a PEP · all (evidence in top 5) | 37 | 29/37 (78%) | 36/37 (97%) | an expected PEP anywhere in the top 5 |
-| Is it current? (superseded) | 31 | 31/31 (100%) | 29/31 (94%) | top 5 include the latest PEP in the chain |
-| Is it current? (controls) | 5 | 5/5 (100%) | n/a | (nothing to retrieve) |
-| Who decided it? | 6 | 5/6 (83%) | 1/6 (17%) | decider named in the top 5 |
-| Did the idea come back? | 3 | 3/3 (100%) | 0/3 (0%) | a later PEP citing it in the top 5 |
-| How are A and B related? | 4 | 4/4 (100%) | 1/4 (25%) | a chunk of A naming B (or B naming A) in the top 5 |
-
-- **Confidently wrong** (Lineage's top row is a "same idea" match on a PEP that did not propose it): 3/32 confident answers (ad24, ho04, ho06). `draft_reply` only quotes "same idea" matches, so this is the rate at which a draft would cite the wrong PEP.
-- Baseline no-match cutoff (cosine similarity of the top chunk), tuned on these questions: **0.765**.
-- Lineage answers that carry a graph path: 71/79 (90%) of correct answered items (the baseline returns text chunks, never paths, by construction).
-- Keyword router (no LLM) picked the right tool: 98/98 (100%).
-- Median latency: Lineage 515 ms, baseline 26 ms (warm, CPU, local FalkorDB).
-
-**What this says.** Finding the PEP for an idea is a retrieval problem, and vectors are good at it:
-the right PEP is in the baseline's top 5 for 97% of ideas. Lineage's cross-encoder picks it as the
-*top* answer more often on held-out ideas (76% vs 53%) and never invents a match for ideas with no
-PEP on held-out. But every question **after** finding the PEP is a relationship, and that is where
-retrieval stops: who decided it (83% vs 17%), whether the idea came back (100% vs 0%), how two PEPs
-relate (100% vs 25%). Those answers live on edges, not in any chunk.
-
-**Where Lineage is wrong.** 3 of 32 confident "same idea" answers name the wrong PEP (HTTP/3 client →
-PEP 476 on HTTPS verification; function decorators → PEP 647; dataclasses → PEP 681, dataclass
-*transforms*). Several right answers are under-confident ("related"). Two ground-truth labels were
-widened after the first run, both to PEPs that themselves proposed the idea (f-strings: 536, 701;
-positional-only: 457); this is recorded in `eval/questions.jsonl`. Full list of misses:
+What it says: finding the PEP for an idea is a retrieval problem, and vectors are good at it (the right PEP is
+in the baseline's top 5 for 97% of ideas). Every question after that is a relationship, and that is where
+retrieval stops. Where Lineage is wrong: 3 of 32 confident "same idea" answers name the wrong PEP, several
+right answers come out only "related", and two ground-truth labels were widened after the first run (both to
+PEPs that themselves proposed the idea; recorded in `eval/questions.jsonl`). The keyword router's 98/98 tool
+choices should be read with care: it was written alongside these questions. Every miss:
 [eval/RESULTS.md](eval/RESULTS.md). Reproduce: `uv run python -m eval.run`.
 
 ## Keeping it current
@@ -144,11 +148,6 @@ Tested under load: 4 reader threads made 22,468 queries during a 2-minute sync, 
 complete graph (745 PEPs, old or new), with 0 errors. A simulated upstream change (a status change,
 a new PEP, a new supersession) came out as exactly those 3 `Change` events.
 
-Why rebuild instead of patching: a long-lived graph that had been re-ingested in place many times
-began returning a wrong endpoint for 3 edges on an unanchored scan (PEP 0 instead of PEP 831; the
-anchored query was right), on FalkorDB 4.22.1. A fresh build was correct, and the sync diff is what
-surfaced it. Replaying four rounds of the same in-place re-ingest on a scratch graph did not reproduce it
-(973 edges, 0 mismatches each round), so this is an observation, not a confirmed FalkorDB bug.
 
 ## Graph model
 
@@ -233,7 +232,7 @@ docker compose up --build         # FalkorDB + ingest + app → http://localhost
 Without Docker for the app:
 
 ```bash
-docker run -d -p 6379:6379 -p 3000:3000 falkordb/falkordb:latest
+docker run -d -p 6379:6379 -p 3000:3000 falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
 uv sync && make ingest && make app
 make test                         # behaviour tests against the loaded graph
 make sync                         # rebuild beside the live graph and swap (see "Keeping it current")
@@ -245,13 +244,19 @@ A single-container image (FalkorDB on localhost + the app, graph baked in) for a
 
 ### LLM (optional, free options)
 
-Any OpenAI-compatible endpoint works: a Gemini API key (free at aistudio.google.com), Groq, or a
-local Ollama model. See `.env.example`. **With no key**, a keyword router picks the tools and the
-answer is templated from the rows. The graph does the reasoning either way.
+**With no key** (the default, and what the demo shows), a keyword router picks the tools and the answer
+is built from the graph rows. The graph does the reasoning either way.
 
-### MCP
+With a key, an LLM picks the tools instead and writes the answer, and the guard checks every PEP number,
+name and quote it uses against the rows. The loop speaks the OpenAI-compatible chat API (a free Gemini key
+from aistudio.google.com, Groq, or a local Ollama model; see `.env.example`). It is covered by tests with a
+scripted model; it has not been run against a hosted model for this submission.
 
-The same tools are an MCP server, usable from Claude Desktop, Claude Code or Cursor:
+### MCP: the agent interface
+
+The web page is one client. The same typed tools are an MCP server, so any agent (Claude Desktop, Claude
+Code, Cursor) can use Lineage as its memory of Python's decisions, with the same read-only Cypher and the
+same paths in every result:
 
 ```json
 {"mcpServers": {"lineage": {"command": "uv", "args": ["run", "python", "-m", "lineage.mcp_server"],

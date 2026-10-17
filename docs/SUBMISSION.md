@@ -2,7 +2,7 @@
 
 Copy into the submission form. Every number here is from the repo; re-check if the code changes.
 
-**Project name:** Lineage
+**Project name:** Lineage (Python decisions): has Python already decided this?
 
 **Track:** Track 03: Company Brain
 
