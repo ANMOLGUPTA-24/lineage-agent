@@ -62,3 +62,13 @@ def test_rollback_points_back_at_the_previous_graph(monkeypatch):
     tiny(T, [(1, "Final")])
     sync.swap(T, f"{T}__v2", build_fn=lambda n: tiny(n, [(1, "Final"), (2, "Draft")]))
     assert sync.rollback(T) == T and resolve(T) == T
+
+
+def test_session_memory_survives_the_swap():
+    g = tiny(T, [(1, "Final"), (2, "Draft")])
+    g.query("""CREATE (s:Session {id: 'abc', started: '2026-01-01'})-[:ASKED]->(q:Query {text: 'why 1', at: '2026-01-01'})
+               WITH q MATCH (p:PEP {number: 1}) CREATE (q)-[:ACCESSED]->(p)""")
+    sync.swap(T, f"{T}__v2", build_fn=lambda n: tiny(n, [(1, "Final"), (2, "Draft")]))
+    new = connect().select_graph(f"{T}__v2")
+    assert new.ro_query("""MATCH (:Session {id: 'abc'})-[:ASKED]->(:Query {text: 'why 1'})-[:ACCESSED]->(p:PEP)
+                           RETURN p.number""").result_set == [[1]]

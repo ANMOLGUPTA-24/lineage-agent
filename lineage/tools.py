@@ -77,6 +77,11 @@ class Run:
         self.g = graph(tenant)
         self.cypher: list[str] = []
         self.params: list[dict] = []
+        self.notes: list[str] = []
+
+    def say(self, text: str) -> None:
+        """A step a reader can follow, written from what actually ran (counts, scores), never ahead of it."""
+        self.notes.append(text)
 
     def log(self, cypher: str, params: dict | None) -> dict:
         params = params or {}
@@ -106,7 +111,7 @@ def first_sentences(text: str, limit: int = QUOTE_CHARS) -> str:
 
 def envelope(tool: str, args: dict, run: Run, outcome: str, rows=None, paths=None, note: str = "") -> dict:
     return {"tool": tool, "args": args, "outcome": outcome, "rows": rows or [], "paths": paths or [],
-            "note": note, "cypher": run.cypher, "params": run.params}
+            "note": note, "cypher": run.cypher, "params": run.params, "explain": run.notes}
 
 
 def unknown(tool: str, args: dict, run: Run, what: str) -> dict:
@@ -228,6 +233,8 @@ def why(pep: str, depth: int = 2, tenant: str = "python") -> dict:
         if key not in rows[0] or (key == "rationale" and kind == "rationale"):
             rows[0][key] = {"section": title, "quote": first_sentences(text), "url": surl}
 
+    run.say(f"Variable-length traversal REQUIRES|REFERENCES|SUPERSEDES*1..{depth} from PEP {n}, cheapest path per "
+            f"ancestor, kept {len(paths)} within embedding drift {MAX_DRIFT}")
     # A cited PEP that never shipped is an earlier proposal, not something this PEP builds on.
     ancestors = [p[-1] for p in paths]
     rows[0]["builds_on"] = [a["id"] for a in ancestors if a.get("status") not in NOT_ADOPTED]
@@ -281,6 +288,8 @@ def is_current(pep: str, tenant: str = "python") -> dict:
     rows = [{"pep": n, "title": title, "status": status, "current": current,
              "latest": [{"pep": r[1], "status": r[2]} for r in chain],
              "replaces": [path_view(r[0])[-1]["id"] for r in replaced]}]
+    run.say(f"Followed SUPERSEDES edges from PEP {n} (status {status}): "
+            + (f"{len(chain)} chain(s) to the latest PEP" if chain else "nothing supersedes it"))
     note = ""
     if status in ("Rejected", "Withdrawn", "Deferred", "Draft") and not chain:
         note = f"PEP {n} is {status}; it never became part of Python."
@@ -357,6 +366,9 @@ def who_knows(subject: str, limit: int = 5, tenant: str = "python") -> dict:
                          (q:PEP)<-[:AUTHORED|DELEGATE_FOR]-(b:Person {{name: $name}})
             WHERE a <> b AND {SCOPE_PEPS[sc['kind']]}
             RETURN path LIMIT 2""", {"name": p["name"], "key": sc["key"]})]
+    run.say(f"Read EXPERT_IN for {sc['name']}: PageRank over the INFLUENCE_{sc['slug']} projection (Person -> Person "
+            "when one's PEP or PR builds on, or was decided by, the other's work), computed at ingest")
+    run.say(f"Evidence: {len(paths)} citation path(s) into the top-ranked people's PEPs")
     row = {"subject": sc["name"], "people_in_area": sc["people"], "direct": direct,
            "most_built_on": people[:limit],
            "most_active": sorted(people, key=lambda p: -p["items"])[:3],
@@ -437,7 +449,11 @@ def bus_factor(subject: str, tenant: str = "python") -> dict:
     rows = [{"subject": label, "peps": len(per_pep), "people": len(counts),
              "most_involved": {"name": top, "peps": counts[top], "share": round(counts[top] / len(per_pep), 2)},
              "orphaned_if_they_leave": orphaned, "single_person_peps": len(single)}]
+    run.say(f"Counted distinct authors, deciders and implementers on each of {len(per_pep)} PEPs; "
+            f"{len(single)} depend on one person")
     if "slug" in sc and sc["largest"]:
+        run.say(f"algo.WCC over INFLUENCE_{sc['slug']} with and without {top} (computed at ingest): "
+                f"largest connected group {sc['largest']} -> {sc['largest_without_top']}")
         # WCC at ingest: the largest connected group of the area's people, with and without `top`.
         rows[0]["connected"] = {"largest_group": sc["largest"], "largest_without_them": sc["largest_without_top"],
                                 "cut_off_if_they_leave": max(0, sc["largest"] - 1 - sc["largest_without_top"]),
@@ -482,6 +498,9 @@ def connection(a: str, b: str, tenant: str = "python") -> dict:
         return envelope("connection", args, run, "not_in_graph",
                         note=f"No path of 6 hops or fewer links {a} and {b} in the graph. "
                              "That means the graph doesn't record one, not that none exists.")
+    run.say(f"algo.SPpaths: weighted shortest paths (up to 6 hops, both directions) over {len(CONNECT_RELS)} "
+            f"relationship types; {len(rows)} path(s), cheapest cost {rows[0][1]:.2f} in {len(rows[0][0].edges())} hop(s). "
+            "Person and topic edges cost 1 + ln(1 + degree), so hubs don't win by default")
     return envelope("connection", args, run, "answered",
                     rows=[{"hops": len(r[0].edges()), "cost": round(r[1], 2)} for r in rows],
                     paths=[path_view(r[0]) for r in rows])
@@ -609,10 +628,19 @@ def idea_candidates(run: Run, idea: str, k: int = 15) -> list[dict]:
             got = []  # a graph built without discuss.python.org threads has no Thread index
         for kind, key, title, text in got:
             found[(kind, key)] = {"kind": kind, "key": key, "title": title, "text": text[:SNIPPET]}
+        if got:
+            src = {"pep": "PEPs", "alt": "rejected ideas", "thread": "forum threads"}[got[0][0]]
+            run.say(f"{'Vector' if vector else 'Full-text'} index over {src}: {len(got)} candidates")
     cands = list(found.values())
     for c, s in zip(cands, _reranker().rerank(idea, [c["text"] for c in cands])):
         c["score"] = round(float(s), 2)
-    return sorted(cands, key=lambda c: -c["score"])
+    cands.sort(key=lambda c: -c["score"])
+    same = sum(c["score"] >= SAME_IDEA for c in cands)
+    related = sum(RELATED_IDEA <= c["score"] < SAME_IDEA for c in cands)
+    run.say(f"Local cross-encoder scored {len(cands)} distinct candidates against the idea: {same} same idea "
+            f"(score >= {SAME_IDEA}), {related} related, {len(cands) - same - related} dropped"
+            + (f"; best: {cands[0]['title'][:60]!r} at {cands[0]['score']}" if cands else ""))
+    return cands
 
 
 def pep_context(run: Run, n: int) -> tuple[dict, list]:
@@ -653,6 +681,66 @@ def pep_context(run: Run, n: int) -> tuple[dict, list]:
         for b in row["came_back"]:
             b["quote"] = quotes.get(b["url"]) or ""
     return row, [path_view(r) for r in rulings + npaths] + succ + [path_view(b) for b in backs]
+
+
+# ---------------------------------------------------------------- session memory (in the graph)
+#
+#   (:Session {id})-[:ASKED]->(:Query {text, at, mode})-[:ACCESSED]->(:PEP)
+#
+# Written after each answer, per tenant graph. session_link then asks the graph how the PEP just
+# answered connects to PEPs asked about earlier in the same session. make sync carries these over.
+
+SESSION_ID = re.compile(r"[A-Za-z0-9_-]{1,32}")
+
+
+def record_turn(session: str, question: str, mode: str, peps: list[int], tenant: str = "python") -> None:
+    if not SESSION_ID.fullmatch(session or ""):
+        return
+    at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    graph(tenant).query("""MERGE (s:Session {id: $sid}) ON CREATE SET s.started = $at
+                           CREATE (s)-[:ASKED {weight: 1.0}]->(q:Query {text: $text, at: $at, mode: $mode})
+                           WITH q UNWIND $peps AS n MATCH (p:PEP {number: n})
+                           CREATE (q)-[:ACCESSED {weight: 1.0}]->(p)""",
+                        {"sid": session, "at": at, "text": question[:500], "mode": mode, "peps": peps[:5]})
+
+
+def session_link(session: str, peps: list[int], tenant: str = "python") -> dict:
+    """How the PEPs in this answer connect to PEPs asked about earlier in the same session:
+    a weighted shortest path (algo.SPpaths, at most 3 hops) to the nearest earlier PEP."""
+    run, args = Run(tenant), {"session": session, "peps": peps}
+    if not SESSION_ID.fullmatch(session or "") or not peps:
+        return envelope("session_link", args, run, "not_in_graph", note="No earlier questions in this session.")
+    rows = run.q("""MATCH (:Session {id: $sid})-[:ASKED]->(:Query)-[:ACCESSED]->(e:PEP) WHERE NOT e.number IN $peps
+                    WITH DISTINCT e LIMIT 10
+                    MATCH (c:PEP) WHERE c.number IN $peps
+                    CALL algo.SPpaths({sourceNode: c, targetNode: e, relTypes: $rels, weightProp: 'weight',
+                                       maxLen: 3, relDirection: 'both', pathCount: 1})
+                    YIELD path, pathWeight
+                    RETURN path, pathWeight, c.number, e.number ORDER BY pathWeight LIMIT 1""",
+                 {"sid": session, "peps": peps, "rels": CONNECT_RELS})
+    if not rows:
+        return envelope("session_link", args, run, "not_in_graph",
+                        note="Nothing asked earlier in this session is within 3 hops of this answer.")
+    path, cost, now, earlier = rows[0]
+    run.say(f"Session memory: PEPs this session asked about before, then algo.SPpaths from PEP {now} to the nearest "
+            f"(PEP {earlier}, {len(path.edges())} hop(s), cost {cost:.2f})")
+    return envelope("session_link", args, run, "answered",
+                    rows=[{"now": now, "earlier": earlier, "hops": len(path.edges()), "cost": round(cost, 2)}],
+                    paths=[path_view(path)])
+
+
+def my_session(session: str = "", tenant: str = "python") -> dict:
+    """What was asked earlier in this session, in order, with the PEPs each answer touched."""
+    run, args = Run(tenant), {"session": session}
+    rows = run.q("""MATCH (:Session {id: $sid})-[:ASKED]->(q:Query)
+                    OPTIONAL MATCH (q)-[:ACCESSED]->(p:PEP)
+                    RETURN q.text, q.at, collect(p.number) ORDER BY q.at""", {"sid": session}) \
+        if SESSION_ID.fullmatch(session or "") else []
+    if not rows:
+        return envelope("my_session", args, run, "not_in_graph", note="Nothing has been asked in this session yet.")
+    run.say(f"Read this session's Query nodes from the graph: {len(rows)} earlier question(s)")
+    return envelope("my_session", args, run, "answered",
+                    rows=[{"question": t, "at": a, "peps": sorted(set(p))} for t, a, p in rows])
 
 
 KIND_ORDER = {"pep": 0, "alt": 1, "thread": 2}
@@ -711,9 +799,15 @@ def already_decided(idea: str, tenant: str = "python") -> dict:
         if h["kind"] == "pep":
             row, ps = pep_context(run, h["key"])
             rows.append({"kind": "pep", "match": match, "score": h["score"], **row})
+            run.say(f"Graph traversal from PEP {row['pep']}: ruling {'found' if row['decision'] else 'not recorded'}, "
+                    f"ruling notice {'quoted' if row['reason'] else 'none'}, "
+                    f"superseded {'by ' + row['superseded_by'] if row['superseded_by'] else 'no'}, "
+                    f"{len(row['came_back'])} later PEP(s) set its approach aside (REJECTS_APPROACH_OF)")
         elif h["kind"] == "thread":
             row, ps = thread_context(run, h["key"])
             rows.append({"kind": "thread", "match": match, "score": h["score"], **row})
+            run.say(f"Graph traversal from forum thread {row['thread_id']}: started by {row['started_by']}, "
+                    f"{len(row['participants'])} top participants, {len(row['peps'])} linked PEP(s)")
         else:
             (alt, pep_n, text, earlier), = run.q("""
                 MATCH alt = (a:Alternative {url: $url})-[:REJECTED_IN]->(p:PEP)
@@ -721,6 +815,8 @@ def already_decided(idea: str, tenant: str = "python") -> dict:
                 RETURN alt, p.number, a.text, collect({pep: q.number, status: q.status, quote: c.quote})""",
                 {"url": h["key"]})
             row, ps = pep_context(run, pep_n)
+            run.say(f"Graph traversal from rejected idea {h['title'][:50]!r} -[REJECTED_IN]-> PEP {pep_n}, "
+                    f"then that PEP's ruling and history")
             rows.append({"kind": "rejected_idea", "match": match, "score": h["score"], "idea": h["title"],
                          "idea_url": h["key"], "idea_quote": first_sentences(text),
                          "earlier_forms": [e for e in earlier if e["pep"]], **row})
@@ -783,7 +879,7 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
 
 
 TOOLS = {f.__name__: f for f in (resolve, why, is_current, who_knows, bus_factor, connection, recall, remember,
-                                 already_decided, draft_reply, changes)}
+                                 already_decided, draft_reply, changes, my_session)}
 
 
 def call(name: str, args: dict, tenant: str = "python") -> dict:

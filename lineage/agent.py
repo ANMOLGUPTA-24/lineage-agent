@@ -67,6 +67,8 @@ SCHEMAS = [
      "parameters": {"type": "object", "properties": {
          "since": {"type": "string", "description": "ISO date, e.g. 2026-10-01"},
          "pep": {"type": "string"}}}},
+    {"name": "my_session", "description": tools.my_session.__doc__,
+     "parameters": {"type": "object", "properties": {}}},
     {"name": "recall", "description": tools.recall.__doc__,
      "parameters": {"type": "object", "properties": {"pep": {"type": "string"}}, "required": ["pep"]}},
     {"name": "remember", "description": tools.remember.__doc__ + " Only when the user asks you to remember or note something.",
@@ -192,6 +194,13 @@ def template(step: dict) -> str:
     if t == "connection":
         p = step["paths"][0]
         return "Shortest link: " + " ".join(x["id"] if "id" in x else (f"-[{x['edge']}]->" if x["forward"] else f"<-[{x['edge']}]-") for x in p) + "."
+    if t == "session_link":
+        p = step["paths"][0]
+        chain = " ".join(x["id"] if "id" in x else (f"-[{x['edge']}]->" if x["forward"] else f"<-[{x['edge']}]-") for x in p)
+        return f"Earlier in this session you asked about PEP {r['earlier']}; the graph links it to this answer: {chain}."
+    if t == "my_session":
+        return "Earlier in this session: " + "; ".join(
+            f"\"{x['question']}\"" + (f" (PEP {', '.join(map(str, x['peps']))})" if x["peps"] else "") for x in rows) + "."
     if t == "changes":
         s = f"Last sync {r['last_sync']}: {r['changes_at_last_sync']} changes."
         if r["changes"]:
@@ -304,8 +313,49 @@ def templated_answer(steps: list[dict]) -> str:
 
 # ---------------------------------------------------------------- main entry
 
+MY_SESSION = re.compile(r"\b(what did i (ask|look at)|my (questions|history|session)|asked (earlier|before))\b", re.I)
+
+
+def answered_peps(steps: list[dict]) -> list[int]:
+    """The PEPs an answer is about: the subjects of its rows, in order, without duplicates."""
+    out = []
+    for st in steps:
+        if st["tool"] in ("session_link", "my_session", "resolve", "recall") or st["outcome"] != "answered":
+            continue
+        for r in st["rows"]:
+            n = r.get("pep") if isinstance(r, dict) else None
+            if isinstance(n, int) and n not in out:
+                out.append(n)
+        if st["tool"] == "connection":
+            for k in ("a", "b"):
+                if str(st["args"].get(k, "")).isdigit() and int(st["args"][k]) not in out:
+                    out.append(int(st["args"][k]))
+    return out[:5]
+
+
 def ask(question: str, tenant: str = "python", session: str | None = None, history: list | None = None) -> dict:
-    session = session or uuid.uuid4().hex[:8]
+    """Answer, then use the graph as session memory: link this answer to what the session asked
+    before (shortest path), and record the turn as (:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP)."""
+    session = session if session and tools.SESSION_ID.fullmatch(session) else uuid.uuid4().hex[:8]
+    if MY_SESSION.search(question):
+        steps = [tools.call("my_session", {"session": session}, tenant)]
+        out = {"answer": templated_answer(steps), "mode": "router", "steps": steps, "session": session}
+    else:
+        out = _ask(question, tenant, session, history)
+    peps = answered_peps(out["steps"])
+    if peps:
+        link = tools.session_link(session, peps, tenant)
+        if link["outcome"] == "answered":
+            out["steps"].append(link)
+            out["answer"] += " " + template(link)
+    try:
+        tools.record_turn(session, question, out["mode"], peps, tenant)
+    except Exception:  # memory is best effort; the answer stands without it
+        pass
+    return out
+
+
+def _ask(question: str, tenant: str, session: str, history: list | None) -> dict:
     client, model = llm_client()
     if client is None:
         steps = route(question, tenant)
@@ -330,6 +380,8 @@ def ask(question: str, tenant: str = "python", session: str | None = None, histo
                              "tool_calls": [tc.model_dump() for tc in msg.tool_calls]})
             for tc in msg.tool_calls:
                 args = json.loads(tc.function.arguments or "{}")
+                if tc.function.name == "my_session":
+                    args["session"] = session
                 if tc.function.name == "remember":
                     res = tools.remember(args.get("pep", ""), args.get("text", ""), session, tenant)
                     res["ms"] = 0

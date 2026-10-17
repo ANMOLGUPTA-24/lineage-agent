@@ -15,7 +15,7 @@ WEB = Path(__file__).parent / "web"
 
 class Ask(BaseModel):
     question: str = Field(min_length=2, max_length=500)
-    session: str | None = Field(default=None, max_length=32)
+    session: str | None = Field(default=None, max_length=32, pattern=r"^[A-Za-z0-9_-]+$")
     tenant: str = Field(default="python", max_length=40)
 
 

@@ -77,7 +77,7 @@ For "has this been proposed?", cosine distance could not separate "same idea" fr
 multi-line lambdas landed 0.21 from conditional expressions, and switch statements 0.30 from the
 switch PEP itself. No cutoff works when the wrong answer is closer than the right one.
 
-So vector and full-text search only gather about 60 candidates (PEPs, rejected ideas, forum
+So vector and full-text search only gather about 90 candidates (PEPs, rejected ideas, forum
 threads), and a small local cross-encoder (MiniLM-L-6, ~0.45 s on CPU, no API key) scores each
 (idea, candidate) pair. Then the graph takes over for the part that matters: the ruling, who made
 it, the PEP's own rejection notice, supersession, and later PEPs that set the same approach aside.

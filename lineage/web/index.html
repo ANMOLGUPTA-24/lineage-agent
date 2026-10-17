@@ -59,6 +59,8 @@ button:disabled { opacity: .5; cursor: wait; }
 .legend { position: absolute; left: 14px; top: 12px; display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); z-index: 2; pointer-events: none; }
 .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 4px; vertical-align: 0; }
 #trace { border-top: 1px solid var(--line); background: var(--panel); max-height: 38vh; overflow-y: auto; padding: 12px 20px; font: 12.5px/1.5 "IBM Plex Mono", monospace; }
+#trace ol.explain { margin: 6px 0 4px; padding-left: 20px; color: var(--ink); font: 13px/1.45 "IBM Plex Sans", sans-serif; }
+#trace ol.explain li { margin: 2px 0; }
 #trace h2 { font: 600 12px "IBM Plex Sans", sans-serif; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 8px; }
 .step { padding: 6px 0; border-bottom: 1px dashed var(--line); }
 .step:last-child { border-bottom: 0; }
@@ -114,9 +116,12 @@ const EXAMPLES = [
   "Who should I ask about typing?",
   "How is PEP 484 related to PEP 695?",
   "Has anyone proposed a banana keyword?",
+  "What did I ask earlier?",
 ];
 const $ = (s) => document.querySelector(s);
-const session = Math.random().toString(16).slice(2, 10);
+// The session id names this browser's memory in the graph: (:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP).
+let session = Math.random().toString(16).slice(2, 10);
+try { session = localStorage.getItem("lineage-session") || session; localStorage.setItem("lineage-session", session); } catch (e) {}
 const turns = [];
 let cy;
 
@@ -186,6 +191,7 @@ function draw(res) {
     <div class="step">${esc(s.tool)}(${esc(Object.entries(s.args).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(", "))})
       → <span class="tag ${esc(s.outcome)}">${esc(s.outcome)}</span> ${s.rows.length} rows · ${s.paths.length} paths · ${s.ms ?? "?"} ms
       ${s.note ? `<div style="color:var(--bad)">${esc(s.note)}</div>` : ""}
+      ${(s.explain || []).length ? `<ol class="explain">${s.explain.map((e) => `<li>${esc(e)}</li>`).join("")}</ol>` : ""}
       <details><summary>cypher (${(s.cypher || []).length})</summary><pre>${esc((s.cypher || []).join("\n\n"))}</pre></details>
     </div>`).join("") : "The agent made no tool calls.";
 }

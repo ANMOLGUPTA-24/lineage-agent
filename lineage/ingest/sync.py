@@ -9,8 +9,8 @@
 2. Check it: refuse to swap if it has no PEPs or lost more than 5% of the live graph's PEPs.
 3. Diff it against the live graph and write (:Change {at, kind, detail})-[:CHANGED]->(:PEP) for
    new PEPs, status changes, new supersessions, new rulings, newly linked PRs / issues and newly
-   recorded rejected approaches. Earlier Change / Sync history and agent memory (Finding) are
-   copied across.
+   recorded rejected approaches. Earlier Change / Sync history and agent memory (Finding, and
+   Session -> Query -> PEP) are copied across.
 4. SET lineage:active:<tenant> to the new graph: one atomic write. Queries already running
    finish on the old graph; new ones read the new one.
 5. Copy Findings written to the old graph while 1-4 ran, keep the previous graph for rollback,
@@ -81,6 +81,20 @@ def copy_findings(src, dst, since: str = "") -> int:
     return len(rows)
 
 
+def copy_sessions(src, dst, since: str = "") -> int:
+    """Session memory: (:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP)."""
+    rows = src.ro_query("""MATCH (s:Session)-[:ASKED]->(q:Query) WHERE q.at >= $since
+                           OPTIONAL MATCH (q)-[:ACCESSED]->(p:PEP)
+                           RETURN s.id, s.started, q.text, q.at, q.mode, collect(p.number)""", {"since": since}).result_set
+    for i in range(0, len(rows), 300):
+        dst.query("""UNWIND $rows AS r
+                     MERGE (s:Session {id: r[0]}) ON CREATE SET s.started = r[1]
+                     MERGE (s)-[:ASKED {weight: 1.0}]->(q:Query {text: r[2], at: r[3]}) SET q.mode = r[4]
+                     WITH q, r UNWIND r[5] AS n MATCH (p:PEP {number: n})
+                     MERGE (q)-[:ACCESSED {weight: 1.0}]->(p)""", {"rows": [list(r) for r in rows[i:i + 300]]})
+    return len(rows)
+
+
 def copy_history(src, dst) -> None:
     changes = src.ro_query("MATCH (c:Change)-[:CHANGED]->(p:PEP) RETURN c.at, c.kind, c.detail, p.number").result_set
     if changes:
@@ -136,12 +150,13 @@ def swap(tenant: str, new: str, build_fn=build) -> dict:
         if has_live:
             copy_history(live, fresh)
             copy_findings(live, fresh)
+            copy_sessions(live, fresh)
         write_changes(fresh, changes, started)
         fresh.query("CREATE (:Sync {at: $at, graph: $g, previous: $p, changes: $n})",
                     {"at": started, "g": new, "p": live_name if has_live else "", "n": len(changes)})
 
         r.set(ALIAS.format(tenant), new)                          # the swap: one atomic write
-        late = copy_findings(live, fresh, since=started) if has_live else 0
+        late = (copy_findings(live, fresh, since=started) + copy_sessions(live, fresh, since=started)) if has_live else 0
         r.set(PREVIOUS.format(tenant), live_name if has_live else "")
 
         keep = {new, live_name}

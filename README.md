@@ -12,6 +12,28 @@ decisions on public record.
 > **Demo video:** [docs/video/lineage-demo.mp4](docs/video/lineage-demo.mp4) (2:26, captioned walkthrough of the running app) · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
 > (runs the app with the pre-built graph in your browser on GitHub's free Codespaces allowance; port 8000 opens by itself)
 
+### Does the graph matter? Measured against vector search on the same data
+
+| 98 questions with known answers | Lineage (graph) | Vector baseline* |
+|---|---|---|
+| Has this idea been decided? Right PEP as the top answer (**held-out** set) | **76%** | 53% |
+| Who decided it? | **83%** | 17% |
+| Did the idea come back later? | **100%** | 0% |
+| How are two PEPs related? | **100%** | 25% |
+| Is it still current? (31 superseded PEPs) | **100%** | 94% |
+
+\*Same corpus, same embedding model, its no-match cutoff tuned on these very questions. Lineage is wrong on
+3 of 32 confident matches; every miss is listed in [eval/RESULTS.md](eval/RESULTS.md). Details below.
+
+**Scale:** 745 PEPs, 1,085 rejected ideas and 866 quotable sections parsed from the PEP sources, 1,748
+discuss.python.org threads, 507 CPython PRs and 466 issues, 252 rulings, 2,175 people, built deterministically
+from public data in under 4 minutes (`make ingest`), with a 47-test suite.
+
+**What the graph does per answer:** typed traversals over evidence edges extracted from the PEPs' own text
+(`REJECTS_APPROACH_OF`, `CITES`), `algo.SPpaths` with hub-aware weights, PageRank and WCC on per-area
+projections, and session memory as graph nodes. Every answer lists the steps that ran, draws the subgraph it
+walked, and shows the exact Cypher with its parameters.
+
 ![Has anyone proposed a do-while loop? PEP 315, rejected, with its Notice quoted and the graph path drawn](docs/screenshots/already-decided.jpg)
 
 | Did the idea come back? | Who should I ask about typing? |
@@ -44,6 +66,7 @@ who ruled on it, or which earlier proposals it builds on four hops back. Those a
 | `connection(a, b)` | How are A and B related? | **`algo.SPpaths`** weighted shortest paths over every relationship type |
 | `already_decided(idea)` | Has Python already decided this? | vector + full-text candidates over PEPs, 1,085 rejected ideas and 1,748 forum threads, scored by a local cross-encoder; then a traversal: ruling, decider, the PEP's own rejection notice (quoted), `SUPERSEDES*`, and later PEPs that set the same approach aside (`REJECTS_APPROACH_OF`) |
 | `draft_reply(idea)` | Answer a forum proposal | a reply built only from `already_decided` rows: quotes, deep links, who to ask. Nothing is posted |
+| *(after every answer)* | "You asked about PEP 572 earlier…" | session memory in the graph: `(:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP)`; `algo.SPpaths` from this answer's PEP to the nearest PEP asked about earlier; `my_session` answers "what did I ask earlier?". Carried across sync swaps |
 | `recall` / `remember` | What did we find last time? | `Finding` nodes linked to the PEP they describe |
 
 The model **never writes Cypher**. It picks a tool and fills typed arguments; each query is
@@ -153,6 +176,7 @@ surfaced it.
 (:Thread {title, url, created, posts, text})-[:DISCUSSES | :MENTIONS]->(:PEP)   discuss.python.org
 (:Person)-[:STARTED | :POSTED_IN {posts}]->(:Thread)          170 PEP authors matched by name
 (:Change {at, kind, detail})-[:CHANGED]->(:PEP)               written by `make sync`
+(:Session {id})-[:ASKED]->(:Query {text, at})-[:ACCESSED]->(:PEP)   per-session agent memory
 ```
 
 Every edge has a `weight`. `REFERENCES` edges cost `1 + ln(1 + in-degree of target)`, so shortest

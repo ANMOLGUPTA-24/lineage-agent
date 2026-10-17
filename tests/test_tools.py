@@ -274,3 +274,35 @@ def test_idea_without_a_pep_points_to_its_forum_thread():
     assert not [x for x in r["rows"] if x["kind"] != "thread" and x["match"] == "same"]
     text = agent.template(r)
     assert "discuss.python.org" in text and threads[0]["url"] in text
+
+
+# ---------------------------------------------------------------- session memory
+
+@pytest.fixture
+def session():
+    sid = "t" + uuid.uuid4().hex[:10]
+    yield sid
+    tools.graph().query("MATCH (s:Session {id: $s}) OPTIONAL MATCH (s)-[:ASKED]->(q) DETACH DELETE q, s", {"s": sid})
+
+
+def test_session_links_new_answer_to_earlier_pep(monkeypatch, session):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    agent.ask("Why does Python have the walrus operator?", session=session)
+    out = agent.ask("Has anyone proposed statement-local name bindings with a given clause?", session=session)
+    link = out["steps"][-1]
+    assert link["tool"] == "session_link" and link["rows"][0]["earlier"] == 572
+    assert "Earlier in this session you asked about PEP 572" in out["answer"]
+
+
+def test_my_session_reads_history_from_the_graph(monkeypatch, session):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    agent.ask("Is PEP 333 still current?", session=session)
+    out = agent.ask("What did I ask earlier?", session=session)
+    assert out["steps"][0]["tool"] == "my_session" and "PEP 333" in out["answer"]
+
+
+def test_sessions_are_isolated(monkeypatch, session):
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    agent.ask("Is PEP 333 still current?", session=session)
+    assert tools.my_session("someone_else_entirely")["outcome"] == "not_in_graph"
+    assert tools.my_session("bad id with spaces")["outcome"] == "not_in_graph"
