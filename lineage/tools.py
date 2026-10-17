@@ -815,11 +815,12 @@ def already_decided(idea: str, tenant: str = "python") -> dict:
             run.say(f"Graph traversal from forum thread {row['thread_id']}: started by {row['started_by']}, "
                     f"{len(row['participants'])} top participants, {len(row['peps'])} linked PEP(s)")
         else:
-            (alt, pep_n, text, earlier), = run.q("""
+            # Two rejected ideas in one PEP can share a heading, hence an anchor URL: take the first.
+            alt, pep_n, text, earlier = run.q("""
                 MATCH alt = (a:Alternative {url: $url})-[:REJECTED_IN]->(p:PEP)
                 OPTIONAL MATCH (a)-[c:CITES]->(q:PEP)
                 RETURN alt, p.number, a.text, collect({pep: q.number, status: q.status, quote: c.quote})""",
-                {"url": h["key"]})
+                {"url": h["key"]})[0]
             row, ps = pep_context(run, pep_n)
             run.say(f"Graph traversal from rejected idea {h['title'][:50]!r} -[REJECTED_IN]-> PEP {pep_n}, "
                     f"then that PEP's ruling and history")
@@ -863,10 +864,13 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
             if d:
                 names = " and ".join(x["by"] for x in d["decided_by"])
                 by = f", {'attributed to' if any(x['inferred'] for x in d['decided_by']) else 'decided by'} {names}"
-            lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) proposed it. Status: {r["verdict"]}{by}. '
-                         f'From the PEP: "{r["quote"]}" {r["url"]}')
+            # The PEP's own ruling notice is the reason; the abstract only says what was proposed.
             if r["reason"]:
-                lines.append(f'  Its {r["reason"]["section"]}: "{r["reason"]["quote"]}" {r["reason"]["url"]}')
+                lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) proposed it; it was {r["verdict"]}{by}. '
+                             f'Its {r["reason"]["section"]}: "{r["reason"]["quote"]}" {r["reason"]["url"]}')
+            else:
+                lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) proposed it; it was {r["verdict"]}{by}. '
+                             f'From the PEP: "{r["quote"]}" {r["url"]}')
             if d and d["url"]:
                 lines.append(f"  The ruling: {d['url']}")
         for b in r["came_back"][:3]:

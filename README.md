@@ -6,7 +6,8 @@ the sentence from the source that says so, and who to ask. It can draft the repl
 the graph path that produced it and the exact Cypher that ran.
 
 Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Track 03: Company Brain**. The
-company is the Python project: one of the largest open-source organisations, with every decision on public record.
+company is the Python project: one of the largest open-source organisations, with its decisions in public PEPs,
+forum threads and Steering Council issues.
 
 > **Demo video:** [watch (2:28)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@master/docs/video/lineage-demo.mp4) ·
 > **Run it in a minute:** `docker compose -f docker-compose.quick.yml up` → http://localhost:8000 (pre-built graph, no API key) ·
@@ -23,6 +24,9 @@ company is the Python project: one of the largest open-source organisations, wit
 > — David Lord, replying on [discuss.python.org](https://discuss.python.org/t/why-not-real-anonymous-functions/44513/14)
 > to a proposer who had "searched this forum as well as all of the PEPs" and found nothing
 
+It keeps happening: better lambda syntax alone came up **10 times on the Ideas forum between 2019 and 2026**
+(384 posts), each time from someone who hadn't found the earlier threads.
+
 Keyword search over PEP titles and forum posts misses rejected ideas buried inside other PEPs (1,085 of them)
 and ideas phrased differently. Lineage reads the rejected-ideas sections, links them to what they rejected,
 and walks those links: "multi-line lambdas" returns the 2023 forum thread and the core developer who answered it.
@@ -35,12 +39,12 @@ and walks those links: "multi-line lambdas" returns the 2023 forum thread and th
 | Who owns what, and who knows what | `who_knows`: PageRank over who builds on whom, per area; `bus_factor`: WCC with and without the key person |
 | Tracing decisions back to their source | `Decision -[MADE_BY]->` person or council, quoted rulings, `REJECTS_APPROACH_OF` chains across PEPs |
 | Keeping knowledge current | `make sync`: rebuild beside the live graph, record `Change` events, swap atomically |
-| Answers with clear sources | every claim quoted from the source with a deep link; a guard rejects anything the graph didn't return |
+| Answers with clear sources | every claim quoted from the source with a deep link; when an LLM writes the answer, a guard rejects any PEP, name or quote the graph didn't return |
 | Gets work done | `draft_reply` writes the forum reply, built only from graph rows |
 
-The ingest is a schema, not a Python special case: point it at an organisation's RFCs or ADRs (with their
-"rejected alternatives" sections), its tracker and its chat, and the same tools answer "has this team
-already decided this?".
+The graph schema and the tools are source-agnostic. Pointing Lineage at an organisation's RFCs or ADRs
+(with their "rejected alternatives" sections), its tracker and its chat means writing one parser per source;
+the tools that answer "has this team already decided this?" don't change.
 
 ### Does the graph matter? Measured against vector search on the same data
 
@@ -57,7 +61,7 @@ already decided this?".
 
 **Scale:** 745 PEPs, 1,085 rejected ideas and 866 quotable sections parsed from the PEP sources, 1,748
 discuss.python.org threads, 507 CPython PRs and 466 issues, 252 rulings, 2,175 people, built deterministically
-from public data in under 4 minutes (`make ingest`), with a 47-test suite.
+from public data in under 4 minutes (`make ingest`), with a 48-test suite.
 
 **What the graph does per answer:** typed traversals over evidence edges extracted from the PEPs' own text
 (`REJECTS_APPROACH_OF`, `CITES`), `algo.SPpaths` with hub-aware weights, PageRank and WCC on per-area
@@ -131,7 +135,9 @@ in the baseline's top 5 for 97% of ideas). Every question after that is a relati
 retrieval stops. Where Lineage is wrong: 3 of 32 confident "same idea" answers name the wrong PEP, several
 right answers come out only "related", and two ground-truth labels were widened after the first run (both to
 PEPs that themselves proposed the idea; recorded in `eval/questions.jsonl`). The keyword router's 98/98 tool
-choices should be read with care: it was written alongside these questions. Every miss:
+choices should be read with care: it was written alongside these questions. On the 60 most recent Ideas topics,
+Lineage found an earlier same-idea record for 1 and earlier related history for 11 (18%): most new ideas really
+are new, and the value is in the ones that aren't ([eval/RECENT_IDEAS.md](eval/RECENT_IDEAS.md)). Every miss:
 [eval/RESULTS.md](eval/RESULTS.md). Reproduce: `uv run python -m eval.run`.
 
 ## Keeping it current
@@ -234,7 +240,7 @@ Without Docker for the app:
 ```bash
 docker run -d -p 6379:6379 -p 3000:3000 falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
 uv sync && make ingest && make app
-make test                         # behaviour tests against the loaded graph
+make test                         # 48 behaviour tests against the loaded graph
 make sync                         # rebuild beside the live graph and swap (see "Keeping it current")
 uv run python -m eval.run         # the evaluation below
 ```

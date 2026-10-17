@@ -65,7 +65,7 @@ button { font: inherit; color: inherit; }
 /* answer document */
 .answer { max-width: 720px; padding: 26px 0 8px; }
 .answer h2 { font: 600 30px/1.15 var(--serif); letter-spacing: -.015em; margin: 0 0 10px; text-wrap: balance; }
-.verdict { font: 500 24px/1.38 var(--serif); margin: 4px 0 18px; padding-left: 14px; border-left: 3px solid var(--v, var(--rule)); }
+.verdict { max-width: 62ch; font: 500 24px/1.38 var(--serif); margin: 4px 0 18px; padding-left: 14px; border-left: 3px solid var(--v, var(--rule)); }
 .verdict .stamp { font-size: 13px; top: -4px; margin-right: 4px; }
 .verdict.none { color: var(--muted); font-size: 21px; }
 .funnel { margin: 4px 0 2px; font-size: 15px; }
@@ -83,6 +83,11 @@ button { font: inherit; color: inherit; }
 .letter p { margin: 0 0 10px; }
 .letter q { display: block; quotes: none; background: var(--mark-soft); border-left: 3px solid var(--mark); padding: 4px 10px; margin: 4px 0 6px; }
 .cmd { font: 13.5px/1.6 var(--mono); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; overflow-x: auto; }
+body.home .bar .data { display: none; }
+.more button { color: var(--ink) !important; }
+.more button:hover { color: var(--blue-ink) !important; }
+.people li { border-bottom: 0 !important; padding: 6px 0 2px; }
+.people .bar-w { height: 6px !important; border-radius: 3px; margin: 2px 0 10px; }
 .snapnote { margin-left: auto; font-size: 13px; color: var(--muted); }
 .snapnote a { color: var(--blue-ink); }
 .btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); font-weight: 600; }
@@ -152,11 +157,11 @@ main { max-width: 780px; margin: 0 auto; padding: 0 24px 140px; }
   .answer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(440px, 0.92fr); column-gap: 44px; align-items: start; }
   .a-head { grid-column: 1 / -1; max-width: 980px; }
   .a-main { grid-column: 1; min-width: 0; }
-  .a-side { grid-column: 2; grid-row: 2; position: sticky; top: 16px; }
-  .a-side .canvas { height: min(62vh, 560px) !important; }
+  .a-side { grid-column: 2; grid-row: 2; position: sticky; top: 24px; }
+  .a-side .canvas { height: var(--h-wide) !important; }
   .hero { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(460px, 1fr); gap: 56px; align-items: start; padding-top: 56px; }
   .hero-side { position: sticky; top: 24px; }
-  .hero-side .canvas { height: 400px !important; }
+  .hero-side .canvas { height: 380px !important; }
   .hero-side .scale { margin-top: 18px; }
   .dock #f { max-width: 980px; }
 }
@@ -330,7 +335,7 @@ function pepRecord(r) {
     <h3>${stamp(r.status)} <span>${pepLink(r.pep, r.title)}</span></h3>
     <dl class="fields">
       ${field("Proposed", `${esc(year(r.created))}${r.authors && r.authors.length ? ` by ${esc(r.authors.join(", "))}` : ""}`)}
-      ${r.decision || !r.reason ? field("Decided", decided(r.decision)) : ""}
+      ${r.decision ? field("Decided", decided(r.decision)) : ""}
       ${r.reason ? field("Why", quote(r.reason.quote, r.reason.url, `${r.reason.section}, PEP ${r.pep}`)) : field("Abstract", quote(r.quote, r.url, "", true))}
       ${cameBack(r, r.came_back)}
       ${field("Replaced by", r.superseded_by ? esc(r.superseded_by) : "")}
@@ -345,7 +350,7 @@ function ideaRecord(r) {
       ${field("Set aside in", `${pepLink(r.pep, r.title)}, ${esc(year(r.created))} (${esc(r.status)})`)}
       ${field("Why", quote(r.idea_quote, r.idea_url, `Rejected ideas, PEP ${r.pep}`))}
       ${field("Points back to", (r.earlier_forms || []).map((e) => pepLink(e.pep) + ` (${esc(e.status)})`).join(", "))}
-      ${field("Decided", decided(r.decision))}
+      ${r.decision ? field("Decided", decided(r.decision)) : ""}
     </dl></article>`;
 }
 function threadRecord(r) {
@@ -368,6 +373,10 @@ function leadFor(step) {
   const t = step.tool, o = step.outcome, rows = step.rows || [];
   if (o === "unknown_entity") return {text: step.note || "Nothing in the graph matches that name.", none: true};
   if (o === "not_in_graph") return {text: step.note || "The graph doesn't record this.", none: true};
+  if (t === "draft_reply" && rows[0] && rows[0].draft) {
+    const inner = leadFor({...step, tool: "already_decided"});
+    return {text: "Reply drafted. " + inner.text.replace(/^Yes\. /, "")};
+  }
   if (t === "already_decided" || t === "draft_reply") {
     const recs = rows.filter((r) => !r.draft), top = recs[0];
     const same = recs.filter((r) => r.match === "same");
@@ -379,7 +388,9 @@ function leadFor(step) {
     return {text: `Yes. PEP ${p.pep} proposed it in ${year(p.created)}, and it was ${p.verdict}.`};
   }
   if (t === "why") {
-    const r = rows[0], why = r.rationale && r.rationale.quote ? r.rationale.quote.split(/(?<=\.)\s/)[0] : "";
+    const r = rows[0];
+    let why = r.rationale && r.rationale.quote ? r.rationale.quote.split(/(?<=\.)\s/)[0] : "";
+    if (why.length > 120) why = why.slice(0, 117).replace(/\s+\S*$/, "") + "…";
     return {text: `PEP ${r.pep} (${year(r.created)}): ${why || `${r.title}, ${r.status.toLowerCase()}.`}`};
   }
   if (t === "is_current") {
@@ -544,9 +555,9 @@ function makeCy(container, els, infoEl, big, opts = {}) {
     container, elements: [...els.nodes, ...els.edges],
     style: [
       {selector: "node", style: {"background-color": "data(color)", shape: "data(shape)", label: "data(short)", color: css("--ink"),
-        "font-family": "Public Sans", "font-size": big ? 14 : 12, "min-zoomed-font-size": 8, "text-valign": "bottom", "text-margin-y": 5,
-        width: "mapData(deg, 1, 10, 14, 34)", height: "mapData(deg, 1, 10, 14, 34)",
-        "border-width": 3, "border-color": "data(ring)", "border-style": "data(ringStyle)", "text-wrap": "wrap", "text-max-width": 150,
+        "font-family": "Public Sans", "font-size": big ? 14 : 13, "min-zoomed-font-size": 9, "text-valign": "bottom", "text-margin-y": 5,
+        width: "mapData(deg, 1, 10, 18, 40)", height: "mapData(deg, 1, 10, 18, 40)",
+        "border-width": 2.5, "border-color": "data(ring)", "text-wrap": "wrap", "text-max-width": 150,
         "text-background-color": css("--card"), "text-background-opacity": 0.85, "text-background-padding": 2, "text-background-shape": "roundrectangle"}},
       {selector: "node[label = 'PEP']", style: {"font-weight": 700}},
       {selector: "node[focus = 1]", style: {"underlay-color": css("--mark"), "underlay-opacity": 0.55, "underlay-padding": 8, "underlay-shape": "ellipse"}},
@@ -563,12 +574,13 @@ function makeCy(container, els, infoEl, big, opts = {}) {
       ? {name: "breadthfirst", directed: false, padding: 40, spacingFactor: 1.2}
       : {name: "cose", animate: false, padding: 26, nodeDimensionsIncludeLabels: true, randomize: false, boundingBox: {x1: 0, y1: 0, w, h},
          idealEdgeLength: () => big ? 120 : 85, nodeRepulsion: () => big ? 14000 : 8000, edgeElasticity: () => 80, gravity: 0.6, numIter: 1500},
-    wheelSensitivity: 0.3, minZoom: 0.25, maxZoom: big ? 3 : 1.25, userZoomingEnabled: !!big, autoungrabify: !!opts.still,
+    wheelSensitivity: 0.3, minZoom: 0.25, maxZoom: big ? 3 : (els.nodes.length <= 6 ? 1.8 : 1.25), userZoomingEnabled: !!big, autoungrabify: !!opts.still,
   });
   // Edge labels stay hidden until you point at a node: the picture first, the details on demand.
   cy.on("mouseover", "node", (ev) => ev.target.connectedEdges().addClass("lit"));
-  cy.on("mouseout", "node", (ev) => { if (!ev.target.selected()) ev.target.connectedEdges().removeClass("lit"); });
-  if (big || opts.labels) cy.edges().addClass("lit");
+  cy.on("mouseout", "node", (ev) => { if (!ev.target.selected() && !big && els.edges.length > 6) ev.target.connectedEdges().removeClass("lit"); });
+  // Small graphs keep their edge labels on: with six edges or fewer the meaning is the picture.
+  if (big || opts.labels || els.edges.length <= 6) cy.edges().addClass("lit");
   if (infoEl) {
     cy.on("tap", "node", (ev) => {
       const d = ev.target.data();
@@ -577,7 +589,7 @@ function makeCy(container, els, infoEl, big, opts = {}) {
         + `${d.outcome ? `<br>${esc(d.outcome)}` : ""}${d.url ? `<br><a href="${esc(d.url)}" target="_blank" rel="noopener">Open source</a>` : ""}`;
       infoEl.style.display = "block";
     });
-    cy.on("tap", (ev) => { if (ev.target === cy) { infoEl.style.display = "none"; if (!big) cy.edges().removeClass("lit"); } });
+    cy.on("tap", (ev) => { if (ev.target === cy) { infoEl.style.display = "none"; if (!big && els.edges.length > 6) cy.edges().removeClass("lit"); } });
   }
   return cy;
 }
@@ -658,7 +670,7 @@ docker compose -f docker-compose.quick.yml up</pre>
       <div class="fig-h"><h4>The path behind this answer</h4><span class="count">${counts(els)}</span>
         <button class="btn" type="button" data-expand="${i}">Expand</button></div>
       ${legendFor(els)}
-      <div class="canvas" style="height:${canvasHeight(els.nodes.length)}px"><div class="cy" id="cy-${i}"></div><div class="info"></div></div>
+      <div class="canvas" style="height:${canvasHeight(els.nodes.length)}px; --h-wide: clamp(280px, ${160 + 34 * els.nodes.length}px, min(calc(100vh - 330px), 560px))"><div class="cy" id="cy-${i}"></div><div class="info"></div></div>
       <figcaption class="fig-note">Every node and edge came back from the queries below. Point at a node to see its relationships; click it for its source.</figcaption>
     </figure>` : ""}
     </aside>`;
@@ -684,7 +696,7 @@ function hero() {
     <div class="more">Or ask ${MORE.map((m) => `<button type="button" data-q="${esc(m)}">${esc(m)}</button>`).join("")}</div>
     </div>
     <div class="hero-side"><figure class="specimen" tabindex="0" role="button" aria-label="Run the example: ${esc(SPECIMEN_Q)}" data-q="${esc(SPECIMEN_Q)}">
-      <div class="canvas" style="height:220px"><div class="cy" id="cy-specimen"></div></div>
+      <div class="canvas" style="height:300px"><div class="cy" id="cy-specimen"></div></div>
       <figcaption><span>An answer, drawn: the <code>given:</code> clause proposed in PEP 3150 came back twice and was set aside both times.</span>
         <span class="run">Ask it</span></figcaption>
     </figure>
@@ -735,9 +747,18 @@ function fillTurn(t, i) {
     const main = [...(t.res.steps || [])].reverse().find((x) => !["resolve", "recall", "session_link"].includes(x.tool));
     t.cy = makeCy(el, elementsFor(t.res, focusFor(main)), el.nextElementSibling, false);
     // The wide layout settles the canvas size after first paint: refit once it has.
-    requestAnimationFrame(() => { t.cy.resize(); t.cy.fit(undefined, 30); if (t.cy.zoom() > 1.25) { t.cy.zoom(1.25); t.cy.center(); } });
+    requestAnimationFrame(() => refit(t.cy));
   }
 }
+
+function refit(cy) {
+  if (!cy) return;
+  const cap = cy.nodes().length <= 6 ? 1.6 : 1.25;
+  cy.resize(); cy.fit(undefined, 30);
+  if (cy.zoom() > cap) { cy.zoom(cap); cy.center(); }
+}
+let resizeTimer;
+window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => turns.forEach((t) => refit(t.cy)), 150); });
 
 /* ---------------------------------------------------------------- full-window graph */
 function openOverlay(i) {

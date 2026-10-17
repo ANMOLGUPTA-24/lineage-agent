@@ -312,3 +312,13 @@ def test_who_knows_for_a_pep_outside_every_area():
     # PEP 315 is in no topic and no large community: the local fallback must still answer.
     r = tools.call("who_knows", {"subject": "315"})
     assert r["outcome"] == "answered" and r["rows"][0]["people"]
+
+
+def test_search_indexes_exist():
+    # Every index already_decided searches; a missing one fails silently at query time, so check here.
+    rows = tools.graph().ro_query("CALL db.indexes() YIELD label, types RETURN label, types").result_set
+    have = {(label, t) for label, types in rows for field, ts in types.items() for t in ts}
+    for need in [("PEP", "VECTOR"), ("PEP", "FULLTEXT"), ("Alternative", "VECTOR"), ("Alternative", "FULLTEXT")]:
+        assert need in have, need
+    if tools.graph().ro_query("MATCH (t:Thread) RETURN count(t)").result_set[0][0]:
+        assert ("Thread", "VECTOR") in have and ("Thread", "FULLTEXT") in have
