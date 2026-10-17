@@ -151,6 +151,32 @@ dl.fields dd { margin: 0; min-width: 0; }
 .plain { margin-top: 10px; }
 .plain summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 .plain p { white-space: pre-wrap; font-size: 15px; }
+.s-thread { color: var(--thread); }
+
+/* triage queue: what the agent decided for each new Ideas topic, newest first */
+.bar .nav { font-size: 14px; }
+.bar .nav[aria-current="page"] { color: var(--ink); text-decoration: none; font-weight: 600; }
+.to-triage { margin: 22px 0 0; font-size: 15px; }
+.triage { max-width: 780px; padding: 34px 0 10px; }
+.triage h2 { font: 600 30px/1.15 var(--serif); letter-spacing: -.015em; margin: 0 0 10px; }
+.triage .intro { color: var(--muted); font-size: 16px; margin: 0 0 24px; max-width: 64ch; }
+.t-list { list-style: none; margin: 0; padding: 0; }
+.t-row h3 span { min-width: 0; overflow-wrap: anywhere; }
+.t-when { color: var(--muted); font-size: 14px; margin: -6px 0 10px; }
+.t-reason { font: 17px/1.55 var(--serif); margin: 0 0 12px; max-width: 64ch; }
+.t-row .chip { color: var(--blue-ink); text-decoration: none; }
+.t-row .chip:hover { text-decoration: underline; }
+.triage .working, .triage .t-empty { margin: 0 0 12px; }
+.triage .cmd { white-space: pre-wrap; }
+.t-list { display: grid; gap: 14px; }
+.t-row { margin: 0; height: 100%; display: flex; flex-direction: column; }
+.t-foot { margin-top: auto; padding-top: 14px; }
+body.triage-view main { padding-bottom: 64px; }
+body.triage-view .dock { display: none; }   /* each card asks its own question */
+@media (min-width: 1180px) {
+  .triage { max-width: none; }
+  .t-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+}
 
 
 /* One reading column (answer engines: Perplexity, Glean); each answer carries its own graph as a
@@ -260,6 +286,7 @@ body.home .dock #f { box-shadow: none; }
 <div class="bar">
   <h1 class="wordmark" id="home" tabindex="0">Lineage</h1>
   <span class="what">A company brain for the Python project</span>
+  <a class="nav" href="#triage" id="nav-triage">Triage queue</a>
   <span class="data">745 PEPs, 1,085 rejected ideas and 1,748 forum threads in FalkorDB</span>
 </div>
 <main id="doc">
@@ -283,7 +310,7 @@ body.home .dock #f { box-shadow: none; }
   </div>
   <div id="ov-canvas"><div id="ov-cy"></div><div class="info" id="ov-info"></div></div>
 </div>
-<script>window.LINEAGE_STATIC = {date: "2026-10-17", count: 67};</script>
+<script>window.LINEAGE_STATIC = {date: "2026-10-17", count: 120};</script>
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -732,6 +759,7 @@ function hero() {
     <ul class="tries">${TRIES.map(([q, v]) => { const [status, pep] = v.split(", "); return `<li><button type="button" data-q="${esc(q)}"><span class="idea">${esc(q)}</span>`
       + `<span class="why">${stamp(status)}${pep ? ` <span>${esc(pep)}</span>` : ""}</span></button></li>`; }).join("")}</ul>
     <div class="more">Or ask ${MORE.map((m) => `<button type="button" data-q="${esc(m)}">${esc(m)}</button>`).join("")}</div>
+    <p class="to-triage"><a href="#triage">See what the triage agent decided for the latest Ideas topics</a></p>
     </div>
     <div class="hero-side"><figure class="feature" id="feature" aria-label="A recorded answer: ${esc(HERO_Q)}">
       <div class="feature-h"><p class="feature-q">${esc(HERO_Q)}</p><p class="verdict none">Loading a recorded answer…</p></div></figure>
@@ -788,7 +816,14 @@ function wire(root) {
   root.querySelectorAll("[data-q]").forEach((b) => b.onclick = () => ask(b.dataset.q));
   root.querySelectorAll("[data-expand]").forEach((b) => b.onclick = () => openOverlay(+b.dataset.expand));
 }
+// The hash names the triage view, so it can be linked to; every other view clears it.
+function leaveTriage() {
+  $("#nav-triage").removeAttribute("aria-current");
+  document.body.classList.remove("triage-view");
+  if (location.hash === "#triage") history.replaceState(null, "", location.pathname + location.search);
+}
 function showHome() {
+  leaveTriage();
   $("#dock").append($("#f"));   // take the form out before the hero is rebuilt
   document.body.classList.add("home");
   $("#view").innerHTML = hero();
@@ -797,7 +832,8 @@ function showHome() {
   drawFeature();
 }
 function ensureThread() {
-  if (!document.body.classList.contains("home")) return;
+  if ($("#thread")) return;
+  leaveTriage();
   document.body.classList.remove("home");
   $("#dock").append($("#f"));
   $("#view").innerHTML = `<div class="thread" id="thread"></div>`;
@@ -831,6 +867,61 @@ function refit(cy) {
 }
 let resizeTimer;
 window.addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => turns.forEach((t) => refit(t.cy)), 150); });
+
+/* ---------------------------------------------------------------- triage queue */
+// lineage/triage.py decides what to do with each new Ideas topic and records it as (:Triage) nodes.
+const ACTIONS = {reply_with_ruling: ["Reply with ruling", "rejected"], point_to_existing: ["Point to existing", "final"],
+  link_prior_threads: ["Link prior threads", "thread"], flag_for_review: ["Flag for review", "deferred"],
+  route_to_experts: ["Route to experts", "draft"]};
+// The question behind a decision, as the agent saw it. Must match triage_question() in scripts/build_static_demo.py.
+function triageQuestion(title) {
+  let t = String(title || "").trim().replace(/^(idea|proposal|pre-pep)\s*:\s*/i, "").replace(/[?!.]+$/, "");
+  if (/^[A-Z][a-z]/.test(t)) t = t[0].toLowerCase() + t.slice(1);
+  t = t.replace(/^(add|allow|support|make|introduce|use|deprecate|remove|change|include|expose|provide|extend)\b/, (v) => v.replace(/e$/, "") + "ing");
+  return `Has anyone proposed ${t}?`;
+}
+const when = (iso) => { const d = new Date(iso); return isNaN(d) ? esc(iso || "") : esc(d.toLocaleString("en-GB", {dateStyle: "medium", timeStyle: "short"})); };
+function triageRow(r) {
+  const [label, cls] = ACTIONS[r.action] || [String(r.action || "Unknown").replaceAll("_", " "), "draft"];
+  const peps = (r.evidence_peps || []).filter((n) => n != null);
+  const q = triageQuestion(r.title);
+  return `<li><article class="record t-row">
+    <h3><span class="stamp s-${cls}">${esc(label)}</span> <span>${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>` : esc(r.title)}</span></h3>
+    <p class="t-when">Triaged <time datetime="${esc(r.at)}">${when(r.at)}</time></p>
+    <p class="t-reason">${esc(r.reason)}</p>
+    <dl class="fields">
+      ${field("Evidence", peps.length ? `<div class="chips">${peps.map((n) => `<a class="chip" href="https://peps.python.org/pep-${String(n).padStart(4, "0")}/" target="_blank" rel="noopener">PEP ${esc(n)}</a>`).join("")}</div>` : "")}
+      ${field("Sent to", esc((r.routed_to || []).join(", ")))}
+    </dl>
+    <div class="t-foot"><button class="btn" type="button" data-q="${esc(q)}" aria-label="Ask Lineage: ${esc(q)}">Ask Lineage</button></div>
+  </article></li>`;
+}
+async function showTriage() {
+  $("#dock").append($("#f"));
+  document.body.classList.remove("home");
+  $("#nav-triage").setAttribute("aria-current", "page");
+  document.body.classList.add("triage-view");
+  $("#view").innerHTML = `<section class="triage" aria-labelledby="t-title"><h2 id="t-title">Triage queue</h2>
+    <p class="intro">For each new topic in the Ideas category on discuss.python.org, the triage agent asks the graph what a
+      person would: has this been proposed, what was decided, and who knows the area. It picks one action, records the decision
+      in the graph with the PEPs it rests on and the people it went to, and writes any reply to an outbox. It never posts to the
+      forum; a person reviews the outbox before anything is sent.</p>
+    <div id="t-body"><p class="working">Reading the triage record…</p></div></section>`;
+  window.scrollTo(0, 0);
+  let rows;
+  try {
+    const r = await fetch(STATIC ? "triage.json" : "/api/triage?limit=20");
+    if (!r.ok) throw new Error(r.status);
+    rows = (await r.json()).rows || [];
+  } catch (e) { rows = null; }
+  const box = document.getElementById("t-body"); if (!box) return;   // the person moved on
+  box.innerHTML = rows === null ? `<p class="t-empty">Couldn't read the triage record. Check that the server is running, then reload.</p>`
+    : !rows.length ? `<p class="t-empty">No decisions are recorded yet. Run the agent on the newest Ideas topics, then reload:</p>
+        <pre class="cmd">uv run python -m lineage.triage --latest 10</pre>`
+    : `<ol class="t-list" aria-label="Decisions, newest first">${rows.map(triageRow).join("")}</ol>`;
+  wire(box);
+}
+window.addEventListener("hashchange", () => { if (location.hash === "#triage") showTriage(); else if ($(".triage")) showHome(); });
 
 /* ---------------------------------------------------------------- full-window graph */
 function openOverlay(i) {
@@ -882,7 +973,7 @@ if (STATIC) {
   $(".bar .data").outerHTML = `<span class="snapnote">Live snapshot: ${STATIC.count} real answers recorded ${esc(STATIC.date)}.
     <a href="https://github.com/ANMOLGUPTA-24/lineage-agent">Run it to ask anything</a></span>`;
 }
-showHome();
+if (location.hash === "#triage") showTriage(); else showHome();
 </script>
 </body>
 </html>

@@ -6,3 +6,6 @@ data/raw/peps/
 data/raw/*.log
 eval/.cache/
 build/
+# triage outbox: runs are local; only the curated examples are committed
+data/triage/*
+!data/triage/examples/

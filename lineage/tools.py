@@ -891,10 +891,19 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
     links and who to ask. Built only from already_decided's rows; nothing is posted."""
     res = already_decided(idea, tenant)
     res["tool"], res["args"] = "draft_reply", {"idea": idea}
-    same = [r for r in res["rows"] if r["match"] == "same"]
-    if not same:
+    draft = draft_from_rows(res["rows"])
+    if draft is None:
         res["note"] = (res["note"] or "Only loosely related history was found, so there is no reply to draft.")
         return res
+    res["rows"] = [{"draft": draft}] + res["rows"]
+    return res
+
+
+def draft_from_rows(rows: list[dict]) -> str | None:
+    """The reply text, from already_decided rows (the triage agent passes rows filtered to earlier history)."""
+    same = [r for r in rows if r["match"] == "same"]
+    if not same:
+        return None
     lines = ["This has come up before."]
     # Each PEP is named once: two matched PEPs often list each other as earlier tries or comebacks (472, 637).
     named = {r["pep"] for r in same if isinstance(r.get("pep"), int) and r["kind"] == "pep"}
@@ -938,13 +947,19 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
         if r["superseded_by"]:
             lines.append(f"  PEP {r['pep']} was later superseded by {r['superseded_by']}.")
     people = sorted({a for r in same for a in r.get("authors", [])})[:4]
-    advice = ("A new proposal should start from these threads and what was said there."
-              if all(r["kind"] == "thread" for r in same) else "A new proposal would need to answer the reasons above.")
+    first = next((r for r in same if r["kind"] != "thread"), None)
+    if first is None:
+        advice = "A new proposal should start from these threads and what was said there."
+    elif first["kind"] == "pep" and first.get("status") in ("Final", "Accepted", "Active", "Provisional"):
+        advice = f"This is already part of Python through PEP {first['pep']}; a change to it would start from that PEP."
+    elif first["kind"] == "pep" and first.get("status") == "Draft":
+        advice = f"PEP {first['pep']} is still open; the place to add to it is that PEP's discussion."
+    else:
+        advice = "A new proposal would need to answer the reasons above."
     lines += ["", advice
               + (f" People who know this history: {', '.join(people)}." if people else ""),
               "", "(Drafted by Lineage from the PEP graph. Check the links before posting.)"]
-    res["rows"] = [{"draft": "\n".join(lines)}] + res["rows"]
-    return res
+    return "\n".join(lines)
 
 
 TOOLS = {f.__name__: f for f in (resolve, why, is_current, who_knows, bus_factor, connection, recall, remember,

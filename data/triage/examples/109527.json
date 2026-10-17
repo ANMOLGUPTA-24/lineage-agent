@@ -1,0 +1,29 @@
+{
+ "topic": {
+  "id": 109527,
+  "title": "Proposing __parse__: a standard inverse of __str__",
+  "created": "2026-10-16T14:25:59.287Z",
+  "url": "https://discuss.python.org/t/109527",
+  "text": "Python standardizes T \u2192 str via __str__ , but it does not for the partial inverse str \u21c0 T . Given a type and a string, nothing in the standard enables introspection whether the type offers string parsing or how to invoke it. A few constructors oblige, but not all of them are useful, like bool(\"False\") yields True .\n\nI have drafted a PEP proposing an optional class method, __parse__(cls, text: str, /) -> Self , whose presence is the introspectable, overloadable declaration. It requires no changes to syntax, constructors, or serialization formats. The target type is a parameter, so the problems that stopped __json__ / __deserialize__ should not arise.\n\nDraft: pep-parse/pep-9999.rst at main \u00b7 cr/pep-parse \u00b7 GitHub\n\nBefore pursuing a sponsor, is the problem already recognized in discussions that I can\u2019t find? And do the proposal\u2019s two open questions \u2013 dunder versus plain class method, and the strength of the round-trip requirement \u2013 have obvious answers I\u2019m not seeing?"
+ },
+ "action": "route_to_experts",
+ "reason": "Nothing in the graph matches closely. That is not proof the idea is new. Routed to core developers from the nearest earlier forum threads.",
+ "confidence": null,
+ "evidence": [],
+ "reviewers": [
+  {
+   "name": "Guido van Rossum",
+   "why": "core developer, posted in \"Switch Python's parsing tech to something more powerful than LL(1)\" (the nearest earlier thread, not a match)"
+  },
+  {
+   "name": "Nathaniel J. Smith",
+   "why": "core developer, posted in \"Switch Python's parsing tech to something more powerful than LL(1)\" (the nearest earlier thread, not a match)"
+  },
+  {
+   "name": "Eric V. Smith",
+   "why": "core developer, posted in \"Ability to modify python types by simple class declaration\" (the nearest earlier thread, not a match)"
+  }
+ ],
+ "draft": null,
+ "cypher": 7
+}

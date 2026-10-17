@@ -40,6 +40,30 @@ def my_session(session: str) -> dict:
 
 
 @mcp.tool()
+def triage_topic(topic_id: int, record: bool = False) -> dict:
+    """Decide what to do with a discuss.python.org Ideas topic from what the graph shows: reply with the
+    earlier ruling, link prior threads, flag for review, or route to the people the area builds on.
+    With record=True the decision is written to the graph and the outbox (nothing is posted)."""
+    from lineage import triage
+    t = triage.fetch_topic(topic_id)
+    if not t:
+        return {"outcome": "unknown_entity", "note": f"No discuss.python.org topic {topic_id}."}
+    if record and triage.already_triaged(topic_id):
+        return {"outcome": "memory", "note": f"Topic {topic_id} was already triaged.", "rows": triage.history(topic_id)}
+    d = triage.decide(t)
+    if record:
+        d["triage_id"] = triage.record(d)
+    return d
+
+
+@mcp.tool()
+def triage_queue(limit: int = 20) -> dict:
+    """The triage agent's recent decisions, newest first, read from the graph."""
+    from lineage import triage
+    return {"outcome": "answered", "rows": triage.history(limit=limit)}
+
+
+@mcp.tool()
 def resolve(text: str) -> dict:
     """Find PEPs, people or topics matching free text, e.g. 'walrus operator'."""
     return tools.call("resolve", {"text": text})

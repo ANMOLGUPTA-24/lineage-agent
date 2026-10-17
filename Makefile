@@ -29,7 +29,13 @@ app:
 mcp:
 	$(PY) -m lineage.mcp_server
 
+triage:           ## triage the 10 newest discuss.python.org Ideas topics: records (:Triage) in the graph, outbox in data/triage/
+	$(PY) -m lineage.triage --latest 10
+
+triage-dry:       ## same decisions, nothing written (no graph writes, no outbox, no webhook)
+	$(PY) -m lineage.triage --latest 10 --dry-run
+
 test:
 	uv run pytest -q
 
-.PHONY: fetch ingest sync rollback app mcp test
+.PHONY: fetch ingest sync rollback app mcp triage triage-dry test

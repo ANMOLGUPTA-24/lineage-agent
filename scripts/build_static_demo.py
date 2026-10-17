@@ -6,6 +6,9 @@ Every answer in the snapshot is a real response from the running graph (tools, r
 recorded by calling the agent exactly as the web server does. The crawl starts from the questions the
 home page offers and follows each answer's suggested next questions, so every button on the demo
 leads to a recorded answer. Anything else shows how to run Lineage locally to ask it.
+
+It also writes the triage agent's recent decisions (triage.json) and records the "Ask Lineage" question
+behind each one, so the triage queue works in the snapshot too.
 """
 import json
 import re
@@ -13,7 +16,7 @@ import uuid
 from datetime import date
 from pathlib import Path
 
-from lineage import agent
+from lineage import agent, triage
 from lineage.db import graph
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,6 +51,16 @@ def norm(q: str) -> str:
     return re.sub(r"[?!.]+$", "", re.sub(r"\s+", " ", q.strip().lower()))
 
 
+def triage_question(title: str) -> str:
+    """Must match triageQuestion() in lineage/web/index.html."""
+    t = re.sub(r"[?!.]+$", "", re.sub(r"^(idea|proposal|pre-pep)\s*:\s*", "", (title or "").strip(), flags=re.I))
+    if re.match(r"^[A-Z][a-z]", t):
+        t = t[0].lower() + t[1:]
+    t = re.sub(r"^(add|allow|support|make|introduce|use|deprecate|remove|change|include|expose|provide|extend)\b",
+               lambda m: re.sub(r"e$", "", m[0]) + "ing", t)
+    return f"Has anyone proposed {t}?"
+
+
 def follow_ups(res: dict) -> list[str]:
     """Same rules as followUps() in lineage/web/index.html."""
     steps = res.get("steps") or []
@@ -73,7 +86,9 @@ def follow_ups(res: dict) -> list[str]:
 
 def main() -> None:
     agent.ask("warm up", session="snapwarmup")   # load the models first, so recorded timings are real ones
-    answers, queue, seen = {}, [(q, 0) for q in SEEDS], set()
+    decisions = triage.history(limit=30)
+    seeds = SEEDS + [triage_question(d["title"]) for d in decisions]
+    answers, queue, seen = {}, [(q, 0) for q in seeds], set()
     sessions = ["snapwarmup"]
     while queue:
         q, depth = queue.pop(0)
@@ -92,13 +107,14 @@ def main() -> None:
                   {"ids": sessions})
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "answers.json").write_text(json.dumps(answers, default=str))
+    (OUT / "triage.json").write_text(json.dumps({"rows": decisions}, default=str))
     # The home page's opening answer, for the live server and the snapshot alike.
     for where in (ROOT / "lineage" / "web", OUT):
         (where / "hero.json").write_text(json.dumps(answers[norm(HERO)], default=str))
     page = (ROOT / "lineage" / "web" / "index.html").read_text()
     flag = f'<script>window.LINEAGE_STATIC = {{date: "{date.today().isoformat()}", count: {len(answers)}}};</script>\n'
     (OUT / "index.html").write_text(page.replace("<script>\nconst $ =", flag + "<script>\nconst $ =", 1))
-    print(len(answers), "answers;", round((OUT / "answers.json").stat().st_size / 1024), "KB")
+    print(len(answers), "answers;", round((OUT / "answers.json").stat().st_size / 1024), "KB;", len(decisions), "triage decisions")
 
 
 if __name__ == "__main__":

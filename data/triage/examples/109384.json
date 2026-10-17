@@ -1,0 +1,42 @@
+{
+ "topic": {
+  "id": 109384,
+  "title": "Allow automatic naming of sentinels within classes",
+  "created": "2026-10-07T11:42:30.352Z",
+  "url": "https://discuss.python.org/t/109384",
+  "text": "In 3.15, this is the way to define a sentinel within a class (example from the documentation ):\n\nclass Cls:\n\nPICKLABLE = sentinel(\"Cls.PICKLABLE\")\n\nI am personally averse to the common antipattern in Python of:\n\nvalue = some_function('value', ...)\n\n\u2026where \u201c value \u201d must appear both as the assignment left-hand side and as an argument string. It feels repetitious and, while not especially error-prone, when there is an error it\u2019s hard to diagnose. In this specific case things are complicated by needing to (remember to) give the constructor the qualified name.\n\nWhat if sentinel were enhanced to provide this alternative?\n\nclass Cls:\n\nPICKLABLE = sentinel()\n\nThe intended behaviour would be that the sentinel is initially constructed with __name__ is None , but sentinel implements __set_name__ (and a dummy __get__ ) so Cls later fills in the name via the descriptor protocol.\n\nThis feels considerably tidier to me, and would be backward-compatible because the name parameter to sentinel() is currently mandatory."
+ },
+ "action": "flag_for_review",
+ "reason": "Only related history (2 items); a person should judge whether it is the same idea.",
+ "confidence": 2.03,
+ "evidence": [
+  {
+   "kind": "rejected_idea",
+   "pep": 661,
+   "thread_id": null,
+   "title": "Sentinel Values",
+   "match": "related",
+   "url": "https://peps.python.org/pep-0661/#use-a-registry-of-per-module-sentinel-names"
+  },
+  {
+   "kind": "rejected_idea",
+   "pep": 661,
+   "thread_id": null,
+   "title": "Sentinel Values",
+   "match": "related",
+   "url": "https://peps.python.org/pep-0661/#using-class-objects"
+  }
+ ],
+ "reviewers": [
+  {
+   "name": "Tal Einat",
+   "why": "author of PEP 661"
+  },
+  {
+   "name": "Jelle Zijlstra",
+   "why": "author of PEP 661"
+  }
+ ],
+ "draft": null,
+ "cypher": 13
+}

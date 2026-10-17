@@ -220,3 +220,15 @@ Scores: Impact 7, Presentation 6, UX 7, Technical 7, FalkorDB 8, Creativity 8.
 - [x] session_link only when short/cheap; low-confidence resolve = "did you mean"
 - [x] Home: real recorded hard answer as hero (None-aware), harder examples, compact; phone graph under verdict
 - [x] README numbers, lambda claim; rebuild demo; tests for each bug
+
+## Round 5: Track 01 eligibility (Oct 17 evening)
+Track 01 asks for an agent that "uses the graph to decide and act" (triage). Missing piece: actions.
+- [x] lineage/triage.py: decide (reply_with_ruling / point_to_existing / link_prior_threads / flag_for_review /
+      route_to_experts) from already_decided + who_knows; act: (:Triage) nodes, outbox, optional webhook; never posts
+- [x] draft_from_rows: drafts only from history before the topic
+- [x] MCP: triage_topic, triage_queue; sync copies Triage nodes
+- [ ] Backend agent: tests, /api/triage, live run on latest Ideas topics, eval/TRIAGE.md
+- [ ] Frontend agent: triage queue view, static demo triage.json
+- [ ] Docs agent: README Track 01 section, SUBMISSION (Tracks 01 + 03)
+- [ ] QA agent: review diff, security of the write path
+- [ ] Video: short triage scene (if time)

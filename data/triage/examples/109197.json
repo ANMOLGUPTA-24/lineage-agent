@@ -1,0 +1,38 @@
+{
+ "topic": {
+  "id": 109197,
+  "title": "Pre-PEP: UTF-8 String Representation",
+  "created": "2026-09-23T03:01:07.784Z",
+  "url": "https://discuss.python.org/t/109197",
+  "text": "I am considering using UTF-8 as Unicode\u2019s internal representation. The potential benefits are:\n\nPEP 393\u2019s Flexible String Representation (FSR) is an implementation detail and is not part of the Stable ABI. Some extension modules use the fastest available APIs for performance reasons, which makes moving to the Stable ABI harder. Eliminating the overhead of creating a UTF-8 cache could help encourage Stable ABI adoption.\n\nPython is a glue language. C, C++, and Rust have many libraries that process UTF-8 efficiently, but supporting FSR requires hand-written code.\n\nUTF-8 can use less memory for large strings when only some characters require the 4-byte kind.\n\nReference implementation\n\nSpecification\n\nOrdinary non-ASCII strings retain a UTF-8 representation. The PEP 393 fixed-width representation (FSR) is created and retained only when needed.\n\nLone surrogates are preserved internally using surrogatepass , without changing Python-level semantics such as string length and indexing.\n\nStrings under construction with PyUnicode_New() continue to use a writable FSR.\n\nMany paths, including string operations, UnicodeWriter , codecs, and JSON, have been changed to process UTF-8 directly or read characters sequentially.\n\nPyUnicode_KIND() returns the width of the fixed-width representation. PyUnicode_DATA() and the various *_DATA() functions create the FSR lazily, so they may return NULL if memory is exhausted."
+ },
+ "action": "flag_for_review",
+ "reason": "Only related history (2 items); a person should judge whether it is the same idea.",
+ "confidence": 2.33,
+ "evidence": [
+  {
+   "kind": "pep",
+   "pep": 3120,
+   "thread_id": null,
+   "title": "Using UTF-8 as the default source encoding",
+   "match": "related",
+   "url": "https://peps.python.org/pep-3120/"
+  },
+  {
+   "kind": "pep",
+   "pep": 686,
+   "thread_id": null,
+   "title": "Make UTF-8 mode default",
+   "match": "related",
+   "url": "https://peps.python.org/pep-0686/"
+  }
+ ],
+ "reviewers": [
+  {
+   "name": "Martin von L\u00f6wis",
+   "why": "author of PEP 3120"
+  }
+ ],
+ "draft": null,
+ "cypher": 11
+}

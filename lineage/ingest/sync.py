@@ -103,6 +103,29 @@ def copy_sessions(src, dst, since: str = "") -> int:
     return len(rows)
 
 
+def copy_triage(src, dst, since: str = "") -> int:
+    """Triage decisions (lineage/triage.py): the agent's record of what it decided and did."""
+    rows = src.ro_query("""MATCH (tr:Triage)-[:ABOUT]->(th:Thread) WHERE tr.at >= $since
+                           OPTIONAL MATCH (tr)-[:EVIDENCE]->(p:PEP)
+                           OPTIONAL MATCH (tr)-[r:ROUTED_TO]->(who:Person)
+                           RETURN tr.id, tr.topic, tr.at, tr.action, tr.reason, tr.confidence,
+                                  th.id, th.title, th.url, th.created, collect(DISTINCT p.number),
+                                  collect(DISTINCT {name: who.name, why: r.why})""", {"since": since}).result_set
+    for r in rows:
+        dst.query("""MERGE (th:Thread {id: $tid}) ON CREATE SET th.title = $title, th.url = $url, th.created = $created, th.kind = 'idea'
+                     MERGE (tr:Triage {id: $id})
+                       ON CREATE SET tr.topic = $topic, tr.at = $at, tr.action = $action, tr.reason = $reason, tr.confidence = $conf
+                     MERGE (tr)-[:ABOUT {weight: 1.0}]->(th)
+                     WITH tr UNWIND $peps AS n MATCH (p:PEP {number: n}) MERGE (tr)-[:EVIDENCE {weight: 1.0}]->(p)""",
+                  {"id": r[0], "topic": r[1], "at": r[2], "action": r[3], "reason": r[4], "conf": r[5], "tid": r[6],
+                   "title": r[7], "url": r[8], "created": r[9], "peps": r[10] or [0]})
+        people = [x for x in r[11] if x.get("name")]
+        if people:
+            dst.query("""MATCH (tr:Triage {id: $id}) UNWIND $people AS x MATCH (p:Person {name: x.name})
+                         MERGE (tr)-[e:ROUTED_TO]->(p) SET e.why = x.why, e.weight = 1.0""", {"id": r[0], "people": people})
+    return len(rows)
+
+
 def copy_history(src, dst) -> None:
     changes = src.ro_query("MATCH (c:Change)-[:CHANGED]->(p:PEP) RETURN c.at, c.kind, c.detail, p.number").result_set
     if changes:
@@ -159,12 +182,14 @@ def swap(tenant: str, new: str, build_fn=build) -> dict:
             copy_history(live, fresh)
             copy_findings(live, fresh)
             copy_sessions(live, fresh, since=session_cutoff())
+            copy_triage(live, fresh)
         write_changes(fresh, changes, started)
         fresh.query("CREATE (:Sync {at: $at, graph: $g, previous: $p, changes: $n})",
                     {"at": started, "g": new, "p": live_name if has_live else "", "n": len(changes)})
 
         r.set(ALIAS.format(tenant), new)                          # the swap: one atomic write
-        late = (copy_findings(live, fresh, since=started) + copy_sessions(live, fresh, since=started)) if has_live else 0
+        late = (copy_findings(live, fresh, since=started) + copy_sessions(live, fresh, since=started)
+                + copy_triage(live, fresh, since=started)) if has_live else 0
         r.set(PREVIOUS.format(tenant), live_name if has_live else "")
 
         keep = {new, live_name}

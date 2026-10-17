@@ -6,11 +6,11 @@ import time
 from collections import defaultdict, deque
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
-from lineage import agent
+from lineage import agent, triage
 from lineage.db import connect, graph, resolve
 
 def warm_up():
@@ -56,6 +56,12 @@ def health():
     last = graph().ro_query("MATCH (s:Sync) RETURN s.at, s.changes ORDER BY s.at DESC LIMIT 1").result_set
     return {"ok": True, "live_graph": resolve("python"), "graphs": connect().list_graphs(),
             "last_sync": {"at": last[0][0], "changes": last[0][1]} if last else None}
+
+
+@app.get("/api/triage")
+def triage_history(limit: int = Query(20, ge=1, le=100)):
+    """What the triage agent decided, newest first (read only; `python -m lineage.triage` does the acting)."""
+    return {"rows": triage.history(limit=limit)}
 
 
 # Per-client sliding window. Every answer also writes session memory into the graph, so an
