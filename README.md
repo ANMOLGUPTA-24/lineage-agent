@@ -10,7 +10,7 @@ company is the Python project: one of the largest open-source organisations, wit
 forum threads and Steering Council issues.
 
 > **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers recorded from the graph; run it locally to ask anything) ·
-> **Demo video:** [watch (2:51, narrated, captioned)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@daa906ec312cfeb6ffd2708765a7150794c6dfe7/docs/video/lineage-demo.mp4) ·
+> **Demo video:** [watch (2:51, narrated, captioned)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@5e78d51ffd522aeaa6b9639c3daff0aa48256fa2/docs/video/lineage-demo.mp4) ·
 > **Run it locally:** `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (pre-built graph, no API key;
 > 2–4 minutes the first time, about 1 GB of images; port taken? set `ports: ["8080:8000"]` in the compose file) ·
 > [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
