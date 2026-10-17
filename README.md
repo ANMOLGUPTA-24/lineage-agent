@@ -294,8 +294,3 @@ tests/                     outcomes, depth, supersession, tenant isolation, guar
 - CPython PR links come from titles that name a PEP, which covers the main implementation
   PRs but not all of them.
 
-## AI assistance disclosure
-
-Built with Claude Code as a pair-programmer. The graph model, tool design, honesty rules and
-data choices were decided by me, and I reviewed, ran and tested every query. Tuning values
-(the drift threshold, edge weights) were checked by hand against known PEP histories.

@@ -188,6 +188,3 @@ Python 3.12, FalkorDB (graph, vector and full-text indexes, `algo.pageRank`, `al
 same tools, fastembed for local embeddings and reranking, and any OpenAI-compatible LLM (or none:
 a keyword router plus templated answers works without a key).
 
-I used Claude Code as a pair programmer. I chose the graph model, the tools, the honesty rules and
-the data sources, ran and checked every query, and the decisions and their trade-offs above are
-the ones I'd defend in a review.

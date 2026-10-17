@@ -47,5 +47,3 @@ how two PEPs relate 100% vs 25%; 3 of 32 confident matches wrong (listed in eval
 
 **Data:** all public: peps.python.org API, python/peps, python/steering-council, python/cpython, discuss.python.org.
 
-**AI use disclosure:** Built with Claude Code as a pair programmer; graph model, tool design, honesty rules and
-data choices decided by the author, every query reviewed and run. See the README section of the same name.
