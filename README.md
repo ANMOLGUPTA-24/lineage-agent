@@ -50,18 +50,21 @@ The graph schema and the tools are source-agnostic. Pointing Lineage at an organ
 (with their "rejected alternatives" sections), its tracker and its chat means writing one parser per source;
 the tools that answer "has this team already decided this?" don't change.
 
-### Does the graph matter? Measured against vector search on the same data
+### Does the graph matter? Measured against vector and keyword search on the same data
 
-| 98 questions with known answers | Lineage (graph) | Vector baseline* |
-|---|---|---|
-| Did the idea come back later? | **100%** | 0% |
-| How are two PEPs related? | **100%** | 25% |
-| Who decided it? | **83%** | 17% |
-| Has this idea been decided? Right PEP as the top answer (**held-out** set) | **76%** | 53% |
-| Is it still current? (31 superseded PEPs) | **100%** | 94% |
+| 98 questions with known answers (n) | Lineage (graph) | Vector search* | BM25 keyword search* |
+|---|---|---|---|
+| Did the idea come back later? (3) | **3** | 0 | 0 |
+| How are two PEPs related? (4) | **4** | 1 | 2 |
+| Who decided it? (6) | **5** | 1 | 1 |
+| Has this idea been decided? Right PEP as the top answer, **held-out** set (17) | **13** | 9 | 11 |
+| Is it still current? (31 superseded PEPs) | **31** | 29 | 29 |
+| Right PEP anywhere in the top 5 (37; Lineage: top answer only) | 29 | **36** | 35 |
 
-\*Same corpus, same embedding model, its no-match cutoff tuned on these very questions. Lineage is wrong on
-3 of 32 confident matches; every miss is listed in [eval/RESULTS.md](eval/RESULTS.md). Details below.
+\*Same text, same embedding model, each baseline's no-match cutoff tuned on these very questions. The first
+three rows are questions a list of text chunks can't represent; the held-out row is the accuracy test, and n is
+small. Lineage is wrong on 3 of 32 confident matches; every miss is listed in [eval/RESULTS.md](eval/RESULTS.md).
+Details below.
 
 **Scale:** 745 PEPs, 1,085 rejected ideas and 866 quotable sections parsed from the PEP sources, 1,748
 discuss.python.org threads, 505 CPython PRs and 460 issues, 257 rulings, 2,175 people, built deterministically

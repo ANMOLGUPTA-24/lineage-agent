@@ -1,4 +1,4 @@
-"""Lineage vs a vector-only baseline, on questions with known answers.
+"""Lineage vs a vector-only and a keyword (BM25) baseline, on questions with known answers.
 
   uv run python -m eval.run        # writes eval/RESULTS.md and eval/results.json
 
@@ -12,6 +12,8 @@ Baseline (given every advantage we could think of)
   sections, and every rejected idea, embedded with the same model (bge-small). Top-5 chunks by
   cosine similarity. Currency questions also get the PEP's title in the query. For "already
   decided?" the no-match cutoff is tuned on this same question set (best case for the baseline).
+  A second baseline runs Okapi BM25 over the same chunks (keyword search), with its own cutoff tuned
+  the same way. Neither baseline uses an LLM; an LLM reading the retrieved text is not tested.
 
 Scoring
   No LLM key is used. The baseline is scored on evidence recall: do its 5 chunks contain what
@@ -22,7 +24,10 @@ Scoring
 """
 import hashlib
 import json
+import math
+import re
 import time
+from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
@@ -91,6 +96,36 @@ class VectorBaseline:
         sims = self.vecs @ (q / np.linalg.norm(q))
         top = np.argsort(-sims)[:k]
         return [{**self.chunks[i], "sim": float(sims[i])} for i in top]
+
+
+class BM25Baseline:
+    """Keyword baseline over the vector baseline's chunks: Okapi BM25 (k1=1.5, b=0.75), lowercase word
+    tokens, the same stopwords Lineage drops. Scored exactly like the vector baseline."""
+    K1, B = 1.5, 0.75
+
+    def __init__(self, chunks: list[dict]):
+        self.chunks = chunks
+        docs = [self.tok(c["text"]) for c in chunks]
+        self.n, self.avgdl = len(docs), sum(map(len, docs)) / len(docs)
+        self.dl = np.array([len(d) for d in docs], dtype=float)
+        df = Counter(w for d in docs for w in set(d))
+        self.idf = {w: math.log(1 + (self.n - m + 0.5) / (m + 0.5)) for w, m in df.items()}
+        self.postings = defaultdict(list)
+        for i, d in enumerate(docs):
+            for w, f in Counter(d).items():
+                self.postings[w].append((i, f))
+
+    @staticmethod
+    def tok(text: str) -> list[str]:
+        return [w for w in re.findall(r"[a-z0-9]+", text.lower()) if len(w) > 1 and w not in tools.STOP]
+
+    def search(self, query: str, k: int = K) -> list[dict]:
+        score = np.zeros(self.n)
+        for w in set(self.tok(query)):
+            for i, f in self.postings.get(w, ()):
+                score[i] += self.idf[w] * f * (self.K1 + 1) / (f + self.K1 * (1 - self.B + self.B * self.dl[i] / self.avgdl))
+        top = np.argsort(-score)[:k]
+        return [{**self.chunks[i], "sim": float(score[i])} for i in top]
 
 
 def mentions(chunk: dict, pep: int) -> bool:
@@ -168,6 +203,7 @@ def routed_tool(question: str) -> str | None:
 def main() -> None:
     items = questions()
     base = VectorBaseline()
+    bm25 = BM25Baseline(base.chunks)
     tools.call("already_decided", {"idea": "warm up the models"})
     results = []
     for it in items:
@@ -175,6 +211,7 @@ def main() -> None:
         query = it.get("idea") or it["q"]
         hits = base.search(query)
         b_ms = (time.perf_counter() - t0) * 1000
+        kw = bm25.search(query)
         res = lineage_call(it)
         tool = routed_tool(it["q"])
         results.append({
@@ -186,21 +223,28 @@ def main() -> None:
                            if it["kind"] == "already_decided" else None,
             "baseline_evidence": baseline_evidence(it, hits) if it.get("expect") not in (None, []) else None,
             "baseline_top1": hits[0]["pep"], "baseline_top1_sim": round(hits[0]["sim"], 3), "baseline_ms": round(b_ms, 1),
+            "bm25_evidence": baseline_evidence(it, kw) if it.get("expect") not in (None, []) else None,
+            "bm25_top1": kw[0]["pep"], "bm25_top1_sim": round(kw[0]["sim"], 3),
             "router_tool": tool, "router_ok": tool in ROUTER_EXPECT[it["kind"]]})
 
     # The baseline's best possible no-match cutoff for "already decided?": top-1 similarity below
     # the cutoff means "nothing recorded". Tuned on these same items.
     ad = [r for r in results if r["kind"] == "already_decided"]
-    def base_ad_ok(r, cut):
+    def base_ad_ok(r, cut, side="baseline"):
         if not r["expect"]:
-            return bool(r["baseline_top1_sim"] < cut)
-        return bool(r["baseline_top1_sim"] >= cut and r["baseline_top1"] in r["expect"])
+            return bool(r[f"{side}_top1_sim"] < cut)
+        return bool(r[f"{side}_top1_sim"] >= cut and r[f"{side}_top1"] in r["expect"])
     cut = max((float(c) for c in np.arange(0.5, 1.0, 0.005)), key=lambda c: sum(base_ad_ok(r, c) for r in ad))
+    # BM25 scores are unbounded: try every observed top-1 score (and 0) as the cutoff.
+    bm_cuts = sorted({0.0} | {r["bm25_top1_sim"] for r in ad} | {r["bm25_top1_sim"] + 1e-6 for r in ad})
+    bm_cut = max(bm_cuts, key=lambda c: sum(base_ad_ok(r, c, "bm25") for r in ad))
     for r in ad:
         r["baseline_answer_ok"] = base_ad_ok(r, cut)
+        r["bm25_answer_ok"] = base_ad_ok(r, bm_cut, "bm25")
 
-    (HERE / "results.json").write_text(json.dumps({"cutoff": round(float(cut), 3), "results": results}, indent=1))
-    write_report(results, float(cut))
+    (HERE / "results.json").write_text(json.dumps({"cutoff": round(float(cut), 3), "bm25_cutoff": round(bm_cut, 3),
+                                                   "results": results}, indent=1))
+    write_report(results, float(cut), bm_cut)
 
 
 def pct(xs) -> str:
@@ -208,7 +252,7 @@ def pct(xs) -> str:
     return f"{sum(xs)}/{len(xs)} ({100 * sum(xs) / len(xs):.0f}%)" if xs else "n/a"
 
 
-def write_report(results: list[dict], cut: float) -> None:
+def write_report(results: list[dict], cut: float, bm_cut: float) -> None:
     by = lambda k, sub=None: [r for r in results if r["kind"] == k and (sub is None or sub(r))]
     pos = lambda r: bool(r["expect"])
     neg = lambda r: not r["expect"]
@@ -226,20 +270,23 @@ def write_report(results: list[dict], cut: float) -> None:
         ("Did the idea come back?", by("recurrence"), "a later PEP citing it in the top 5", "baseline_evidence"),
         ("How are A and B related?", by("connection"), "a chunk of A naming B (or B naming A) in the top 5", "baseline_evidence"),
     ]
-    out = ["# Evaluation: Lineage vs vector-only retrieval", "",
+    out = ["# Evaluation: Lineage vs vector-only and keyword (BM25) retrieval", "",
            f"Generated by `uv run python -m eval.run` · {len(results)} questions · see the docstring of "
            "`eval/run.py` for exactly how each side is scored.", "",
-           "| Question type | n | Lineage (tool rows) | Vector baseline | Baseline is credited when |", "|---|---|---|---|---|"]
+           "| Question type | n | Lineage (tool rows) | Vector baseline | BM25 baseline | Baselines are credited when |",
+           "|---|---|---|---|---|---|"]
     for name, rs, how, key in rows:
+        bkey = key.replace("baseline", "bm25") if key else None
         out.append(f"| {name} | {len(rs)} | {pct([r['lineage'] for r in rs])} | "
-                   f"{pct([r[key] for r in rs]) if key else 'n/a'} | {how} |")
+                   f"{pct([r[key] for r in rs]) if key else 'n/a'} | {pct([r[bkey] for r in rs]) if bkey else 'n/a'} | {how} |")
     allr = results
     confident = [r for r in by("already_decided") if r["lineage_top"] and r["lineage_top"][0]["match"] == "same"]
     wrong = [r for r in confident if r["lineage_top"][0]["pep"] not in r["expect"]]
     out += ["", f"- **Confidently wrong** (Lineage's top row is a \"same idea\" match on a PEP that did not propose it): "
                 f"{len(wrong)}/{len(confident)} confident answers ({', '.join(r['id'] for r in wrong) or 'none'}). "
                 "`draft_reply` only quotes \"same idea\" matches, so this is the rate at which a draft would cite the wrong PEP.",
-            f"- Baseline no-match cutoff (cosine similarity of the top chunk), tuned on these questions: **{cut:.3f}**.",
+            f"- Baseline no-match cutoffs, tuned on these questions (best case for both): cosine similarity **{cut:.3f}**, "
+            f"BM25 score **{bm_cut:.2f}**.",
             f"- Lineage answers that carry a graph path: {pct([r['lineage_paths'] > 0 for r in allr if r['lineage'] and r['lineage_outcome'] == 'answered'])} "
             "of correct answered items (the baseline returns text chunks, never paths, by construction).",
             f"- Keyword router (no LLM) picked the right tool: {pct([r['router_ok'] for r in allr])}.",
