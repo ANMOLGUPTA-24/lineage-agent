@@ -6,7 +6,7 @@ Copy into the submission form. Every number here is from the repo; re-check if t
 
 **Track:** Track 03: Company Brain
 
-**Tagline:** Has Python already decided this? A FalkorDB graph agent over 25 years of Python's decisions.
+**Tagline:** Has Python already decided this? A FalkorDB graph agent over 26 years of Python's decisions.
 
 **Repository:** https://github.com/ANMOLGUPTA-24/lineage-agent
 
@@ -18,7 +18,7 @@ graph, opening on a multi-hop example; anything else shows how to run it locally
 **Demo video:** https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4 (2:51, narrated, captions burned in; `docs/video/lineage-demo.srt` for upload)
 
 **How to run (live deployment alternative):**
-`docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (about a minute; the graph is
+`docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (2–4 minutes the first time; the graph is
 pre-built). Or the "Open in GitHub Codespaces" button in the README. No API key needed.
 
 **Short description (≈50 words):**
