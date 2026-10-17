@@ -148,8 +148,8 @@ complete graph and none failed.
 
 Rebuilding instead of patching turned out to matter. A graph I had re-ingested in place many times
 started returning PEP 0 as the endpoint of three edges on an unanchored scan, while the anchored
-query returned the right PEP. A fresh build was correct, and the sync diff is what surfaced it. I
-haven't reduced it to a minimal reproduction yet.
+query returned the right PEP. A fresh build was correct, and the sync diff is what surfaced it. Replaying
+four rounds of the same in-place re-ingest didn't reproduce it, so I report it as an observation, not a bug.
 
 ## Where ideas go to die: the forum
 

@@ -9,7 +9,7 @@ Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Tra
 The "company" is the Python project, one of the largest open-source organisations, with 25 years of
 decisions on public record.
 
-> **Demo video:** [docs/video/lineage-demo.mp4](docs/video/lineage-demo.mp4) (2:47, captioned walkthrough of the running app) · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
+> **Demo video:** [docs/video/lineage-demo.mp4](docs/video/lineage-demo.mp4) (2:28, captioned walkthrough of the running app) · [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
 > (runs the app with the pre-built graph in your browser on GitHub's free Codespaces allowance; port 8000 opens by itself)
 
 ### Does the graph matter? Measured against vector search on the same data
@@ -34,11 +34,11 @@ from public data in under 4 minutes (`make ingest`), with a 47-test suite.
 projections, and session memory as graph nodes. Every answer lists the steps that ran, draws the subgraph it
 walked, and shows the exact Cypher with its parameters.
 
-![Has anyone proposed a do-while loop? PEP 315, rejected, with its Notice quoted and the graph path drawn](docs/screenshots/already-decided.jpg)
+![Has anyone proposed a do-while loop? PEP 315, rejected: the answer reads like a PEP header, the deciding sentence highlighted, with the graph path and the steps that ran alongside](docs/screenshots/already-decided.jpg)
 
-| Did the idea come back? | Who should I ask about typing? |
-|---|---|
-| ![PEP 403 and PEP 572 rejected the approach of PEP 3150](docs/screenshots/came-back.jpg) | ![PageRank over the typing influence graph, with the citations behind it](docs/screenshots/who-knows.jpg) |
+| Did the idea come back? | Who should I ask about typing? | Memory in the graph |
+|---|---|---|
+| ![PEP 403 and PEP 572 set aside the approach of PEP 3150, each quoted](docs/screenshots/came-back.jpg) | ![PageRank over the typing influence graph, with the citations behind it](docs/screenshots/who-knows.jpg) | ![Session, asked, Query, accessed, PEP](docs/screenshots/memory.jpg) |
 
 ## Why a graph?
 
@@ -147,7 +147,8 @@ a new PEP, a new supersession) came out as exactly those 3 `Change` events.
 Why rebuild instead of patching: a long-lived graph that had been re-ingested in place many times
 began returning a wrong endpoint for 3 edges on an unanchored scan (PEP 0 instead of PEP 831; the
 anchored query was right), on FalkorDB 4.22.1. A fresh build was correct, and the sync diff is what
-surfaced it.
+surfaced it. Replaying four rounds of the same in-place re-ingest on a scratch graph did not reproduce it
+(973 edges, 0 mismatches each round), so this is an observation, not a confirmed FalkorDB bug.
 
 ## Graph model
 
