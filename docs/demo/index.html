@@ -481,7 +481,7 @@ function body(step) {
       <button class="btn primary" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(this.previousElementSibling.value); const b=this; b.textContent='Copied'; setTimeout(()=>b.textContent='Copy reply', 1500)">Copy reply</button>
       <button class="btn" type="button" onclick="const l=this.parentElement.querySelector('.letter'); l.classList.toggle('open'); this.textContent = l.classList.contains('open') ? 'Show less' : 'Show full reply'">Show full reply</button>
       <span style="color:var(--muted);font-size:14px;margin-left:8px">Built only from the records below. Nothing is posted.</span></article>` : "")
-      + decidedRecords(rows);
+      + historyHTML(rows) + decidedRecords(rows);
   }
   if (t === "why") {
     const r = rows[0];
