@@ -426,20 +426,22 @@ function leadFor(step) {
     const r = rows[0];
     let why = r.rationale && r.rationale.quote ? r.rationale.quote.split(/(?<=\.)\s/)[0] : "";
     if (why.length > 120) why = why.slice(0, 117).replace(/\s+\S*$/, "") + "…";
-    return {text: `PEP ${r.pep} (${year(r.created)}): ${why || `${r.title}, ${r.status.toLowerCase()}.`}`};
+    const over = (r.earlier_proposals || []).map((x) => x.pep);
+    return {text: `PEP ${r.pep} (${year(r.created)}): ${why || `${r.title}, ${r.status.toLowerCase()}.`}`
+      + (over.length ? ` Earlier proposals it cites that never shipped: ${over.join(", ")}.` : "")};
   }
   if (t === "is_current") {
     const r = rows[0];
     return {text: r.current ? `Yes. PEP ${r.pep} is ${r.status} and nothing supersedes it.`
-      : r.latest && r.latest.length ? `No. It was superseded; the latest in the chain is PEP ${r.latest[0].pep}.` : step.note || `PEP ${r.pep} is ${r.status}.`};
+      : r.latest && r.latest.length ? `No. PEP ${r.pep} is ${r.status.toLowerCase()}; the latest in its chain is PEP ${r.latest[0].pep}.` : step.note || `PEP ${r.pep} is ${r.status}.`};
   }
   if (t === "who_knows") { const r = rows[0]; const subj = r.subject.replace(/^topic /, "");
     return {text: r.most_built_on ? `In ${subj}, the work builds most on ${r.most_built_on[0].name}; the most active today is ${r.most_active[0].name}.` : `People who know ${subj}:`}; }
   if (t === "bus_factor") { const r = rows[0], c = r.connected;
     const subj = r.subject.replace(/^topic /, "");
     return {text: c ? (c.cut_off_if_they_leave ? `Without ${r.most_involved.name}, ${c.cut_off_if_they_leave} people lose their link to the rest of ${subj}.`
-                                                 : `${subj[0].toUpperCase() + subj.slice(1)} doesn't depend on one person: without ${r.most_involved.name}, no one else is cut off.`)
-                    : `${r.single_person_peps} PEPs in ${subj} depend on a single person.`}; }
+                                                 : `${subj[0].toUpperCase() + subj.slice(1)} doesn't hinge on one person: without ${r.most_involved.name}, everyone else stays connected.`)
+                    : `${r.single_person_peps} of the ${r.peps} PEPs ${/^PEP /.test(subj) ? `around ${subj}` : `in ${subj}`} depend on a single person.`}; }
   if (t === "connection") {
     // Say what the link is: the first path, read as a sentence.
     const r = rows[0], p = (step.paths || [])[0] || [];
@@ -507,7 +509,7 @@ function body(step) {
   }
   if (t === "who_knows") {
     const r = rows[0];
-    if (!r.most_built_on) return `<article class="record"><ul class="people">${(r.people || []).map((p) => `<li><span>${esc(p.name)}</span><span class="n">${esc(p.items)} items</span></li>`).join("")}</ul></article>`;
+    if (!r.most_built_on) return `<article class="record"><ul class="people">${(r.people || []).map((p) => `<li><span>${esc(p.name)}</span><span class="n">${esc(p.items)} item${p.items === 1 ? "" : "s"}</span></li>`).join("")}</ul></article>`;
     const max = Math.max(...r.most_built_on.map((p) => p.influence_share)) || 1;
     return `${r.direct && r.direct.length ? `<p>Wrote or decided it: ${r.direct.map((d) => esc(d.name)).join(", ")}.</p>` : ""}
       <article class="record"><h3>Whose work ${esc(r.subject.replace(/^topic /, ""))} builds on</h3><ul class="people">${r.most_built_on.map((p) =>
@@ -678,7 +680,7 @@ function answerHTML(t, i) {
   const r = t.res;
   if (!r) return `<h2>${esc(t.q)}</h2><p class="working">Walking the graph…</p>`;
   if (r.mode === "static-miss") {
-    const known = Object.keys(SNAP || {}).slice(0, 12);
+    const known = Object.entries(SNAP || {}).map(([k, v]) => v.question || k).slice(0, 12);
     return `<h2>${esc(t.q)}</h2>
       <p class="verdict none">This page is a snapshot of ${STATIC.count} real answers recorded from the graph; this question isn't one of them.</p>
       <p>To ask anything, run Lineage locally (about a minute, no API key):</p>

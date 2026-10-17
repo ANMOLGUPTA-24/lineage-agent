@@ -84,6 +84,7 @@ def main() -> None:
         sessions.append(sid)
         res = agent.ask(q, session=sid)
         res.pop("session", None)
+        res["question"] = q   # shown, in its own casing, where the snapshot lists what it recorded
         answers[norm(q)] = res
         if depth < 2:
             queue += [(f, depth + 1) for f in follow_ups(res)]

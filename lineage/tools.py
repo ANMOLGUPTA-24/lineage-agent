@@ -896,6 +896,8 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
         res["note"] = (res["note"] or "Only loosely related history was found, so there is no reply to draft.")
         return res
     lines = ["This has come up before."]
+    # Each PEP is named once: two matched PEPs often list each other as earlier tries or comebacks (472, 637).
+    named = {r["pep"] for r in same if isinstance(r.get("pep"), int) and r["kind"] == "pep"}
     for r in same:
         lines.append("")
         if r["kind"] == "thread":
@@ -927,9 +929,11 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
                              f'From the PEP: "{r["quote"]}" {r["url"]}')
             if d and d["url"]:
                 lines.append(f"  The ruling: {d['url']}")
-        for e in r.get("earlier_tries", [])[:2]:
+        for e in [x for x in r.get("earlier_tries", []) if x["pep"] not in named][:2]:
+            named.add(e["pep"])
             lines.append(f'  It had been proposed before, in PEP {e["pep"]} ("{e["title"]}", {(e["created"] or "")[:4]}, {e["status"]}).')
-        for b in r["came_back"][:3]:
+        for b in [x for x in r["came_back"] if x["pep"] not in named][:3]:
+            named.add(b["pep"])
             lines.append(f"  It came up again in {came_back_text(b)}")
         if r["superseded_by"]:
             lines.append(f"  PEP {r['pep']} was later superseded by {r['superseded_by']}.")
