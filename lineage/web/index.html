@@ -35,8 +35,7 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; overflow-x: hidden; }
-body { background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased;
-       height: 100vh; display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
 a { color: var(--blue-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
 :focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
 button { font: inherit; color: inherit; }
@@ -47,21 +46,6 @@ button { font: inherit; color: inherit; }
 .bar .what { color: var(--muted); font-size: 14px; }
 .bar .data { margin-left: auto; color: var(--muted); font-size: 13px; }
 
-/* App layout: the answer column scrolls on its own; the graph panel stays put at full height. */
-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr); min-height: 0; }
-#doc { padding: 0 28px 64px; min-width: 0; overflow-y: auto; overflow-anchor: none; }
-#side { border-left: 1px solid var(--rule); background: var(--card); min-height: 0; overflow: hidden;
-        display: grid; grid-template-rows: minmax(260px, 1fr) auto; min-width: 0; }
-
-/* ask */
-.ask { position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 16px 0 12px; }
-.ask form { display: flex; gap: 8px; max-width: 720px; }
-.ask input { flex: 1; min-width: 0; font: 17px var(--sans); color: var(--ink); background: var(--card);
-             border: 1px solid var(--rule); border-radius: 10px; padding: 12px 14px; }
-.ask input::placeholder { color: var(--muted); }
-.ask input:focus { outline: 3px solid color-mix(in srgb, var(--blue) 35%, transparent); border-color: var(--blue); }
-.ask button { border: 0; border-radius: 10px; padding: 0 18px; background: var(--blue); color: #fff; font-weight: 700; cursor: pointer; }
-.ask button:disabled { opacity: .6; cursor: progress; }
 
 /* hero (empty state) */
 .hero { max-width: 720px; padding: 48px 0 8px; }
@@ -136,27 +120,39 @@ dl.fields dd { margin: 0; min-width: 0; }
 .plain { margin-top: 10px; }
 .plain summary { cursor: pointer; color: var(--muted); font-size: 14px; }
 .plain p { white-space: pre-wrap; font-size: 15px; }
-.earlier { max-width: 720px; margin-top: 36px; border-top: 1px solid var(--rule); padding-top: 14px; }
-.earlier h4 { font: 700 15px var(--sans); margin: 0 0 6px; color: var(--muted); }
-.earlier button { display: flex; gap: 10px; width: 100%; background: none; border: 0; padding: 8px 0; cursor: pointer; text-align: left;
-                  border-bottom: 1px solid var(--soft); font-size: 15px; align-items: baseline; }
-.earlier button span:first-child { flex: 1; }
 
-/* side: graph + how it was answered */
-.side-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 14px 18px 0; flex-wrap: wrap; }
-.side-h h3 { font: 700 15px var(--sans); margin: 0; }
-.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted); }
-.legend span { display: inline-flex; align-items: center; gap: 5px; }
-.legend i { width: 10px; height: 10px; display: inline-block; }
-#graph { position: relative; min-height: 0; display: grid; grid-template-rows: auto 1fr; }
-.stage { position: relative; min-height: 260px; }
-#cy { position: absolute; inset: 0; }   /* cytoscape owns this element's children */
-#graph .empty { position: absolute; inset: 24px; display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 15px; }
-#info { position: absolute; right: 14px; bottom: 14px; max-width: 280px; background: var(--card); border: 1px solid var(--rule);
-        border-radius: 8px; padding: 10px 12px; font-size: 14px; display: none; z-index: 3; box-shadow: 0 6px 24px rgba(20,33,46,.12); }
-#how { border-top: 1px solid var(--rule); max-height: 34vh; overflow-y: auto; padding: 12px 18px 16px; }
-#how h3 { font: 700 15px var(--sans); margin: 0 0 6px; }
-.tool { margin: 10px 0 0; }
+
+/* One reading column (answer engines: Perplexity, Glean); each answer carries its own graph as a
+   figure, expandable to a full-window canvas (graph tools: FalkorDB Code Graph). */
+main { max-width: 780px; margin: 0 auto; padding: 0 24px 140px; }
+body.home main { padding-bottom: 48px; }
+.answer { max-width: none; padding: 34px 0 10px; border-top: 1px solid var(--rule); }
+.thread .answer:first-child { border-top: 0; }
+
+/* ask: in the hero on the home screen, docked at the bottom once a conversation starts */
+#f { display: flex; gap: 8px; }
+#f input { flex: 1; min-width: 0; font: 17px var(--sans); color: var(--ink); background: var(--card);
+           border: 1px solid var(--rule); border-radius: 12px; padding: 13px 15px; }
+#f input::placeholder { color: var(--muted); }
+#f input:focus { outline: 3px solid color-mix(in srgb, var(--blue) 35%, transparent); border-color: var(--blue); }
+#f button { border: 0; border-radius: 12px; padding: 0 20px; background: var(--blue); color: #fff; font-weight: 700; cursor: pointer; }
+#f button:disabled { opacity: .6; cursor: progress; }
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 14px 24px 18px;
+        background: linear-gradient(transparent, var(--paper) 30%); }
+.dock #f { max-width: 780px; margin: 0 auto; box-shadow: 0 8px 30px rgba(20, 33, 46, .12); border-radius: 12px; }
+body.home .dock { position: static; background: none; padding: 0; }
+body.home .dock #f { box-shadow: none; }
+.hero-ask { margin: 0 0 26px; }
+
+/* how it was answered: collapsed above the answer */
+.how-sum { margin: 0 0 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--card); }
+.how-sum > summary { cursor: pointer; padding: 9px 14px; font-size: 14.5px; color: var(--muted); list-style: none; display: flex; gap: 8px; align-items: center; }
+.how-sum > summary::-webkit-details-marker { display: none; }
+.how-sum > summary::before { content: "▸"; color: var(--blue); transition: transform .15s; }
+.how-sum[open] > summary::before { transform: rotate(90deg); }
+.how-sum > summary b { color: var(--ink); font-weight: 600; }
+.how-body { padding: 2px 16px 14px; border-top: 1px solid var(--soft); }
+.tool { margin: 12px 0 0; }
 .tool-h { font-size: 14px; color: var(--muted); }
 .tool-h b { color: var(--ink); font-weight: 700; }
 .tool ol { margin: 6px 0 0; padding-left: 22px; font-size: 14.5px; }
@@ -165,60 +161,70 @@ dl.fields dd { margin: 0; min-width: 0; }
 .tool summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
 .tool pre { font: 12px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; background: var(--paper); border-radius: 6px;
             padding: 10px; margin: 6px 0 0; color: var(--ink); }
-.ms { font-variant-numeric: tabular-nums; }
 
-@media (max-width: 900px) {
-  body { height: auto; display: block; overflow: auto; }
-  main { grid-template-columns: 1fr; }
-  #doc { overflow: visible; }
-  #side { border-left: 0; border-top: 1px solid var(--rule); grid-template-rows: 380px auto; overflow: visible; }
-  #doc, .bar { padding-left: 16px; padding-right: 16px; }
+/* the graph figure */
+.figure { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; margin: 6px 0 16px; overflow: hidden; }
+.fig-h { display: flex; align-items: baseline; gap: 12px; padding: 12px 16px 4px; flex-wrap: wrap; }
+.fig-h h4 { font: 700 15px var(--sans); margin: 0; }
+.fig-h .count { color: var(--muted); font-size: 13.5px; }
+.fig-h .btn { margin-left: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted); padding: 0 16px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; display: inline-block; }
+.canvas { position: relative; height: 340px; }
+.canvas .cy { position: absolute; inset: 0; }
+.fig-note { color: var(--muted); font-size: 14px; padding: 4px 16px 14px; }
+.info { position: absolute; right: 12px; bottom: 12px; max-width: 280px; background: var(--card); border: 1px solid var(--rule);
+        border-radius: 8px; padding: 10px 12px; font-size: 14px; display: none; z-index: 3; box-shadow: 0 6px 24px rgba(20, 33, 46, .12); }
+
+/* full-window graph */
+#overlay { position: fixed; inset: 0; z-index: 30; background: var(--paper); display: grid; grid-template-rows: auto 1fr; }
+#overlay[hidden] { display: none; }
+.ov-h { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.ov-h h4 { font: 600 18px var(--serif); margin: 0 auto 0 0; }
+.ov-h .count { color: var(--muted); font-size: 14px; }
+#ov-canvas { position: relative; }
+#ov-cy { position: absolute; inset: 0; }
+
+@media (max-width: 700px) {
+  main { padding: 0 16px 140px; }
+  .bar { padding-left: 16px; padding-right: 16px; }
   .bar .data { margin-left: 0; width: 100%; }
+  .dock { padding: 10px 12px 12px; }
   dl.fields { grid-template-columns: 1fr; gap: 2px 0; }
   dl.fields dd { margin-bottom: 8px; }
+  .canvas { height: 300px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
 </head>
-<body>
+<body class="home">
 <div class="bar">
   <h1 class="wordmark" id="home" tabindex="0">Lineage</h1>
   <span class="what">Python's decisions, as a graph you can question</span>
   <span class="data">745 PEPs, 1,085 rejected ideas and 1,748 forum threads in FalkorDB</span>
 </div>
-<main>
-  <section id="doc">
-    <div class="ask">
-      <form id="f">
-        <input id="q" type="text" aria-label="Ask about a PEP, a person or a topic, or paste an idea"
-               placeholder="Paste an idea, or ask about a PEP, a person or a topic" autocomplete="off" required>
-        <button id="go">Ask</button>
-      </form>
-    </div>
-    <div id="view"></div>
-  </section>
-  <aside id="side" aria-label="How this answer was found">
-    <div id="graph">
-      <div class="side-h">
-        <h3>The path behind this answer</h3>
-        <div class="legend" aria-hidden="true">
-          <span><i style="background:var(--blue);border-radius:50%"></i>PEP</span>
-          <span><i style="background:var(--person);border-radius:2px"></i>Person</span>
-          <span><i style="background:var(--decision);transform:rotate(45deg)"></i>Ruling</span>
-          <span><i style="background:var(--idea);border-radius:2px"></i>Rejected idea</span>
-          <span><i style="background:var(--thread)"></i>Forum thread</span>
-          <span><i style="background:var(--pr);border-radius:50%"></i>PR or issue</span>
-        </div>
-      </div>
-      <div class="stage">
-        <div class="empty" id="empty">Ask something. The nodes and edges the agent walked will be drawn here.</div>
-        <div id="cy"></div>
-      </div>
-      <div id="info"></div>
-    </div>
-    <div id="how"><h3>How it was answered</h3><div id="steps" style="color:var(--muted);font-size:14.5px">Each tool the agent runs, what it found, and the exact Cypher.</div></div>
-  </aside>
+<main id="doc">
+  <div id="view"></div>
 </main>
+<div class="dock" id="dock">
+  <form id="f">
+    <input id="q" type="text" aria-label="Paste an idea, or ask about a PEP, a person or a topic"
+           placeholder="Paste an idea, or ask about a PEP, a person or a topic" autocomplete="off" required>
+    <button id="go">Ask</button>
+  </form>
+</div>
+<div id="overlay" hidden role="dialog" aria-modal="true" aria-label="Graph, full window">
+  <div class="ov-h">
+    <h4 id="ov-title">The path behind this answer</h4>
+    <span class="count" id="ov-count"></span>
+    <button class="btn" type="button" id="ov-fit">Fit</button>
+    <button class="btn" type="button" id="ov-in" aria-label="Zoom in">+</button>
+    <button class="btn" type="button" id="ov-out" aria-label="Zoom out">−</button>
+    <button class="btn" type="button" id="ov-close">Close</button>
+  </div>
+  <div id="ov-canvas"><div id="ov-cy"></div><div class="info" id="ov-info"></div></div>
+</div>
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
@@ -237,9 +243,8 @@ const TRIES = [
 ];
 const MORE = ["Why does Python have the walrus operator?", "Who should I ask about typing?",
               "How is PEP 484 related to PEP 695?", "Is PEP 333 still current?", "What did I ask earlier?"];
-
 const turns = [];
-let current = -1, cy;
+let overlayCy = null;
 
 function ask(q) { $("#q").value = q; $("#f").requestSubmit(); }
 
@@ -355,8 +360,8 @@ function body(step) {
   if (t === "already_decided") return decidedRecords(rows);
   if (t === "draft_reply") {
     const d = rows[0].draft;
-    return (d ? `<article class="record"><h3>Ready-to-post reply</h3><div class="draft" id="draft">${esc(d)}</div>
-      <button class="btn" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('draft').innerText); this.textContent='Copied'">Copy reply</button>
+    return (d ? `<article class="record"><h3>Ready-to-post reply</h3><div class="draft">${esc(d)}</div>
+      <button class="btn" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(this.previousElementSibling.innerText); this.textContent='Copied'">Copy reply</button>
       <span style="color:var(--muted);font-size:14px;margin-left:8px">Built only from the records below. Nothing is posted.</span></article>` : "")
       + decidedRecords(rows);
   }
@@ -421,47 +426,6 @@ function followUps(main) {
   if (main.tool === "is_current" && rows[0]) out.push(`Tell me the history of PEP ${rows[0].pep}`);
   return out.slice(0, 3);
 }
-function renderAnswer(t) {
-  const r = t.res;
-  if (!r) return `<section class="answer"><h2>${esc(t.q)}</h2><p class="working">Walking the graph…</p></section>`;
-  const steps = r.steps || [];
-  const main = [...steps].reverse().find((s) => !["resolve", "recall", "session_link"].includes(s.tool)) || steps[steps.length - 1];
-  const link = steps.find((s) => s.tool === "session_link");
-  const lead = main ? leadFor(main) : {text: r.answer};
-  const rendered = main ? body(main) : "";
-  const nexts = main ? followUps(main) : [];
-  return `<section class="answer" aria-live="polite"><h2>${esc(t.q)}</h2>
-    ${r.mode === "llm" ? `<p class="lead">${esc(r.answer)}</p>` : `<p class="lead${lead.none ? " none" : ""}">${esc(lead.text)}</p>`}
-    ${r.rejected ? `<div class="guarded">The guard replaced the model's answer because it named ${esc(r.rejected.unsupported.join(", "))}, which no tool returned:<br><s>${esc(r.rejected.answer)}</s></div>` : ""}
-    ${link ? `<div class="memory">Connects to what you asked earlier, PEP ${esc(link.rows[0].earlier)}:${chain(link.paths[0])}</div>` : ""}
-    ${rendered}
-    ${!rendered && !lead.none && r.answer && r.mode !== "llm" ? `<p class="plain-a">${esc(r.answer)}</p>` : ""}
-    ${nexts.length ? `<div class="next"><h4>Ask next</h4>${nexts.map((n) => `<button type="button" data-q="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
-    <p class="how">${r.mode === "llm" ? `Written by ${esc(r.model)} from the graph rows, checked by the guard.` : "Answered from the graph rows, without a language model."}
-      ${main ? ` ${steps.reduce((a, s) => a + (s.ms || 0), 0).toFixed(0)} ms.` : ""}</p>
-    ${r.mode !== "llm" && r.answer ? `<details class="plain"><summary>Plain-text answer</summary><p>${esc(r.answer)}</p></details>` : ""}
-  </section>`;
-}
-function renderEarlier() {
-  const prev = turns.map((t, i) => [t, i]).filter(([t, i]) => i !== current && t.res).reverse();
-  if (!prev.length) return "";
-  return `<div class="earlier"><h4>Earlier in this session</h4>${prev.map(([t, i]) => {
-    const m = (t.res.steps || []).find((s) => !["resolve", "recall", "session_link"].includes(s.tool));
-    const st = m && m.rows && m.rows[0] && m.rows[0].status;
-    return `<button type="button" data-turn="${i}"><span>${esc(t.q)}</span>${st ? stamp(st) : ""}</button>`; }).join("")}</div>`;
-}
-function hero() {
-  return `<section class="hero"><h2>Has Python already decided this?</h2>
-    <p>Paste an idea and get the PEP that proposed it, the ruling and who made it, whether it came back, and who to ask.
-       Every answer shows the graph path it came from.</p>
-    <ul class="tries">${TRIES.map(([q, v]) => `<li><button type="button" data-q="${esc(q)}"><span class="idea">${esc(q)}</span><span class="why">${esc(v)}</span></button></li>`).join("")}</ul>
-    <div class="more">Or ask ${MORE.map((m) => `<button type="button" data-q="${esc(m)}">${esc(m)}</button>`).join("")}</div></section>`;
-}
-function render() {
-  $("#view").innerHTML = current < 0 ? hero() : renderAnswer(turns[current]) + renderEarlier();
-  document.querySelectorAll("#view [data-q]").forEach((b) => b.onclick = () => ask(b.dataset.q));
-  document.querySelectorAll("#view [data-turn]").forEach((b) => b.onclick = () => { current = +b.dataset.turn; render(); draw(turns[current].res); $("#doc").scrollTo({top: 0}); });
-}
 
 /* ---------------------------------------------------------------- graph */
 const STATUS_RING = (s) => ({Rejected: "--rejected", Withdrawn: "--deferred", Deferred: "--deferred", Final: "--final", Accepted: "--final",
@@ -470,7 +434,14 @@ const NODE = {PEP: ["--blue", "ellipse"], Person: ["--person", "round-rectangle"
               Decision: ["--decision", "diamond"], PR: ["--pr", "ellipse"], Issue: ["--pr", "ellipse"], Alternative: ["--idea", "tag"],
               Thread: ["--thread", "rectangle"], Section: ["--muted", "round-tag"], Finding: ["--memory", "hexagon"],
               Session: ["--memory", "hexagon"], Query: ["--memory", "round-hexagon"], Change: ["--muted", "vee"]};
-function draw(res) {
+
+const LEGEND = `<div class="legend" aria-hidden="true">
+  <span><i style="background:var(--blue);border-radius:50%"></i>PEP</span><span><i style="background:var(--person);border-radius:2px"></i>Person</span>
+  <span><i style="background:var(--decision);transform:rotate(45deg)"></i>Ruling</span><span><i style="background:var(--idea);border-radius:2px"></i>Rejected idea</span>
+  <span><i style="background:var(--thread)"></i>Forum thread</span><span><i style="background:var(--pr);border-radius:50%"></i>PR or issue</span></div>`;
+
+/* ---------------------------------------------------------------- graph elements from the paths that ran */
+function elementsFor(res) {
   const nodes = new Map(), edges = new Map();
   for (const step of res.steps || []) for (const path of step.paths || []) {
     for (let i = 0; i < path.length; i += 2) {
@@ -485,23 +456,15 @@ function draw(res) {
       }
     }
   }
-  // Most answers are a subject and what it connects to: put the subject (where paths start) in the
-  // middle and rank everything else by how many hops away it is.
-  const rootIds = new Set((res.steps || []).flatMap((s) => (s.paths || []).map((p) => p[0].id)));
-  const hops = new Map();
-  for (const step of res.steps || []) for (const path of step.paths || [])
-    for (let i = 0; i < path.length; i += 2) hops.set(path[i].id, Math.min(hops.get(path[i].id) ?? 99, i / 2));
-  $("#empty").style.display = nodes.size ? "none" : "grid";
-  $("#empty").textContent = nodes.size ? "" : "No path to draw: the graph doesn't record a relationship for this answer.";
-  $("#info").style.display = "none";
-  if (cy) cy.destroy();
-  cy = cytoscape({
-    container: $("#cy"),
-    elements: [...nodes.values(), ...edges.values()],
+  return {nodes: [...nodes.values()], edges: [...edges.values()]};
+}
+function makeCy(container, els, infoEl, big) {
+  const cy = cytoscape({
+    container, elements: [...els.nodes, ...els.edges],
     style: [
       {selector: "node", style: {"background-color": "data(color)", shape: "data(shape)", label: "data(short)", color: css("--ink"),
-        "font-family": "Public Sans", "font-size": 13, "text-valign": "bottom", "text-margin-y": 6, width: 18, height: 18,
-        "border-width": 3, "border-color": "data(ring)", "text-wrap": "wrap", "text-max-width": 140}},
+        "font-family": "Public Sans", "font-size": big ? 14 : 13, "text-valign": "bottom", "text-margin-y": 6, width: 18, height: 18,
+        "border-width": 3, "border-color": "data(ring)", "text-wrap": "wrap", "text-max-width": 150}},
       {selector: "node[label = 'PEP']", style: {width: 22, height: 22, "font-weight": 700}},
       {selector: "edge", style: {width: 1.5, "line-color": css("--rule"), "target-arrow-color": css("--muted"), "target-arrow-shape": "triangle",
         "arrow-scale": 0.85, "curve-style": "bezier", label: "data(label)", "font-size": 10.5, color: css("--muted"),
@@ -510,30 +473,122 @@ function draw(res) {
       {selector: "edge[inferred = 1]", style: {"line-style": "dashed"}},
       {selector: "node:selected", style: {"overlay-color": css("--mark"), "overlay-opacity": 0.35, "overlay-padding": 6}},
     ],
-    layout: nodes.size <= 3
+    layout: els.nodes.length <= 3
       ? {name: "breadthfirst", directed: false, padding: 48, spacingFactor: 1.3}
-      : {name: "cose", animate: false, padding: 24, nodeDimensionsIncludeLabels: true, randomize: false,
-         idealEdgeLength: () => 90, nodeRepulsion: () => 9000, edgeElasticity: () => 80, gravity: 0.6, numIter: 1500},
-    wheelSensitivity: 0.3, minZoom: 0.3, maxZoom: 1.25,
+      : {name: "cose", animate: false, padding: 28, nodeDimensionsIncludeLabels: true, randomize: false,
+         idealEdgeLength: () => big ? 120 : 90, nodeRepulsion: () => big ? 14000 : 9000, edgeElasticity: () => 80, gravity: 0.6, numIter: 1500},
+    wheelSensitivity: 0.3, minZoom: 0.25, maxZoom: big ? 3 : 1.25, userZoomingEnabled: !!big,
   });
   cy.on("tap", "node", (ev) => {
     const d = ev.target.data();
-    $("#info").innerHTML = `<b>${esc(d.id)}</b>${d.title && d.title !== d.id ? `<br>${esc(d.title)}` : ""}${d.status ? `<br>${stamp(d.status)}` : ""}`
+    infoEl.innerHTML = `<b>${esc(d.id)}</b>${d.title && d.title !== d.id ? `<br>${esc(d.title)}` : ""}${d.status ? `<br>${stamp(d.status)}` : ""}`
       + `${d.outcome ? `<br>${esc(d.outcome)}` : ""}${d.url ? `<br><a href="${esc(d.url)}" target="_blank" rel="noopener">Open source</a>` : ""}`;
-    $("#info").style.display = "block";
+    infoEl.style.display = "block";
   });
-  cy.on("tap", (ev) => { if (ev.target === cy) $("#info").style.display = "none"; });
+  cy.on("tap", (ev) => { if (ev.target === cy) infoEl.style.display = "none"; });
+  return cy;
+}
 
-  const steps = res.steps || [];
-  $("#steps").innerHTML = steps.length ? steps.map((s) => `<div class="tool">
-      <div class="tool-h"><b>${esc(s.tool.replaceAll("_", " "))}</b> ${esc(Object.entries(s.args || {}).filter(([k]) => k !== "session").map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`).join(", "))}
-        <span class="ms">${s.ms != null ? `, ${s.ms} ms` : ""}</span></div>
+/* ---------------------------------------------------------------- one answer, as a section in the thread */
+function stepsSummary(steps) {
+  const queries = steps.reduce((a, s) => a + (s.cypher || []).length, 0);
+  const ms = steps.reduce((a, s) => a + (s.ms || 0), 0);
+  const tools = steps.map((s) => s.tool.replaceAll("_", " "));
+  return `<details class="how-sum"><summary><b>How it was answered</b> ${esc(tools.join(", "))}: ${queries} graph quer${queries === 1 ? "y" : "ies"}, ${ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : Math.round(ms) + " ms"}</summary>
+    <div class="how-body">${steps.map((s) => `<div class="tool">
+      <div class="tool-h"><b>${esc(s.tool.replaceAll("_", " "))}</b> ${esc(Object.entries(s.args || {}).filter(([k]) => k !== "session").map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`).join(", "))}${s.ms != null ? `, ${s.ms} ms` : ""}</div>
       ${(s.explain || []).length ? `<ol>${s.explain.map((e) => `<li>${esc(e)}</li>`).join("")}</ol>` : s.note ? `<ol><li>${esc(s.note)}</li></ol>` : ""}
       ${(s.cypher || []).length ? `<details><summary>Cypher that ran (${s.cypher.length})</summary><pre>${esc(s.cypher.map((c, i) => c + (s.params && s.params[i] && Object.keys(s.params[i]).length ? `\n// ${JSON.stringify(s.params[i])}` : "")).join("\n\n"))}</pre></details>` : ""}
-    </div>`).join("") : "The agent made no tool calls.";
-  // The steps panel above changes the graph area's height: refit once it has rendered.
-  requestAnimationFrame(() => { cy.resize(); cy.fit(undefined, 28); });
+    </div>`).join("")}</div></details>`;
 }
+function answerHTML(t, i) {
+  const r = t.res;
+  if (!r) return `<h2>${esc(t.q)}</h2><p class="working">Walking the graph…</p>`;
+  const steps = r.steps || [];
+  const main = [...steps].reverse().find((s) => !["resolve", "recall", "session_link"].includes(s.tool)) || steps[steps.length - 1];
+  const link = steps.find((s) => s.tool === "session_link");
+  const lead = main ? leadFor(main) : {text: r.answer};
+  const rendered = main ? body(main) : "";
+  const nexts = main ? followUps(main) : [];
+  const els = elementsFor(r);
+  return `<h2>${esc(t.q)}</h2>
+    ${steps.length ? stepsSummary(steps) : ""}
+    ${r.mode === "llm" ? `<p class="lead">${esc(r.answer)}</p>` : `<p class="lead${lead.none ? " none" : ""}">${esc(lead.text)}</p>`}
+    ${r.rejected ? `<div class="guarded">The guard replaced the model's answer because it named ${esc(r.rejected.unsupported.join(", "))}, which no tool returned:<br><s>${esc(r.rejected.answer)}</s></div>` : ""}
+    ${link ? `<div class="memory">Connects to what you asked earlier, PEP ${esc(link.rows[0].earlier)}:${chain(link.paths[0])}</div>` : ""}
+    ${els.nodes.length ? `<figure class="figure" aria-label="The graph path behind this answer">
+      <div class="fig-h"><h4>The path behind this answer</h4><span class="count">${els.nodes.length} nodes, ${els.edges.length} relationships</span>
+        <button class="btn" type="button" data-expand="${i}">Expand</button></div>
+      ${LEGEND}
+      <div class="canvas"><div class="cy" id="cy-${i}"></div><div class="info"></div></div>
+      <figcaption class="fig-note">Every node and edge here came back from the queries listed above. Click a node for its source.</figcaption>
+    </figure>` : ""}
+    ${rendered}
+    ${!rendered && !lead.none && r.answer && r.mode !== "llm" ? `<p class="plain-a">${esc(r.answer)}</p>` : ""}
+
+    ${nexts.length ? `<div class="next"><h4>Ask next</h4>${nexts.map((n) => `<button type="button" data-q="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
+    <p class="how">${r.mode === "llm" ? `Written by ${esc(r.model)} from the graph rows, checked by the guard.` : "Answered from the graph rows, without a language model."}</p>
+    ${r.mode !== "llm" && r.answer ? `<details class="plain"><summary>Plain-text answer</summary><p>${esc(r.answer)}</p></details>` : ""}`;
+}
+function hero() {
+  return `<section class="hero"><h2>Has Python already decided this?</h2>
+    <p>Paste an idea and get the PEP that proposed it, the ruling and who made it, whether it came back, and who to ask.
+       Every answer shows the graph path it came from.</p>
+    <div class="hero-ask" id="hero-ask"></div>
+    <ul class="tries">${TRIES.map(([q, v]) => `<li><button type="button" data-q="${esc(q)}"><span class="idea">${esc(q)}</span><span class="why">${esc(v)}</span></button></li>`).join("")}</ul>
+    <div class="more">Or ask ${MORE.map((m) => `<button type="button" data-q="${esc(m)}">${esc(m)}</button>`).join("")}</div></section>`;
+}
+function wire(root) {
+  root.querySelectorAll("[data-q]").forEach((b) => b.onclick = () => ask(b.dataset.q));
+  root.querySelectorAll("[data-expand]").forEach((b) => b.onclick = () => openOverlay(+b.dataset.expand));
+}
+function showHome() {
+  document.body.classList.add("home");
+  $("#view").innerHTML = hero();
+  $("#hero-ask").append($("#f"));
+  wire($("#view"));
+}
+function ensureThread() {
+  if (!document.body.classList.contains("home")) return;
+  document.body.classList.remove("home");
+  $("#dock").append($("#f"));
+  $("#view").innerHTML = `<div class="thread" id="thread"></div>`;
+  turns.forEach((t, i) => { if (t.res) addTurn(t, i, true); });
+}
+function addTurn(t, i, restore) {
+  const sec = document.createElement("section");
+  sec.className = "answer"; sec.id = `turn-${i}`; sec.setAttribute("aria-live", "polite");
+  $("#thread").append(sec);
+  fillTurn(t, i);
+  if (!restore) sec.scrollIntoView({block: "start"});
+}
+function fillTurn(t, i) {
+  const sec = document.getElementById(`turn-${i}`);
+  sec.innerHTML = answerHTML(t, i);
+  wire(sec);
+  const el = document.getElementById(`cy-${i}`);
+  if (el && t.res) t.cy = makeCy(el, elementsFor(t.res), el.nextElementSibling, false);
+}
+
+/* ---------------------------------------------------------------- full-window graph */
+function openOverlay(i) {
+  const t = turns[i]; if (!t || !t.res) return;
+  const els = elementsFor(t.res);
+  $("#ov-title").textContent = t.q;
+  $("#ov-count").textContent = `${els.nodes.length} nodes, ${els.edges.length} relationships`;
+  $("#overlay").hidden = false;
+  if (overlayCy) overlayCy.destroy();
+  overlayCy = makeCy($("#ov-cy"), els, $("#ov-info"), true);
+  // Small graphs shouldn't open magnified; start at most at 1.6x, centred.
+  if (overlayCy.zoom() > 1.6) { overlayCy.zoom(1.6); overlayCy.center(); }
+  $("#ov-close").focus();
+}
+function closeOverlay() { $("#overlay").hidden = true; if (overlayCy) { overlayCy.destroy(); overlayCy = null; } }
+$("#ov-close").onclick = closeOverlay;
+$("#ov-fit").onclick = () => overlayCy && overlayCy.fit(undefined, 40);
+$("#ov-in").onclick = () => overlayCy && overlayCy.zoom({level: overlayCy.zoom() * 1.25, renderedPosition: {x: innerWidth / 2, y: innerHeight / 2}});
+$("#ov-out").onclick = () => overlayCy && overlayCy.zoom({level: overlayCy.zoom() / 1.25, renderedPosition: {x: innerWidth / 2, y: innerHeight / 2}});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#overlay").hidden) closeOverlay(); });
 
 /* ---------------------------------------------------------------- ask */
 $("#f").onsubmit = async (ev) => {
@@ -541,8 +596,9 @@ $("#f").onsubmit = async (ev) => {
   const q = $("#q").value.trim();
   if (!q) return;
   $("#go").disabled = true;
-  const t = {q, res: null};
-  turns.push(t); current = turns.length - 1; render(); requestAnimationFrame(() => { $("#doc").scrollTop = 0; });
+  ensureThread();
+  const t = {q, res: null}, i = turns.length;
+  turns.push(t); addTurn(t, i, false);
   try {
     const r = await fetch("/api/ask", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question: q, session})});
     t.res = r.ok ? await r.json() : {answer: `The server answered ${r.status}. Try again, or rephrase the question.`, mode: "error", steps: []};
@@ -550,11 +606,12 @@ $("#f").onsubmit = async (ev) => {
     t.res = {answer: "Couldn't reach the server. Check that it is running, then ask again.", mode: "error", steps: []};
   }
   $("#go").disabled = false; $("#q").value = "";
-  render(); draw(t.res); requestAnimationFrame(() => { $("#doc").scrollTop = 0; });
+  fillTurn(t, i);
+  document.getElementById(`turn-${i}`).scrollIntoView({block: "start"});
 };
-$("#home").onclick = () => { current = -1; render(); };
-$("#home").onkeydown = (e) => { if (e.key === "Enter") { current = -1; render(); } };
-render();
+$("#home").onclick = showHome;
+$("#home").onkeydown = (e) => { if (e.key === "Enter") showHome(); };
+showHome();
 </script>
 </body>
 </html>
