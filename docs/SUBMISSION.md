@@ -10,6 +10,8 @@ Copy into the submission form. Every number here is from the repo; re-check if t
 
 **Repository:** https://github.com/ANMOLGUPTA-24/lineage-agent
 
+**Blog post:** https://medium.com/@anmolgupta.skp/python-already-said-no-tracing-26-years-of-rejected-ideas-with-a-graph-d8060ecc1cba
+
 **Live demo:** https://anmolgupta-24.github.io/lineage-agent/demo/ (static: the real UI with 67 answers recorded from the
 graph, opening on a multi-hop example; anything else shows how to run it locally in a minute)
 
