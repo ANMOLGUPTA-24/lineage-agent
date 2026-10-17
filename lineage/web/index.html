@@ -458,6 +458,8 @@ function elementsFor(res) {
   }
   return {nodes: [...nodes.values()], edges: [...edges.values()]};
 }
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const counts = (els) => `${plural(els.nodes.length, "node")}, ${els.edges.length === 1 ? "1 relationship" : els.edges.length + " relationships"}`;
 function makeCy(container, els, infoEl, big) {
   const cy = cytoscape({
     container, elements: [...els.nodes, ...els.edges],
@@ -517,7 +519,7 @@ function answerHTML(t, i) {
     ${r.rejected ? `<div class="guarded">The guard replaced the model's answer because it named ${esc(r.rejected.unsupported.join(", "))}, which no tool returned:<br><s>${esc(r.rejected.answer)}</s></div>` : ""}
     ${link ? `<div class="memory">Connects to what you asked earlier, PEP ${esc(link.rows[0].earlier)}:${chain(link.paths[0])}</div>` : ""}
     ${els.nodes.length ? `<figure class="figure" aria-label="The graph path behind this answer">
-      <div class="fig-h"><h4>The path behind this answer</h4><span class="count">${els.nodes.length} nodes, ${els.edges.length} relationships</span>
+      <div class="fig-h"><h4>The path behind this answer</h4><span class="count">${counts(els)}</span>
         <button class="btn" type="button" data-expand="${i}">Expand</button></div>
       ${LEGEND}
       <div class="canvas"><div class="cy" id="cy-${i}"></div><div class="info"></div></div>
@@ -575,7 +577,7 @@ function openOverlay(i) {
   const t = turns[i]; if (!t || !t.res) return;
   const els = elementsFor(t.res);
   $("#ov-title").textContent = t.q;
-  $("#ov-count").textContent = `${els.nodes.length} nodes, ${els.edges.length} relationships`;
+  $("#ov-count").textContent = counts(els);
   $("#overlay").hidden = false;
   if (overlayCy) overlayCy.destroy();
   overlayCy = makeCy($("#ov-cy"), els, $("#ov-info"), true);
