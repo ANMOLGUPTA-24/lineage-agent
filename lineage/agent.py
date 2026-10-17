@@ -197,7 +197,7 @@ def template(step: dict) -> str:
         if r.get("builds_on"):
             s += f". It builds on {', '.join(r['builds_on'][:6])}"
         if r.get("earlier_proposals"):
-            s += (". Earlier proposals it cites that were never adopted: "
+            s += (". Earlier, never-adopted proposals in its lineage: "
                   + ", ".join(f"{x['pep']} ({x['status']})" for x in r["earlier_proposals"][:6]))
         # One rejected idea can cite several PEPs ("PEP 576 and PEP 580"): say its sentence once.
         grouped = {}

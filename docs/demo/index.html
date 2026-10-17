@@ -428,7 +428,7 @@ function leadFor(step) {
     if (why.length > 120) why = why.slice(0, 117).replace(/\s+\S*$/, "") + "…";
     const over = (r.earlier_proposals || []).map((x) => x.pep);
     return {text: `PEP ${r.pep} (${year(r.created)}): ${why || `${r.title}, ${r.status.toLowerCase()}.`}`
-      + (over.length ? ` Earlier proposals it cites that never shipped: ${over.join(", ")}.` : "")};
+      + (over.length ? ` Earlier, never-adopted proposals in its lineage: ${over.join(", ")}.` : "")};
   }
   if (t === "is_current") {
     const r = rows[0];
