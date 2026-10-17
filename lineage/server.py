@@ -1,6 +1,7 @@
 """Web app: one page, one JSON endpoint.  uv run uvicorn lineage.server:app --port 8000"""
 import re
 import threading
+from contextlib import asynccontextmanager
 import time
 from collections import defaultdict, deque
 from pathlib import Path
@@ -12,10 +13,6 @@ from pydantic import BaseModel, Field
 from lineage import agent
 from lineage.db import connect, graph, resolve
 
-app = FastAPI(title="Lineage")
-
-
-@app.on_event("startup")
 def warm_up():
     """Load the embedding and reranking models in the background, so the first question isn't the slow one."""
     def run():
@@ -25,6 +22,15 @@ def warm_up():
         except Exception:   # warming is best effort; the first real question still works, only slower
             pass
     threading.Thread(target=run, daemon=True).start()
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    warm_up()
+    yield
+
+
+app = FastAPI(title="Lineage", lifespan=lifespan)
 WEB = Path(__file__).parent / "web"
 
 
