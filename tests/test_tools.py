@@ -306,3 +306,9 @@ def test_sessions_are_isolated(monkeypatch, session):
     agent.ask("Is PEP 333 still current?", session=session)
     assert tools.my_session("someone_else_entirely")["outcome"] == "not_in_graph"
     assert tools.my_session("bad id with spaces")["outcome"] == "not_in_graph"
+
+
+def test_who_knows_for_a_pep_outside_every_area():
+    # PEP 315 is in no topic and no large community: the local fallback must still answer.
+    r = tools.call("who_knows", {"subject": "315"})
+    assert r["outcome"] == "answered" and r["rows"][0]["people"]

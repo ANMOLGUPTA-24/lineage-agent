@@ -82,6 +82,9 @@ button { font: inherit; color: inherit; }
 .letter.open { max-height: none; -webkit-mask-image: none; mask-image: none; }
 .letter p { margin: 0 0 10px; }
 .letter q { display: block; quotes: none; background: var(--mark-soft); border-left: 3px solid var(--mark); padding: 4px 10px; margin: 4px 0 6px; }
+.cmd { font: 13.5px/1.6 var(--mono); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; overflow-x: auto; }
+.snapnote { margin-left: auto; font-size: 13px; color: var(--muted); }
+.snapnote a { color: var(--blue-ink); }
 .btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); font-weight: 600; }
 .working { color: var(--muted); font-size: 17px; }
 .record { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; margin: 0 0 14px; }
@@ -141,6 +144,22 @@ dl.fields dd { margin: 0; min-width: 0; }
 /* One reading column (answer engines: Perplexity, Glean); each answer carries its own graph as a
    figure, expandable to a full-window canvas (graph tools: FalkorDB Code Graph). */
 main { max-width: 780px; margin: 0 auto; padding: 0 24px 140px; }
+.a-head { margin-bottom: 4px; }
+.a-side .figure { margin-top: 0; }
+@media (min-width: 1180px) {
+  /* Wide screens: the answer reads on the left while its own graph stays pinned on the right. */
+  main { max-width: 1440px; padding: 0 48px 140px; }
+  .answer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(440px, 0.92fr); column-gap: 44px; align-items: start; }
+  .a-head { grid-column: 1 / -1; max-width: 980px; }
+  .a-main { grid-column: 1; min-width: 0; }
+  .a-side { grid-column: 2; grid-row: 2; position: sticky; top: 16px; }
+  .a-side .canvas { height: min(62vh, 560px) !important; }
+  .hero { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(460px, 1fr); gap: 56px; align-items: start; padding-top: 56px; }
+  .hero-side { position: sticky; top: 24px; }
+  .hero-side .canvas { height: 400px !important; }
+  .hero-side .scale { margin-top: 18px; }
+  .dock #f { max-width: 980px; }
+}
 body.home main { padding-bottom: 48px; }
 .answer { max-width: none; padding: 34px 0 10px; border-top: 1px solid var(--rule); }
 .thread .answer:first-child { border-top: 0; }
@@ -261,6 +280,17 @@ const MORE = ["Why does Python have the walrus operator?", "Who should I ask abo
               "How is PEP 484 related to PEP 695?", "Is PEP 333 still current?", "What did I ask earlier?"];
 const turns = [];
 let overlayCy = null;
+
+/* ---------------------------------------------------------------- static snapshot mode (GitHub Pages demo) */
+// docs/demo is this page plus answers recorded from the real graph (scripts/build_static_demo.py).
+const STATIC = window.LINEAGE_STATIC || null;
+let SNAP = null;
+const norm = (q) => q.trim().toLowerCase().replace(/\s+/g, " ").replace(/[?!.]+$/, "");
+async function snapshotAnswer(q) {
+  if (!SNAP) SNAP = await fetch("answers.json").then((r) => r.json());
+  return SNAP[norm(q)] || {mode: "static-miss", steps: [], answer: ""};
+}
+if (STATIC) MORE.splice(MORE.indexOf("What did I ask earlier?"), 1);
 
 function ask(q) { $("#q").value = q; $("#f").requestSubmit(); }
 
@@ -592,6 +622,15 @@ function leadStatus(main) {
 function answerHTML(t, i) {
   const r = t.res;
   if (!r) return `<h2>${esc(t.q)}</h2><p class="working">Walking the graph…</p>`;
+  if (r.mode === "static-miss") {
+    const known = Object.keys(SNAP || {}).slice(0, 12);
+    return `<h2>${esc(t.q)}</h2>
+      <p class="verdict none">This page is a snapshot of ${STATIC.count} real answers recorded from the graph; this question isn't one of them.</p>
+      <p>To ask anything, run Lineage locally (about a minute, no API key):</p>
+      <pre class="cmd">git clone https://github.com/ANMOLGUPTA-24/lineage-agent && cd lineage-agent
+docker compose -f docker-compose.quick.yml up</pre>
+      <div class="next"><h4>Recorded questions you can open here</h4>${known.map((k) => `<button type="button" data-q="${esc(k)}">${esc(k[0].toUpperCase() + k.slice(1))}</button>`).join("")}</div>`;
+  }
   const steps = r.steps || [];
   const main = [...steps].reverse().find((s) => !["resolve", "recall", "session_link"].includes(s.tool)) || steps[steps.length - 1];
   const link = steps.find((s) => s.tool === "session_link");
@@ -601,11 +640,20 @@ function answerHTML(t, i) {
   const nexts = main ? followUps(main) : [];
   const els = elementsFor(r, focusFor(main));
   const statusVar = st ? `--${({forum: "draft", withdrawn: "deferred", accepted: "final", active: "final", provisional: "final"})[st.toLowerCase()] || st.toLowerCase()}` : "--rule";
-  return `<h2>${esc(t.q)}</h2>
+  return `<header class="a-head"><h2>${esc(t.q)}</h2>
     ${r.mode === "llm" ? `<p class="verdict" style="--v:var(--blue)">${esc(r.answer)}</p>`
-      : `<p class="verdict${lead.none ? " none" : ""}" style="--v:var(${lead.none ? "--rule" : statusVar})">${st ? stamp(st) + " " : ""}${esc(lead.text)}</p>`}
+      : `<p class="verdict${lead.none ? " none" : ""}" style="--v:var(${lead.none ? "--rule" : statusVar})">${st ? stamp(st) + " " : ""}${esc(lead.text)}</p>`}</header>
+    <div class="a-main">
     ${r.rejected ? `<div class="guarded">The guard replaced the model's answer because it named ${esc(r.rejected.unsupported.join(", "))}, which no tool returned:<br><s>${esc(r.rejected.answer)}</s></div>` : ""}
     ${link ? `<div class="memory">Connects to what you asked earlier, PEP ${esc(link.rows[0].earlier)}:${chain(link.paths[0])}</div>` : ""}
+
+    ${rendered}
+    ${!rendered && !lead.none && r.answer && r.mode !== "llm" ? `<p class="plain-a">${esc(r.answer)}</p>` : ""}
+    ${steps.length ? stepsSummary(steps, r.mode) : ""}
+    ${nexts.length ? `<div class="next"><h4>Ask next</h4>${nexts.map((n) => `<button type="button" data-q="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
+    ${r.mode !== "llm" && r.answer ? `<details class="plain"><summary>Plain-text answer</summary><p>${esc(r.answer)}</p></details>` : ""}
+    </div>
+    <aside class="a-side">
     ${els.nodes.length ? `<figure class="figure" aria-label="The graph path behind this answer">
       <div class="fig-h"><h4>The path behind this answer</h4><span class="count">${counts(els)}</span>
         <button class="btn" type="button" data-expand="${i}">Expand</button></div>
@@ -613,11 +661,7 @@ function answerHTML(t, i) {
       <div class="canvas" style="height:${canvasHeight(els.nodes.length)}px"><div class="cy" id="cy-${i}"></div><div class="info"></div></div>
       <figcaption class="fig-note">Every node and edge came back from the queries below. Point at a node to see its relationships; click it for its source.</figcaption>
     </figure>` : ""}
-    ${rendered}
-    ${!rendered && !lead.none && r.answer && r.mode !== "llm" ? `<p class="plain-a">${esc(r.answer)}</p>` : ""}
-    ${steps.length ? stepsSummary(steps, r.mode) : ""}
-    ${nexts.length ? `<div class="next"><h4>Ask next</h4>${nexts.map((n) => `<button type="button" data-q="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
-    ${r.mode !== "llm" && r.answer ? `<details class="plain"><summary>Plain-text answer</summary><p>${esc(r.answer)}</p></details>` : ""}`;
+    </aside>`;
 }
 
 /* ---------------------------------------------------------------- home: show the product, not a description of it */
@@ -631,19 +675,20 @@ const SPECIMEN = {steps: [{paths: [
 ]}]};
 const SPECIMEN_Q = "Has anyone proposed statement-local name bindings with a given clause?";
 function hero() {
-  return `<section class="hero"><h2>Has Python already decided this?</h2>
+  return `<section class="hero"><div class="hero-main"><h2>Has Python already decided this?</h2>
     <p>Paste an idea and get the PEP that proposed it, the ruling and who made it, whether it came back, and who to ask.
        Every answer shows the graph path it came from.</p>
     <div class="hero-ask" id="hero-ask"></div>
-    <figure class="specimen" tabindex="0" role="button" aria-label="Run the example: ${esc(SPECIMEN_Q)}" data-q="${esc(SPECIMEN_Q)}">
+    <ul class="tries">${TRIES.map(([q, v]) => { const [status, pep] = v.split(", "); return `<li><button type="button" data-q="${esc(q)}"><span class="idea">${esc(q)}</span>`
+      + `<span class="why">${stamp(status === "Forum only" ? "Forum" : status)}${pep ? ` <span>${esc(pep)}</span>` : ""}</span></button></li>`; }).join("")}</ul>
+    <div class="more">Or ask ${MORE.map((m) => `<button type="button" data-q="${esc(m)}">${esc(m)}</button>`).join("")}</div>
+    </div>
+    <div class="hero-side"><figure class="specimen" tabindex="0" role="button" aria-label="Run the example: ${esc(SPECIMEN_Q)}" data-q="${esc(SPECIMEN_Q)}">
       <div class="canvas" style="height:220px"><div class="cy" id="cy-specimen"></div></div>
       <figcaption><span>An answer, drawn: the <code>given:</code> clause proposed in PEP 3150 came back twice and was set aside both times.</span>
         <span class="run">Ask it</span></figcaption>
     </figure>
-    <ul class="tries">${TRIES.map(([q, v]) => { const [status, pep] = v.split(", "); return `<li><button type="button" data-q="${esc(q)}"><span class="idea">${esc(q)}</span>`
-      + `<span class="why">${stamp(status === "Forum only" ? "Forum" : status)}${pep ? ` <span>${esc(pep)}</span>` : ""}</span></button></li>`; }).join("")}</ul>
-    <div class="more">Or ask ${MORE.map((m) => `<button type="button" data-q="${esc(m)}">${esc(m)}</button>`).join("")}</div>
-    <p class="scale">745 PEPs, 1,085 rejected ideas, 1,748 forum threads and 2,175 people in one FalkorDB graph.</p></section>`;
+    <p class="scale">745 PEPs, 1,085 rejected ideas, 1,748 forum threads and 2,175 people in one FalkorDB graph.</p></div></section>`;
 }
 function drawSpecimen() {
   const el = document.getElementById("cy-specimen"); if (!el) return;
@@ -689,6 +734,8 @@ function fillTurn(t, i) {
   if (el && t.res) {
     const main = [...(t.res.steps || [])].reverse().find((x) => !["resolve", "recall", "session_link"].includes(x.tool));
     t.cy = makeCy(el, elementsFor(t.res, focusFor(main)), el.nextElementSibling, false);
+    // The wide layout settles the canvas size after first paint: refit once it has.
+    requestAnimationFrame(() => { t.cy.resize(); t.cy.fit(undefined, 30); if (t.cy.zoom() > 1.25) { t.cy.zoom(1.25); t.cy.center(); } });
   }
 }
 
@@ -723,8 +770,11 @@ $("#f").onsubmit = async (ev) => {
   const t = {q, res: null}, i = turns.length;
   turns.push(t); addTurn(t, i, false);
   try {
-    const r = await fetch("/api/ask", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question: q, session})});
-    t.res = r.ok ? await r.json() : {answer: `The server answered ${r.status}. Try again, or rephrase the question.`, mode: "error", steps: []};
+    if (STATIC) t.res = await snapshotAnswer(q);
+    else {
+      const r = await fetch("/api/ask", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question: q, session})});
+      t.res = r.ok ? await r.json() : {answer: `The server answered ${r.status}. Try again, or rephrase the question.`, mode: "error", steps: []};
+    }
   } catch (e) {
     t.res = {answer: "Couldn't reach the server. Check that it is running, then ask again.", mode: "error", steps: []};
   }
@@ -734,6 +784,10 @@ $("#f").onsubmit = async (ev) => {
 };
 $("#home").onclick = showHome;
 $("#home").onkeydown = (e) => { if (e.key === "Enter") showHome(); };
+if (STATIC) {
+  $(".bar .data").outerHTML = `<span class="snapnote">Live snapshot: ${STATIC.count} real answers recorded ${esc(STATIC.date)}.
+    <a href="https://github.com/ANMOLGUPTA-24/lineage-agent">Run it to ask anything</a></span>`;
+}
 showHome();
 </script>
 </body>

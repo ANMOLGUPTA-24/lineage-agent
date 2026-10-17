@@ -310,9 +310,9 @@ def _subject_peps(run: Run, subject: str) -> tuple[str, list[int]] | None:
     if n is None:
         return None
     # A PEP's neighbourhood: itself plus the PEPs one lineage hop away in either direction.
-    nums = [r[0] for r in run.q(f"""MATCH (p:PEP {{number: $n}}) OPTIONAL MATCH (p)-[:{LINEAGE_RELS}]-(q:PEP)
-                                    WITH p, collect(DISTINCT q.number) AS near RETURN [p.number] + near""", {"n": n})[0]]
-    return f"PEP {n}", nums[0]
+    nums = run.q(f"""MATCH (p:PEP {{number: $n}}) OPTIONAL MATCH (p)-[:{LINEAGE_RELS}]-(q:PEP)
+                     WITH p, collect(DISTINCT q.number) AS near RETURN [p.number] + near""", {"n": n})[0][0]
+    return f"PEP {n}", nums
 
 
 SCOPE_PEPS = {"Topic": "(q:PEP)-[:IN_TOPIC]->(:Topic {name: $key})",

@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lineage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+<style>
+/* Lineage: Python's decision record. Answers read like PEP headers; quoted evidence gets a
+   Python-yellow highlight; status colours carry meaning (rejected / deferred / final). */
+:root {
+  --paper: #eef1f4; --card: #ffffff; --ink: #14212e; --muted: #5a6877; --rule: #d3d9e0; --soft: #e3e8ee;
+  --blue: #306998; --blue-ink: #24557c; --mark: #ffd43b; --mark-soft: #fff1b8;
+  --rejected: #a4262c; --deferred: #8a5a00; --final: #1d6b40; --draft: #5a6877; --superseded: #6b4fa0;
+  --person: #b5651d; --decision: #1d6b40; --pr: #6b4fa0; --thread: #2c7a7b; --idea: #a4262c; --memory: #306998;
+  --serif: "Source Serif 4", Georgia, serif; --sans: "Public Sans", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #18222d; --card: #1f2b38; --ink: #e8edf2; --muted: #9aa8b6; --rule: #33424f; --soft: #2a3846;
+    --blue: #7fb0dc; --blue-ink: #a9cbea; --mark: #ffd43b; --mark-soft: rgba(255, 212, 59, .13);
+    --rejected: #f08a8f; --deferred: #e2b35c; --final: #6fcf97; --draft: #9aa8b6; --superseded: #b9a2ee;
+    --person: #e8a15e; --decision: #6fcf97; --pr: #b9a2ee; --thread: #6cc7c8; --idea: #f08a8f; --memory: #7fb0dc;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #18222d; --card: #1f2b38; --ink: #e8edf2; --muted: #9aa8b6; --rule: #33424f; --soft: #2a3846;
+  --blue: #7fb0dc; --blue-ink: #a9cbea; --mark: #ffd43b; --mark-soft: rgba(255, 212, 59, .13);
+  --rejected: #f08a8f; --deferred: #e2b35c; --final: #6fcf97; --draft: #9aa8b6; --superseded: #b9a2ee;
+  --person: #e8a15e; --decision: #6fcf97; --pr: #b9a2ee; --thread: #6cc7c8; --idea: #f08a8f; --memory: #7fb0dc;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; overflow-x: hidden; }
+body { background: var(--paper); color: var(--ink); font: 16px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
+a { color: var(--blue-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+button { font: inherit; color: inherit; }
+
+/* top bar */
+.bar { display: flex; align-items: baseline; gap: 14px; padding: 14px 28px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.wordmark { font: 600 22px/1 var(--serif); letter-spacing: -.01em; margin: 0; cursor: pointer; }
+.bar .what { color: var(--muted); font-size: 14px; }
+.bar .data { margin-left: auto; color: var(--muted); font-size: 13px; }
+
+
+/* hero (empty state) */
+.hero { max-width: 720px; padding: 48px 0 8px; }
+.hero h2 { font: 600 clamp(34px, 5vw, 52px)/1.05 var(--serif); letter-spacing: -.02em; margin: 0 0 14px; text-wrap: balance; }
+.hero p { color: var(--muted); font-size: 17px; margin: 0 0 28px; max-width: 60ch; }
+.tries { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.tries li { border-bottom: 1px solid var(--rule); }
+.tries button { width: 100%; display: flex; align-items: baseline; gap: 14px; background: none; border: 0; padding: 14px 2px;
+                text-align: left; cursor: pointer; font: 19px/1.35 var(--serif); }
+.tries button:hover .idea { text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 4px; }
+.tries .idea { flex: 1; }
+.tries .why { font: 14px var(--sans); color: var(--muted); }
+.more { margin-top: 22px; color: var(--muted); font-size: 15px; }
+.more button { background: none; border: 0; padding: 0; color: var(--blue-ink); cursor: pointer; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px;
+               text-decoration-thickness: 1px; text-underline-offset: 2px; margin-right: 14px; font-size: 15px; }
+
+/* answer document */
+.answer { max-width: 720px; padding: 26px 0 8px; }
+.answer h2 { font: 600 30px/1.15 var(--serif); letter-spacing: -.015em; margin: 0 0 10px; text-wrap: balance; }
+.verdict { font: 500 24px/1.38 var(--serif); margin: 4px 0 18px; padding-left: 14px; border-left: 3px solid var(--v, var(--rule)); }
+.verdict .stamp { font-size: 13px; top: -4px; margin-right: 4px; }
+.verdict.none { color: var(--muted); font-size: 21px; }
+.funnel { margin: 4px 0 2px; font-size: 15px; }
+.specimen { margin: 0 0 26px; background: var(--card); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; cursor: pointer; }
+.specimen:hover { border-color: var(--blue); }
+.specimen figcaption { padding: 10px 16px 14px; color: var(--muted); font-size: 15px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.specimen code { font: 14px var(--mono); color: var(--ink); }
+.specimen .run { margin-left: auto; color: var(--blue-ink); font-weight: 600; white-space: nowrap; }
+.scale { margin-top: 26px; font: 17px/1.5 var(--serif); color: var(--ink); font-variant-numeric: tabular-nums; }
+.tries .why { display: inline-flex; gap: 8px; align-items: baseline; }
+.tries .why .stamp { top: 0; }
+.letter { font: 16px/1.65 var(--serif); max-height: 280px; overflow: hidden; position: relative; margin: 4px 0 12px;
+          -webkit-mask-image: linear-gradient(#000 72%, transparent); mask-image: linear-gradient(#000 72%, transparent); }
+.letter.open { max-height: none; -webkit-mask-image: none; mask-image: none; }
+.letter p { margin: 0 0 10px; }
+.letter q { display: block; quotes: none; background: var(--mark-soft); border-left: 3px solid var(--mark); padding: 4px 10px; margin: 4px 0 6px; }
+.cmd { font: 13.5px/1.6 var(--mono); background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 14px; overflow-x: auto; }
+.snapnote { margin-left: auto; font-size: 13px; color: var(--muted); }
+.snapnote a { color: var(--blue-ink); }
+.btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); font-weight: 600; }
+.working { color: var(--muted); font-size: 17px; }
+.record { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; margin: 0 0 14px; }
+.record.related { background: transparent; border-style: dashed; }
+.record h3 { font: 600 21px/1.25 var(--serif); margin: 0 0 12px; display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.record h3 a { color: inherit; text-decoration: none; }
+.record h3 a:hover { text-decoration: underline; }
+.relnote { font-size: 14px; color: var(--muted); margin: -6px 0 10px; }
+.stamp { font: 700 13px/1 var(--sans); padding: 5px 9px 4px; border-radius: 4px; border: 1.5px solid currentColor;
+         letter-spacing: .01em; white-space: nowrap; position: relative; top: -2px; }
+.s-rejected { color: var(--rejected); } .s-deferred, .s-withdrawn { color: var(--deferred); }
+.s-final, .s-accepted, .s-active, .s-provisional { color: var(--final); } .s-superseded { color: var(--superseded); }
+.s-draft, .s-forum, .s-unknown { color: var(--draft); }
+dl.fields { display: grid; grid-template-columns: 128px 1fr; gap: 8px 16px; margin: 0; }
+dl.fields dt { color: var(--muted); font-size: 15px; }
+dl.fields dd { margin: 0; min-width: 0; }
+.quote { font: 17px/1.6 var(--serif); margin: 0; }
+.quote mark { background: linear-gradient(transparent 12%, var(--mark-soft) 12%, var(--mark-soft) 92%, transparent 92%);
+              color: inherit; padding: 0 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone;
+              box-shadow: inset 0 -2px 0 color-mix(in srgb, var(--mark) 70%, transparent); }
+.quote .src { font: 14px var(--sans); color: var(--muted); display: block; margin-top: 4px; }
+.timeline { list-style: none; margin: 2px 0 0; padding: 0; position: relative; }
+.timeline li { position: relative; padding: 0 0 12px 22px; }
+.timeline li::before { content: ""; position: absolute; left: 5px; top: 8px; width: 9px; height: 9px; border-radius: 50%;
+                       background: var(--card); border: 2px solid var(--blue); }
+.timeline li::after { content: ""; position: absolute; left: 10px; top: 20px; bottom: -2px; width: 1.5px; background: var(--rule); }
+.timeline li:last-child::after { display: none; }
+.timeline .yr { font-weight: 700; margin-right: 6px; }
+.timeline .quote { font-size: 15.5px; margin-top: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: var(--soft); border-radius: 6px; padding: 2px 8px; font-size: 14px; white-space: nowrap; }
+.people { list-style: none; margin: 0; padding: 0; }
+.people li { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--soft); align-items: center; }
+.people li:last-child { border-bottom: 0; }
+.people .bar-w { grid-column: 1 / -1; height: 4px; background: var(--soft); border-radius: 2px; overflow: hidden; margin-top: -2px; }
+.people .bar-w i { display: block; height: 100%; background: var(--blue); }
+.people .n { color: var(--muted); font-size: 14px; }
+.chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 15px; }
+.chain .rel { color: var(--muted); font-size: 13px; }
+.draft { white-space: pre-wrap; font: 15px/1.6 var(--sans); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px;
+         padding: 14px 16px; margin: 6px 0 10px; max-height: 360px; overflow: auto; }
+.btn { border: 1px solid var(--rule); background: var(--card); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-size: 14px; }
+.memory { border-left: 3px solid var(--memory); padding: 4px 0 4px 14px; margin: 4px 0 18px; font-size: 15.5px; }
+.memory .chain { margin-top: 4px; }
+.guarded { border-left: 3px solid var(--rejected); padding: 4px 0 4px 14px; margin: 0 0 16px; font-size: 14px; color: var(--muted); }
+.guarded s { color: var(--muted); }
+.next { margin: 18px 0 0; }
+.next h4 { font: 700 15px var(--sans); margin: 0 0 6px; }
+.next button { display: block; background: none; border: 0; padding: 5px 0; color: var(--blue-ink); cursor: pointer; text-align: left; font-size: 16px; }
+.next button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.how { font-size: 13.5px; color: var(--muted); margin-top: 14px; }
+.plain { margin-top: 10px; }
+.plain summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.plain p { white-space: pre-wrap; font-size: 15px; }
+
+
+/* One reading column (answer engines: Perplexity, Glean); each answer carries its own graph as a
+   figure, expandable to a full-window canvas (graph tools: FalkorDB Code Graph). */
+main { max-width: 780px; margin: 0 auto; padding: 0 24px 140px; }
+.a-head { margin-bottom: 4px; }
+.a-side .figure { margin-top: 0; }
+@media (min-width: 1180px) {
+  /* Wide screens: the answer reads on the left while its own graph stays pinned on the right. */
+  main { max-width: 1440px; padding: 0 48px 140px; }
+  .answer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(440px, 0.92fr); column-gap: 44px; align-items: start; }
+  .a-head { grid-column: 1 / -1; max-width: 980px; }
+  .a-main { grid-column: 1; min-width: 0; }
+  .a-side { grid-column: 2; grid-row: 2; position: sticky; top: 16px; }
+  .a-side .canvas { height: min(62vh, 560px) !important; }
+  .hero { max-width: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(460px, 1fr); gap: 56px; align-items: start; padding-top: 56px; }
+  .hero-side { position: sticky; top: 24px; }
+  .hero-side .canvas { height: 400px !important; }
+  .hero-side .scale { margin-top: 18px; }
+  .dock #f { max-width: 980px; }
+}
+body.home main { padding-bottom: 48px; }
+.answer { max-width: none; padding: 34px 0 10px; border-top: 1px solid var(--rule); }
+.thread .answer:first-child { border-top: 0; }
+
+/* ask: in the hero on the home screen, docked at the bottom once a conversation starts */
+#f { display: flex; gap: 8px; }
+#f input { flex: 1; min-width: 0; font: 17px var(--sans); color: var(--ink); background: var(--card);
+           border: 1px solid var(--rule); border-radius: 12px; padding: 13px 15px; }
+#f input::placeholder { color: var(--muted); }
+#f input:focus { outline: 3px solid color-mix(in srgb, var(--blue) 35%, transparent); border-color: var(--blue); }
+#f button { border: 0; border-radius: 12px; padding: 0 20px; background: var(--blue); color: #fff; font-weight: 700; cursor: pointer; }
+#f button:disabled { opacity: .6; cursor: progress; }
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; padding: 24px 24px 18px;
+        background: linear-gradient(transparent, var(--paper) 45%); }
+.dock #f { max-width: 780px; margin: 0 auto; box-shadow: 0 8px 30px rgba(20, 33, 46, .12); border-radius: 12px; }
+body.home .dock { position: static; background: none; padding: 0; }
+body.home .dock #f { box-shadow: none; }
+.hero-ask { margin: 0 0 26px; }
+
+/* how it was answered: collapsed above the answer */
+.how-sum { margin: 0 0 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--card); }
+.how-sum > summary { cursor: pointer; padding: 9px 14px; font-size: 14.5px; color: var(--muted); list-style: none; display: flex; gap: 8px; align-items: center; }
+.how-sum > summary::-webkit-details-marker { display: none; }
+.how-sum > summary::before { content: "▸"; color: var(--blue); transition: transform .15s; }
+.how-sum[open] > summary::before { transform: rotate(90deg); }
+.how-sum > summary b { color: var(--ink); font-weight: 600; }
+.how-body { padding: 2px 16px 14px; border-top: 1px solid var(--soft); }
+.tool { margin: 12px 0 0; }
+.tool-h { font-size: 14px; color: var(--muted); }
+.tool-h b { color: var(--ink); font-weight: 700; }
+.tool ol { margin: 6px 0 0; padding-left: 22px; font-size: 14.5px; }
+.tool ol li { margin: 3px 0; }
+.tool details { margin-top: 6px; }
+.tool summary { cursor: pointer; font-size: 13.5px; color: var(--muted); }
+.tool pre { font: 12px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; background: var(--paper); border-radius: 6px;
+            padding: 10px; margin: 6px 0 0; color: var(--ink); }
+
+/* the graph figure */
+.figure { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; margin: 6px 0 16px; overflow: hidden; }
+.fig-h { display: flex; align-items: baseline; gap: 12px; padding: 12px 16px 4px; flex-wrap: wrap; }
+.fig-h h4 { font: 700 15px var(--sans); margin: 0; }
+.fig-h .count { color: var(--muted); font-size: 13.5px; }
+.fig-h .btn { margin-left: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted); padding: 0 16px; }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; display: inline-block; }
+.canvas { position: relative; height: 340px; }
+.canvas .cy { position: absolute; inset: 0; }
+.fig-note { color: var(--muted); font-size: 14px; padding: 4px 16px 14px; }
+.info { position: absolute; right: 12px; bottom: 12px; max-width: 280px; background: var(--card); border: 1px solid var(--rule);
+        border-radius: 8px; padding: 10px 12px; font-size: 14px; display: none; z-index: 3; box-shadow: 0 6px 24px rgba(20, 33, 46, .12); }
+
+/* full-window graph */
+#overlay { position: fixed; inset: 0; z-index: 30; background: var(--paper); display: grid; grid-template-rows: auto 1fr; }
+#overlay[hidden] { display: none; }
+.ov-h { display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.ov-h h4 { font: 600 18px var(--serif); margin: 0 auto 0 0; }
+.ov-h .count { color: var(--muted); font-size: 14px; }
+#ov-canvas { position: relative; }
+#ov-cy { position: absolute; inset: 0; }
+
+@media (max-width: 700px) {
+  main { padding: 0 16px 140px; }
+  .bar { padding-left: 16px; padding-right: 16px; }
+  .bar .data { margin-left: 0; width: 100%; }
+  .dock { padding: 10px 12px 12px; }
+  dl.fields { grid-template-columns: 1fr; gap: 2px 0; }
+  dl.fields dd { margin-bottom: 8px; }
+  .canvas { height: 300px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body class="home">
+<div class="bar">
+  <h1 class="wordmark" id="home" tabindex="0">Lineage</h1>
+  <span class="what">A company brain for the Python project</span>
+  <span class="data">745 PEPs, 1,085 rejected ideas and 1,748 forum threads in FalkorDB</span>
+</div>
+<main id="doc">
+  <div id="view"></div>
+</main>
+<div class="dock" id="dock">
+  <form id="f">
+    <input id="q" type="text" aria-label="Paste an idea, or ask about a PEP, a person or a topic"
+           placeholder="Paste an idea, or ask about a PEP, a person or a topic" autocomplete="off" required>
+    <button id="go">Ask</button>
+  </form>
+</div>
+<div id="overlay" hidden role="dialog" aria-modal="true" aria-label="Graph, full window">
+  <div class="ov-h">
+    <h4 id="ov-title">The path behind this answer</h4>
+    <span class="count" id="ov-count"></span>
+    <button class="btn" type="button" id="ov-fit">Fit</button>
+    <button class="btn" type="button" id="ov-in" aria-label="Zoom in">+</button>
+    <button class="btn" type="button" id="ov-out" aria-label="Zoom out">−</button>
+    <button class="btn" type="button" id="ov-close">Close</button>
+  </div>
+  <div id="ov-canvas"><div id="ov-cy"></div><div class="info" id="ov-info"></div></div>
+</div>
+<script>window.LINEAGE_STATIC = {date: "2026-10-17", count: 45};</script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const year = (d) => (d || "").slice(0, 4);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+// The session id names this browser's memory in the graph: (:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP).
+let session = Math.random().toString(16).slice(2, 10);
+try { session = localStorage.getItem("lineage-session") || session; localStorage.setItem("lineage-session", session); } catch (e) {}
+
+const TRIES = [
+  ["Has anyone proposed a do-while loop?", "Rejected, PEP 315"],
+  ["Was there a PEP for None-aware operators (?. and ??)", "Deferred, PEP 505"],
+  ["Draft a reply to someone proposing a switch statement", "Rejected, PEP 3103"],
+  ["Have multi-line lambdas ever been proposed?", "Forum only"],
+];
+const MORE = ["Why does Python have the walrus operator?", "Who should I ask about typing?",
+              "How is PEP 484 related to PEP 695?", "Is PEP 333 still current?", "What did I ask earlier?"];
+const turns = [];
+let overlayCy = null;
+
+/* ---------------------------------------------------------------- static snapshot mode (GitHub Pages demo) */
+// docs/demo is this page plus answers recorded from the real graph (scripts/build_static_demo.py).
+const STATIC = window.LINEAGE_STATIC || null;
+let SNAP = null;
+const norm = (q) => q.trim().toLowerCase().replace(/\s+/g, " ").replace(/[?!.]+$/, "");
+async function snapshotAnswer(q) {
+  if (!SNAP) SNAP = await fetch("answers.json").then((r) => r.json());
+  return SNAP[norm(q)] || {mode: "static-miss", steps: [], answer: ""};
+}
+if (STATIC) MORE.splice(MORE.indexOf("What did I ask earlier?"), 1);
+
+function ask(q) { $("#q").value = q; $("#f").requestSubmit(); }
+
+/* ---------------------------------------------------------------- pieces */
+function stamp(status) {
+  const s = (status || "unknown").toLowerCase();
+  return `<span class="stamp s-${esc(s.split(" ")[0])}">${esc(status || "Unknown")}</span>`;
+}
+const pepLink = (n, title) => `<a href="https://peps.python.org/pep-${String(n).padStart(4, "0")}/" target="_blank" rel="noopener">PEP ${esc(n)}</a>${title ? `: ${esc(title)}` : ""}`;
+// Yellow marks decisive evidence only (rulings, the sentence that set an idea aside); context stays plain.
+function quote(text, url, label, plain) {
+  if (!text) return "";
+  return `<p class="quote">${plain ? esc(text) : `<mark>${esc(text)}</mark>`}${url ? `<a class="src" href="${esc(url)}" target="_blank" rel="noopener">${esc(label || "Read it in the PEP")}</a>` : ""}</p>`;
+}
+function decided(d) {
+  if (!d || !d.decided_by || !d.decided_by.length) return `<span style="color:var(--muted)">No ruling recorded in the graph</span>`;
+  const who = d.decided_by.map((x) => esc(x.by)).join(" and ");
+  const inferred = d.decided_by.some((x) => x.inferred);
+  const link = d.url || d.ruling_url;
+  return `${esc(d.outcome ? d.outcome[0].toUpperCase() + d.outcome.slice(1) : "Ruled")} by ${who}${d.at ? `, ${esc(year(d.at))}` : ""}`
+    + (inferred ? ` <span style="color:var(--muted)">(attributed from the date)</span>` : "")
+    + (link ? ` <a href="${esc(link)}" target="_blank" rel="noopener">ruling</a>` : "");
+}
+function cameBack(r, items) {
+  if (!items || !items.length) return "";
+  const first = `<li><span class="yr">${esc(year(r.created))}</span>Proposed in ${pepLink(r.pep)}</li>`;
+  return `<dt>Came back</dt><dd><ol class="timeline">${first}${items.map((b) => `<li><span class="yr">${esc(year(b.created))}</span>`
+    + `${pepLink(b.pep, b.title)} set it aside${b.quote ? quote(b.quote, b.url, "The sentence that says so") : b.url ? ` <a href="${esc(b.url)}" target="_blank" rel="noopener">where</a>` : ""}</li>`).join("")}</ol></dd>`;
+}
+const field = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : "";
+
+/* ---------------------------------------------------------------- records per row kind */
+function pepRecord(r) {
+  const rel = r.match === "related";
+  return `<article class="record${rel ? " related" : ""}">
+    ${rel ? `<div class="relnote">Related history, not the same idea</div>` : ""}
+    <h3>${stamp(r.status)} <span>${pepLink(r.pep, r.title)}</span></h3>
+    <dl class="fields">
+      ${field("Proposed", `${esc(year(r.created))}${r.authors && r.authors.length ? ` by ${esc(r.authors.join(", "))}` : ""}`)}
+      ${r.decision || !r.reason ? field("Decided", decided(r.decision)) : ""}
+      ${r.reason ? field("Why", quote(r.reason.quote, r.reason.url, `${r.reason.section}, PEP ${r.pep}`)) : field("Abstract", quote(r.quote, r.url, "", true))}
+      ${cameBack(r, r.came_back)}
+      ${field("Replaced by", r.superseded_by ? esc(r.superseded_by) : "")}
+    </dl></article>`;
+}
+function ideaRecord(r) {
+  const rel = r.match === "related";
+  return `<article class="record${rel ? " related" : ""}">
+    ${rel ? `<div class="relnote">Related history, not the same idea</div>` : ""}
+    <h3>${stamp("Rejected")} <span>“${esc(r.idea)}”</span></h3>
+    <dl class="fields">
+      ${field("Set aside in", `${pepLink(r.pep, r.title)}, ${esc(year(r.created))} (${esc(r.status)})`)}
+      ${field("Why", quote(r.idea_quote, r.idea_url, `Rejected ideas, PEP ${r.pep}`))}
+      ${field("Points back to", (r.earlier_forms || []).map((e) => pepLink(e.pep) + ` (${esc(e.status)})`).join(", "))}
+      ${field("Decided", decided(r.decision))}
+    </dl></article>`;
+}
+function threadRecord(r) {
+  const core = (r.participants || []).filter((p) => p.group === "committers").map((p) => esc(p.name));
+  return `<article class="record">
+    <h3>${stamp("Forum")} <span><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a></span></h3>
+    <dl class="fields">
+      ${field("Discussed", `${esc(year(r.created))} on discuss.python.org, ${esc(r.posts)} posts, started by ${esc(r.started_by)}`)}
+      ${field("Core devs there", core.join(", "))}
+      ${field("Opening post", quote(r.quote, r.url, "Read the thread", true))}
+      ${field("Linked PEPs", (r.peps || []).map((p) => pepLink(p.pep) + ` (${esc(p.status)})`).join(", "))}
+    </dl></article>`;
+}
+function decidedRecords(rows) {
+  return rows.filter((r) => !r.draft).map((r) => r.kind === "thread" ? threadRecord(r) : r.kind === "rejected_idea" ? ideaRecord(r) : pepRecord(r)).join("");
+}
+
+/* ---------------------------------------------------------------- one answer = lead + records */
+function leadFor(step) {
+  const t = step.tool, o = step.outcome, rows = step.rows || [];
+  if (o === "unknown_entity") return {text: step.note || "Nothing in the graph matches that name.", none: true};
+  if (o === "not_in_graph") return {text: step.note || "The graph doesn't record this.", none: true};
+  if (t === "already_decided" || t === "draft_reply") {
+    const recs = rows.filter((r) => !r.draft), top = recs[0];
+    const same = recs.filter((r) => r.match === "same");
+    if (!same.length) return {text: "Nothing in the record is the same idea. The closest history is below."};
+    if (same.every((r) => r.kind === "thread"))
+      return {text: `No PEP has proposed this. It came up on the forum ${({1: "once", 2: "twice"})[same.length] || `${same.length} times`}.`};
+    const p = same.find((r) => r.kind !== "thread");
+    if (p.kind === "rejected_idea") return {text: `Yes. It was considered inside PEP ${p.pep} and set aside.`};
+    return {text: `Yes. PEP ${p.pep} proposed it in ${year(p.created)}, and it was ${p.verdict}.`};
+  }
+  if (t === "why") {
+    const r = rows[0], why = r.rationale && r.rationale.quote ? r.rationale.quote.split(/(?<=\.)\s/)[0] : "";
+    return {text: `PEP ${r.pep} (${year(r.created)}): ${why || `${r.title}, ${r.status.toLowerCase()}.`}`};
+  }
+  if (t === "is_current") {
+    const r = rows[0];
+    return {text: r.current ? `Yes. PEP ${r.pep} is ${r.status} and nothing supersedes it.`
+      : r.latest && r.latest.length ? `No. It was superseded; the latest in the chain is PEP ${r.latest[0].pep}.` : step.note || `PEP ${r.pep} is ${r.status}.`};
+  }
+  if (t === "who_knows") { const r = rows[0]; const subj = r.subject.replace(/^topic /, "");
+    return {text: r.most_built_on ? `In ${subj}, the work builds most on ${r.most_built_on[0].name}; the most active today is ${r.most_active[0].name}.` : `People who know ${subj}:`}; }
+  if (t === "bus_factor") { const r = rows[0], c = r.connected;
+    const subj = r.subject.replace(/^topic /, "");
+    return {text: c ? (c.cut_off_if_they_leave ? `Without ${r.most_involved.name}, ${c.cut_off_if_they_leave} people lose their link to the rest of ${subj}.`
+                                                 : `${subj[0].toUpperCase() + subj.slice(1)} doesn't depend on one person: without ${r.most_involved.name}, no one else is cut off.`)
+                    : `${r.single_person_peps} PEPs in ${subj} depend on a single person.`}; }
+  if (t === "connection") { const r = rows[0]; return {text: `They connect in ${r.hops} hop${r.hops === 1 ? "" : "s"}.`}; }
+  if (t === "changes") { const r = rows[0]; return {text: `The last sync recorded ${r.changes_at_last_sync} changes.`}; }
+  if (t === "my_session") return {text: `You've asked ${rows.length} question${rows.length === 1 ? "" : "s"} in this session.`};
+  return {text: ""};
+}
+// The drafted reply, read as a letter: PEP numbers and URLs become links, quoted sentences become marked quotes.
+function letter(text) {
+  return text.split(/\n\s*\n/).map((para) => {
+    let h = esc(para.trim()).replace(/^- /gm, "");
+    // Quotes in the draft are balanced: pair them in order.
+    const parts = h.split("&quot;");
+    // Evidence is always introduced with a colon ("From the PEP:", "set it aside:"); other quotes are titles.
+    h = parts.map((x, k) => k % 2 === 0 || k === parts.length - 1 ? x : (parts[k - 1].trimEnd().endsWith(":") ? `<q>${x}</q>` : `“${x}”`)).join("");
+    h = h.replace(/(https:\/\/[^\s<]+)/g, (u) => `<a href="${u}" target="_blank" rel="noopener">${u.includes("discuss.python.org") ? "the thread" : "source"}</a>`);
+    h = h.replace(/\bPEP (\d{1,4})\b(?![^<]*<\/a>)/g, (m, n) => `<a href="https://peps.python.org/pep-${n.padStart(4, "0")}/" target="_blank" rel="noopener">PEP ${n}</a>`);
+    return `<p>${h.replace(/\n/g, "<br>")}</p>`;
+  }).join("");
+}
+function chain(path) {
+  return `<div class="chain">${path.map((x) => x.id ? `<span class="chip">${esc(x.id)}</span>`
+    : `<span class="rel">${x.forward ? "" : "←"} ${esc(x.edge.toLowerCase().replaceAll("_", " "))} ${x.forward ? "→" : ""}</span>`).join("")}</div>`;
+}
+function body(step) {
+  const t = step.tool, rows = step.rows || [];
+  if (!rows.length) return "";
+  if (t === "already_decided") return decidedRecords(rows);
+  if (t === "draft_reply") {
+    const d = rows[0].draft;
+    return (d ? `<article class="record"><h3>Ready-to-post reply</h3><div class="letter">${letter(d)}</div>
+      <textarea hidden>${esc(d)}</textarea>
+      <button class="btn primary" type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(this.previousElementSibling.value); const b=this; b.textContent='Copied'; setTimeout(()=>b.textContent='Copy reply', 1500)">Copy reply</button>
+      <button class="btn" type="button" onclick="const l=this.parentElement.querySelector('.letter'); l.classList.toggle('open'); this.textContent = l.classList.contains('open') ? 'Show less' : 'Show full reply'">Show full reply</button>
+      <span style="color:var(--muted);font-size:14px;margin-left:8px">Built only from the records below. Nothing is posted.</span></article>` : "")
+      + decidedRecords(rows);
+  }
+  if (t === "why") {
+    const r = rows[0];
+    return `<article class="record"><h3>${stamp(r.status)} <span>${pepLink(r.pep, r.title)}</span></h3><dl class="fields">
+      ${field("Written by", esc((r.people || []).filter((p) => p.role === "author").map((p) => p.name).join(", ")))}
+      ${field("Decided", decided(r.decision))}
+      ${r.rationale ? field(esc(r.rationale.section), quote(r.rationale.quote, r.rationale.url, `${r.rationale.section}, PEP ${r.pep}`, true)) : ""}
+      ${r.ruling_notice ? field(esc(r.ruling_notice.section), quote(r.ruling_notice.quote, r.ruling_notice.url)) : ""}
+      ${field("Builds on", r.builds_on && r.builds_on.length ? `<div class="chips">${r.builds_on.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>` : "")}
+      ${field("Set aside", (r.rejected_approaches || []).map((x) => `<div>${pepLink(x.pep)} (${esc(x.status)}), under “${esc(x.idea)}”${quote(x.quote, x.url, "The sentence that says so")}</div>`).join(""))}
+      ${field("Earlier tries", (r.earlier_proposals || []).filter((x) => !(r.rejected_approaches || []).some((y) => `PEP ${y.pep}` === x.pep))
+          .map((x) => `<span class="chip">${esc(x.pep)} ${esc(x.status)}</span>`).join(" "))}
+      ${r.set_aside_later_by && r.set_aside_later_by.length ? cameBack(r, r.set_aside_later_by) : ""}
+      ${field("Replaced by", (r.superseded_by || []).join(", "))}
+    </dl></article>`;
+  }
+  if (t === "is_current") {
+    const r = rows[0];
+    return `<article class="record"><h3>${stamp(r.status)} <span>${pepLink(r.pep, r.title)}</span></h3><dl class="fields">
+      ${field("Current", r.current ? "Yes" : "No")}
+      ${field("Latest", (r.latest || []).map((x) => `${pepLink(x.pep)} (${esc(x.status)})`).join(", "))}
+      ${field("Replaces", (r.replaces || []).join(", "))}</dl></article>`;
+  }
+  if (t === "who_knows") {
+    const r = rows[0];
+    if (!r.most_built_on) return `<article class="record"><ul class="people">${(r.people || []).map((p) => `<li><span>${esc(p.name)}</span><span class="n">${esc(p.items)} items</span></li>`).join("")}</ul></article>`;
+    const max = Math.max(...r.most_built_on.map((p) => p.influence_share)) || 1;
+    return `${r.direct && r.direct.length ? `<p>Wrote or decided it: ${r.direct.map((d) => esc(d.name)).join(", ")}.</p>` : ""}
+      <article class="record"><h3>Whose work ${esc(r.subject.replace(/^topic /, ""))} builds on</h3><ul class="people">${r.most_built_on.map((p) =>
+        `<li><span>${esc(p.name)}</span><span class="n">${(p.influence_share * 100).toFixed(1)}% of influence</span><span class="bar-w"><i style="width:${(p.influence_share / max * 100).toFixed(0)}%"></i></span></li>`).join("")}</ul>
+      <p class="how">PageRank over who builds on whom in ${esc(r.subject.replace(/^topic /, ""))}: citations, implementations and rulings, among ${esc(r.people_in_area)} people.</p></article>
+      <article class="record"><h3>Most active</h3><ul class="people">${r.most_active.map((p) => `<li><span>${esc(p.name)}</span><span class="n">${esc(p.items)} PEPs and PRs</span></li>`).join("")}</ul></article>`;
+  }
+  if (t === "bus_factor") {
+    const r = rows[0], c = r.connected;
+    const subj = r.subject.replace(/^topic /, "");
+    return `<article class="record"><h3>${esc(subj[0].toUpperCase() + subj.slice(1))}</h3><dl class="fields">
+      ${field("Size", `${esc(r.peps)} PEPs, ${esc(r.people)} people who wrote, decided or implemented them`)}
+      ${field("Key person", `${esc(r.most_involved.name)}, on ${esc(r.most_involved.peps)} of them`)}
+      ${field("One-person PEPs", esc(r.single_person_peps))}
+      ${field("Orphaned", (r.orphaned_if_they_leave || []).map((x) => pepLink(x.pep)).join(", "))}
+      ${c ? field("If they leave", `Largest connected group goes from ${esc(c.largest_group)} to ${esc(c.largest_without_them)} people (WCC)`) : ""}
+    </dl></article>`;
+  }
+  if (t === "connection") return `<article class="record"><h3>Shortest link</h3>${step.paths.slice(0, 3).map((p, i) =>
+      `<div style="margin:8px 0">${chain(p)}<div class="how" style="margin-top:4px">cost ${esc(rows[i] && rows[i].cost)}</div></div>`).join("")}</article>`;
+  if (t === "changes") return `<article class="record"><ul class="people">${rows[0].changes.slice(0, 12).map((c) => `<li><span>${esc(c.detail)}</span><span class="n">${esc((c.at || "").slice(0, 10))}</span></li>`).join("")}</ul></article>`;
+  if (t === "my_session") return `<article class="record"><ol class="timeline">${rows.map((x) => `<li>${esc(x.question)}${x.peps.length ? ` <span class="n" style="color:var(--muted)">(PEP ${x.peps.join(", ")})</span>` : ""}</li>`).join("")}</ol></article>`;
+  return "";
+}
+function followUps(main) {
+  const rows = main.rows || [], out = [];
+  if (main.outcome !== "answered") return out;
+  const p = rows.find((r) => r && r.pep && r.kind !== "thread");
+  const idea = main.args && main.args.idea;
+  if (main.tool === "already_decided" && p) out.push(`Tell me the history of PEP ${p.pep}`, `Who should I ask about PEP ${p.pep}?`);
+  if (main.tool === "already_decided" && idea) out.push(`Draft a reply to someone proposing ${main.args.searched_for || idea}`);
+  if (main.tool === "why" && rows[0]) out.push(`Is PEP ${rows[0].pep} still current?`, `Who should I ask about PEP ${rows[0].pep}?`);
+  if (main.tool === "who_knows" && rows[0]) out.push(`What is the bus factor of ${rows[0].subject.replace(/^topic /, "")}?`);
+  if (main.tool === "is_current" && rows[0]) out.push(`Tell me the history of PEP ${rows[0].pep}`);
+  return out.slice(0, 3);
+}
+
+/* ---------------------------------------------------------------- graph */
+const STATUS_RING = (s) => ({Rejected: "--rejected", Withdrawn: "--deferred", Deferred: "--deferred", Final: "--final", Accepted: "--final",
+                             Active: "--final", Superseded: "--superseded"}[s] || "--draft");
+const NODE = {PEP: ["--blue", "ellipse"], Person: ["--person", "round-rectangle"], Council: ["--person", "round-rectangle"],
+              Decision: ["--decision", "diamond"], PR: ["--pr", "ellipse"], Issue: ["--pr", "ellipse"], Alternative: ["--idea", "tag"],
+              Thread: ["--thread", "rectangle"], Section: ["--muted", "round-tag"], Finding: ["--memory", "hexagon"],
+              Session: ["--memory", "hexagon"], Query: ["--memory", "round-hexagon"], Change: ["--muted", "vee"]};
+
+const LEGEND_TYPES = [["PEP", "PEP", "background:var(--blue);border-radius:50%"], ["Person", "Person", "background:var(--person);border-radius:2px"],
+  ["Decision", "Ruling", "background:var(--decision);transform:rotate(45deg)"], ["Alternative", "Rejected idea", "background:var(--idea);border-radius:2px"],
+  ["Thread", "Forum thread", "background:var(--thread)"], ["PR", "PR or issue", "background:var(--pr);border-radius:50%"],
+  ["Section", "PEP section", "background:var(--muted);border-radius:2px"], ["Query", "Your question", "background:var(--memory);border-radius:2px"]];
+// Only the node types this answer actually contains.
+function legendFor(els) {
+  const present = new Set(els.nodes.map((n) => n.data.label === "Issue" ? "PR" : n.data.label === "Session" ? "Query" : n.data.label));
+  const items = LEGEND_TYPES.filter(([k]) => present.has(k));
+  return items.length > 1 ? `<div class="legend" aria-hidden="true">${items.map(([, name, st]) => `<span><i style="${st}"></i>${name}</span>`).join("")}</div>` : "";
+}
+
+/* ---------------------------------------------------------------- graph elements from the paths that ran */
+// focus: the PEP(s) the answer is about. They get a highlight, and the edges touching them turn blue.
+function elementsFor(res, focus = new Set()) {
+  const nodes = new Map(), edges = new Map(), deg = new Map();
+  for (const step of res.steps || []) for (const path of step.paths || []) {
+    for (let i = 0; i < path.length; i += 2) {
+      const n = path[i], [col, shape] = NODE[n.label] || ["--muted", "ellipse"];
+      if (!nodes.has(n.id)) nodes.set(n.id, {data: {...n, color: css(col), shape, ring: n.label === "PEP" ? css(STATUS_RING(n.status)) : css("--card"),
+        ringStyle: ["Deferred", "Withdrawn"].includes(n.status) ? "dashed" : "solid", focus: focus.has(n.id) ? 1 : 0,
+        short: n.label === "PEP" ? n.id : n.label === "Decision" ? "ruling" : n.id.length > 26 ? n.id.slice(0, 25) + "…" : n.id}});
+      if (i + 2 < path.length) {
+        const e = path[i + 1], m = path[i + 2];
+        const [src, tgt] = e.forward ? [n.id, m.id] : [m.id, n.id];
+        const id = `${src}|${e.edge}|${tgt}`;
+        if (!edges.has(id)) {
+          deg.set(src, (deg.get(src) || 0) + 1); deg.set(tgt, (deg.get(tgt) || 0) + 1);
+          edges.set(id, {data: {id, source: src, target: tgt, label: e.label || e.edge.toLowerCase().replaceAll("_", " "),
+                                inferred: e.inferred ? 1 : 0, focus: focus.has(src) || focus.has(tgt) ? 1 : 0}});
+        }
+      }
+    }
+  }
+  for (const n of nodes.values()) n.data.deg = deg.get(n.data.id) || 1;
+  return {nodes: [...nodes.values()], edges: [...edges.values()]};
+}
+const plural = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+const counts = (els) => `${plural(els.nodes.length, "node")}, ${els.edges.length === 1 ? "1 relationship" : els.edges.length + " relationships"}`;
+const canvasHeight = (n) => Math.max(190, Math.min(420, 110 + 26 * n));
+function makeCy(container, els, infoEl, big, opts = {}) {
+  const w = container.clientWidth || 700, h = container.clientHeight || 340;
+  const cy = cytoscape({
+    container, elements: [...els.nodes, ...els.edges],
+    style: [
+      {selector: "node", style: {"background-color": "data(color)", shape: "data(shape)", label: "data(short)", color: css("--ink"),
+        "font-family": "Public Sans", "font-size": big ? 14 : 12, "min-zoomed-font-size": 8, "text-valign": "bottom", "text-margin-y": 5,
+        width: "mapData(deg, 1, 10, 14, 34)", height: "mapData(deg, 1, 10, 14, 34)",
+        "border-width": 3, "border-color": "data(ring)", "border-style": "data(ringStyle)", "text-wrap": "wrap", "text-max-width": 150,
+        "text-background-color": css("--card"), "text-background-opacity": 0.85, "text-background-padding": 2, "text-background-shape": "roundrectangle"}},
+      {selector: "node[label = 'PEP']", style: {"font-weight": 700}},
+      {selector: "node[focus = 1]", style: {"underlay-color": css("--mark"), "underlay-opacity": 0.55, "underlay-padding": 8, "underlay-shape": "ellipse"}},
+      {selector: "edge", style: {width: 1.2, "line-color": css("--rule"), "target-arrow-color": css("--rule"), "target-arrow-shape": "triangle",
+        "arrow-scale": 0.8, "curve-style": "bezier", label: "", "font-size": 10.5, "min-zoomed-font-size": 9, color: css("--muted"),
+        "font-family": "Public Sans", "text-rotation": "autorotate", "text-background-color": css("--card"),
+        "text-background-opacity": 1, "text-background-padding": 2}},
+      {selector: "edge[focus = 1]", style: {width: 2.5, "line-color": css("--blue"), "target-arrow-color": css("--blue")}},
+      {selector: "edge.lit", style: {label: "data(label)", color: css("--ink")}},
+      {selector: "edge[inferred = 1]", style: {"line-style": "dashed"}},
+      {selector: "node:selected", style: {"overlay-color": css("--mark"), "overlay-opacity": 0.35, "overlay-padding": 6}},
+    ],
+    layout: els.nodes.length <= 3
+      ? {name: "breadthfirst", directed: false, padding: 40, spacingFactor: 1.2}
+      : {name: "cose", animate: false, padding: 26, nodeDimensionsIncludeLabels: true, randomize: false, boundingBox: {x1: 0, y1: 0, w, h},
+         idealEdgeLength: () => big ? 120 : 85, nodeRepulsion: () => big ? 14000 : 8000, edgeElasticity: () => 80, gravity: 0.6, numIter: 1500},
+    wheelSensitivity: 0.3, minZoom: 0.25, maxZoom: big ? 3 : 1.25, userZoomingEnabled: !!big, autoungrabify: !!opts.still,
+  });
+  // Edge labels stay hidden until you point at a node: the picture first, the details on demand.
+  cy.on("mouseover", "node", (ev) => ev.target.connectedEdges().addClass("lit"));
+  cy.on("mouseout", "node", (ev) => { if (!ev.target.selected()) ev.target.connectedEdges().removeClass("lit"); });
+  if (big || opts.labels) cy.edges().addClass("lit");
+  if (infoEl) {
+    cy.on("tap", "node", (ev) => {
+      const d = ev.target.data();
+      cy.edges().removeClass("lit"); ev.target.connectedEdges().addClass("lit");
+      infoEl.innerHTML = `<b>${esc(d.id)}</b>${d.title && d.title !== d.id ? `<br>${esc(d.title)}` : ""}${d.status ? `<br>${stamp(d.status)}` : ""}`
+        + `${d.outcome ? `<br>${esc(d.outcome)}` : ""}${d.url ? `<br><a href="${esc(d.url)}" target="_blank" rel="noopener">Open source</a>` : ""}`;
+      infoEl.style.display = "block";
+    });
+    cy.on("tap", (ev) => { if (ev.target === cy) { infoEl.style.display = "none"; if (!big) cy.edges().removeClass("lit"); } });
+  }
+  return cy;
+}
+
+/* ---------------------------------------------------------------- one answer, as a section in the thread */
+const TOOL_NAMES = {already_decided: "Searched past decisions", draft_reply: "Drafted a reply", why: "Traced the decision", is_current: "Followed supersessions",
+  who_knows: "Ranked who knows", bus_factor: "Checked the bus factor", connection: "Found the shortest link", resolve: "Resolved the name",
+  recall: "Checked memory", session_link: "Linked to earlier questions", my_session: "Read this session", changes: "Read recent changes"};
+const fmtMs = (ms) => ms >= 1000 ? (ms / 1000).toFixed(1) + " s" : Math.round(ms) + " ms";
+// One funnel line for the idea search, built from the steps' own counts.
+function funnel(s) {
+  const ex = s.explain || [];
+  const idx = ex.filter((e) => /index over/.test(e)).length;
+  const ce = ex.find((e) => /cross-encoder scored/.test(e)) || "";
+  const m = ce.match(/scored (\d+) distinct candidates.*?: (\d+) same idea/);
+  const trav = ex.filter((e) => /^Graph traversal from/.test(e)).map((e) => e.replace(/^Graph traversal from ([^:]+):.*/, "$1"));
+  if (!m) return "";
+  return `${idx} index searches → ${m[1]} candidates → ${m[2]} same idea${m[2] === "1" ? "" : "s"}${trav.length ? ` → traversal from ${trav.join(", ")}` : ""}`;
+}
+function stepsSummary(steps, mode) {
+  const queries = steps.reduce((a, s) => a + (s.cypher || []).length, 0);
+  const ms = steps.reduce((a, s) => a + (s.ms || 0), 0);
+  return `<details class="how-sum"><summary><b>How it was answered</b> ${queries} graph quer${queries === 1 ? "y" : "ies"}, ${fmtMs(ms)}${mode === "llm" ? "" : ", no language model"}</summary>
+    <div class="how-body">${steps.map((s) => { const f = funnel(s); return `<div class="tool">
+      <div class="tool-h"><b>${esc(TOOL_NAMES[s.tool] || s.tool)}</b>${s.args && s.args.searched_for ? ` for “${esc(s.args.searched_for)}”` : ""}<span class="ms"> ${s.ms != null ? fmtMs(s.ms) : ""}</span></div>
+      ${f ? `<p class="funnel">${esc(f)}</p>` : ""}
+      ${(s.explain || []).length ? `<details><summary>Details</summary><ol>${s.explain.map((e) => `<li>${esc(e)}</li>`).join("")}</ol></details>` : s.note ? `<p class="funnel">${esc(s.note)}</p>` : ""}
+      ${(s.cypher || []).length ? `<details><summary>Cypher that ran (${s.cypher.length})</summary><pre>${esc(s.cypher.map((c, i) => c + (s.params && s.params[i] && Object.keys(s.params[i]).length ? `\n// ${JSON.stringify(s.params[i])}` : "")).join("\n\n"))}</pre></details>` : ""}
+    </div>`; }).join("")}</div></details>`;
+}
+function focusFor(main) {
+  const out = new Set();
+  for (const r of (main && main.rows) || []) if (r && Number.isInteger(r.pep)) { out.add(`PEP ${r.pep}`); if (main.tool !== "already_decided") break; }
+  if (main && main.tool === "already_decided") return new Set([...out].slice(0, 1));
+  return out;
+}
+function leadStatus(main) {
+  const r = main && (main.rows || []).find((x) => x && x.status && (main.tool !== "already_decided" || x.match === "same"));
+  if (!r) return null;
+  return r.kind === "thread" ? "Forum" : r.kind === "rejected_idea" ? "Rejected" : r.status;
+}
+function answerHTML(t, i) {
+  const r = t.res;
+  if (!r) return `<h2>${esc(t.q)}</h2><p class="working">Walking the graph…</p>`;
+  if (r.mode === "static-miss") {
+    const known = Object.keys(SNAP || {}).slice(0, 12);
+    return `<h2>${esc(t.q)}</h2>
+      <p class="verdict none">This page is a snapshot of ${STATIC.count} real answers recorded from the graph; this question isn't one of them.</p>
+      <p>To ask anything, run Lineage locally (about a minute, no API key):</p>
+      <pre class="cmd">git clone https://github.com/ANMOLGUPTA-24/lineage-agent && cd lineage-agent
+docker compose -f docker-compose.quick.yml up</pre>
+      <div class="next"><h4>Recorded questions you can open here</h4>${known.map((k) => `<button type="button" data-q="${esc(k)}">${esc(k[0].toUpperCase() + k.slice(1))}</button>`).join("")}</div>`;
+  }
+  const steps = r.steps || [];
+  const main = [...steps].reverse().find((s) => !["resolve", "recall", "session_link"].includes(s.tool)) || steps[steps.length - 1];
+  const link = steps.find((s) => s.tool === "session_link");
+  const lead = main ? leadFor(main) : {text: r.answer};
+  const st = !lead.none && main ? leadStatus(main) : null;
+  const rendered = main ? body(main) : "";
+  const nexts = main ? followUps(main) : [];
+  const els = elementsFor(r, focusFor(main));
+  const statusVar = st ? `--${({forum: "draft", withdrawn: "deferred", accepted: "final", active: "final", provisional: "final"})[st.toLowerCase()] || st.toLowerCase()}` : "--rule";
+  return `<header class="a-head"><h2>${esc(t.q)}</h2>
+    ${r.mode === "llm" ? `<p class="verdict" style="--v:var(--blue)">${esc(r.answer)}</p>`
+      : `<p class="verdict${lead.none ? " none" : ""}" style="--v:var(${lead.none ? "--rule" : statusVar})">${st ? stamp(st) + " " : ""}${esc(lead.text)}</p>`}</header>
+    <div class="a-main">
+    ${r.rejected ? `<div class="guarded">The guard replaced the model's answer because it named ${esc(r.rejected.unsupported.join(", "))}, which no tool returned:<br><s>${esc(r.rejected.answer)}</s></div>` : ""}
+    ${link ? `<div class="memory">Connects to what you asked earlier, PEP ${esc(link.rows[0].earlier)}:${chain(link.paths[0])}</div>` : ""}
+
+    ${rendered}
+    ${!rendered && !lead.none && r.answer && r.mode !== "llm" ? `<p class="plain-a">${esc(r.answer)}</p>` : ""}
+    ${steps.length ? stepsSummary(steps, r.mode) : ""}
+    ${nexts.length ? `<div class="next"><h4>Ask next</h4>${nexts.map((n) => `<button type="button" data-q="${esc(n)}">${esc(n)}</button>`).join("")}</div>` : ""}
+    ${r.mode !== "llm" && r.answer ? `<details class="plain"><summary>Plain-text answer</summary><p>${esc(r.answer)}</p></details>` : ""}
+    </div>
+    <aside class="a-side">
+    ${els.nodes.length ? `<figure class="figure" aria-label="The graph path behind this answer">
+      <div class="fig-h"><h4>The path behind this answer</h4><span class="count">${counts(els)}</span>
+        <button class="btn" type="button" data-expand="${i}">Expand</button></div>
+      ${legendFor(els)}
+      <div class="canvas" style="height:${canvasHeight(els.nodes.length)}px"><div class="cy" id="cy-${i}"></div><div class="info"></div></div>
+      <figcaption class="fig-note">Every node and edge came back from the queries below. Point at a node to see its relationships; click it for its source.</figcaption>
+    </figure>` : ""}
+    </aside>`;
+}
+
+/* ---------------------------------------------------------------- home: show the product, not a description of it */
+// A real answer from the graph, drawn small: PEP 3150's given-clause idea was set aside again by PEP 403 and PEP 572.
+const SPECIMEN = {steps: [{paths: [
+  [{id: "PEP 403", label: "PEP", status: "Deferred", title: "General purpose decorator clause"}, {edge: "REJECTS_APPROACH_OF", forward: true, label: "set it aside, 2011"},
+   {id: "PEP 3150", label: "PEP", status: "Deferred", title: "Statement local namespaces (given clause)"}],
+  [{id: "PEP 572", label: "PEP", status: "Final", title: "Assignment Expressions"}, {edge: "REJECTS_APPROACH_OF", forward: true, label: "set it aside, 2018"},
+   {id: "PEP 3150", label: "PEP", status: "Deferred"}],
+  [{id: "Alyssa Coghlan", label: "Person"}, {edge: "AUTHORED", forward: true, label: "proposed, 2010"}, {id: "PEP 3150", label: "PEP", status: "Deferred"}],
+]}]};
+const SPECIMEN_Q = "Has anyone proposed statement-local name bindings with a given clause?";
+function hero() {
+  return `<section class="hero"><div class="hero-main"><h2>Has Python already decided this?</h2>
+    <p>Paste an idea and get the PEP that proposed it, the ruling and who made it, whether it came back, and who to ask.
+       Every answer shows the graph path it came from.</p>
+    <div class="hero-ask" id="hero-ask"></div>
+    <ul class="tries">${TRIES.map(([q, v]) => { const [status, pep] = v.split(", "); return `<li><button type="button" data-q="${esc(q)}"><span class="idea">${esc(q)}</span>`
+      + `<span class="why">${stamp(status === "Forum only" ? "Forum" : status)}${pep ? ` <span>${esc(pep)}</span>` : ""}</span></button></li>`; }).join("")}</ul>
+    <div class="more">Or ask ${MORE.map((m) => `<button type="button" data-q="${esc(m)}">${esc(m)}</button>`).join("")}</div>
+    </div>
+    <div class="hero-side"><figure class="specimen" tabindex="0" role="button" aria-label="Run the example: ${esc(SPECIMEN_Q)}" data-q="${esc(SPECIMEN_Q)}">
+      <div class="canvas" style="height:220px"><div class="cy" id="cy-specimen"></div></div>
+      <figcaption><span>An answer, drawn: the <code>given:</code> clause proposed in PEP 3150 came back twice and was set aside both times.</span>
+        <span class="run">Ask it</span></figcaption>
+    </figure>
+    <p class="scale">745 PEPs, 1,085 rejected ideas, 1,748 forum threads and 2,175 people in one FalkorDB graph.</p></div></section>`;
+}
+function drawSpecimen() {
+  const el = document.getElementById("cy-specimen"); if (!el) return;
+  const cy = makeCy(el, elementsFor(SPECIMEN, new Set(["PEP 3150"])), null, false, {labels: true, still: true});
+  cy.userPanningEnabled(false);
+  // One orchestrated moment: the path lights up edge by edge.
+  if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    cy.edges().style("opacity", 0);
+    cy.edges().forEach((e, k) => setTimeout(() => e.animate({style: {opacity: 1}}, {duration: 350}), 300 + k * 320));
+  }
+}
+function wire(root) {
+  root.querySelectorAll("[data-q]").forEach((b) => b.onclick = () => ask(b.dataset.q));
+  root.querySelectorAll("[data-expand]").forEach((b) => b.onclick = () => openOverlay(+b.dataset.expand));
+}
+function showHome() {
+  $("#dock").append($("#f"));   // take the form out before the hero is rebuilt
+  document.body.classList.add("home");
+  $("#view").innerHTML = hero();
+  $("#hero-ask").append($("#f"));
+  wire($("#view"));
+  drawSpecimen();
+}
+function ensureThread() {
+  if (!document.body.classList.contains("home")) return;
+  document.body.classList.remove("home");
+  $("#dock").append($("#f"));
+  $("#view").innerHTML = `<div class="thread" id="thread"></div>`;
+  turns.forEach((t, i) => { if (t.res) addTurn(t, i, true); });
+}
+function addTurn(t, i, restore) {
+  const sec = document.createElement("section");
+  sec.className = "answer"; sec.id = `turn-${i}`; sec.setAttribute("aria-live", "polite");
+  $("#thread").append(sec);
+  fillTurn(t, i);
+  if (!restore) sec.scrollIntoView({block: "start"});
+}
+function fillTurn(t, i) {
+  const sec = document.getElementById(`turn-${i}`);
+  sec.innerHTML = answerHTML(t, i);
+  wire(sec);
+  const el = document.getElementById(`cy-${i}`);
+  if (el && t.res) {
+    const main = [...(t.res.steps || [])].reverse().find((x) => !["resolve", "recall", "session_link"].includes(x.tool));
+    t.cy = makeCy(el, elementsFor(t.res, focusFor(main)), el.nextElementSibling, false);
+    // The wide layout settles the canvas size after first paint: refit once it has.
+    requestAnimationFrame(() => { t.cy.resize(); t.cy.fit(undefined, 30); if (t.cy.zoom() > 1.25) { t.cy.zoom(1.25); t.cy.center(); } });
+  }
+}
+
+/* ---------------------------------------------------------------- full-window graph */
+function openOverlay(i) {
+  const t = turns[i]; if (!t || !t.res) return;
+  const main = [...(t.res.steps || [])].reverse().find((x) => !["resolve", "recall", "session_link"].includes(x.tool));
+  const els = elementsFor(t.res, focusFor(main));
+  $("#ov-title").textContent = t.q;
+  $("#ov-count").textContent = counts(els);
+  $("#overlay").hidden = false;
+  if (overlayCy) overlayCy.destroy();
+  overlayCy = makeCy($("#ov-cy"), els, $("#ov-info"), true);
+  // Small graphs shouldn't open magnified; start at most at 1.6x, centred.
+  if (overlayCy.zoom() > 1.6) { overlayCy.zoom(1.6); overlayCy.center(); }
+  $("#ov-close").focus();
+}
+function closeOverlay() { $("#overlay").hidden = true; if (overlayCy) { overlayCy.destroy(); overlayCy = null; } }
+$("#ov-close").onclick = closeOverlay;
+$("#ov-fit").onclick = () => overlayCy && overlayCy.fit(undefined, 40);
+$("#ov-in").onclick = () => overlayCy && overlayCy.zoom({level: overlayCy.zoom() * 1.25, renderedPosition: {x: innerWidth / 2, y: innerHeight / 2}});
+$("#ov-out").onclick = () => overlayCy && overlayCy.zoom({level: overlayCy.zoom() / 1.25, renderedPosition: {x: innerWidth / 2, y: innerHeight / 2}});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#overlay").hidden) closeOverlay(); });
+
+/* ---------------------------------------------------------------- ask */
+$("#f").onsubmit = async (ev) => {
+  ev.preventDefault();
+  const q = $("#q").value.trim();
+  if (!q) return;
+  $("#go").disabled = true;
+  ensureThread();
+  const t = {q, res: null}, i = turns.length;
+  turns.push(t); addTurn(t, i, false);
+  try {
+    if (STATIC) t.res = await snapshotAnswer(q);
+    else {
+      const r = await fetch("/api/ask", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({question: q, session})});
+      t.res = r.ok ? await r.json() : {answer: `The server answered ${r.status}. Try again, or rephrase the question.`, mode: "error", steps: []};
+    }
+  } catch (e) {
+    t.res = {answer: "Couldn't reach the server. Check that it is running, then ask again.", mode: "error", steps: []};
+  }
+  $("#go").disabled = false; $("#q").value = "";
+  fillTurn(t, i);
+  document.getElementById(`turn-${i}`).scrollIntoView({block: "start"});
+};
+$("#home").onclick = showHome;
+$("#home").onkeydown = (e) => { if (e.key === "Enter") showHome(); };
+if (STATIC) {
+  $(".bar .data").outerHTML = `<span class="snapnote">Live snapshot: ${STATIC.count} real answers recorded ${esc(STATIC.date)}.
+    <a href="https://github.com/ANMOLGUPTA-24/lineage-agent">Run it to ask anything</a></span>`;
+}
+showHome();
+</script>
+</body>
+</html>
