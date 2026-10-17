@@ -825,7 +825,7 @@ def thread_context(run: Run, tid: int) -> tuple[dict, list]:
 def already_decided(idea: str, tenant: str = "python") -> dict:
     """Has Python already decided this idea? Finds the PEP or the rejected idea inside a PEP that
     matches the proposal, then follows the graph: the ruling and who made it, whether it was
-    superseded, which later PEPs set the same approach aside again, and who to ask. Use for
+    superseded, earlier and later PEPs whose rejected ideas cite it, and who to ask. Use for
     "has X been proposed", "why not X", "was X rejected", or any pasted proposal."""
     run, args = Run(tenant), {"idea": idea}
     idea = idea_text(idea)

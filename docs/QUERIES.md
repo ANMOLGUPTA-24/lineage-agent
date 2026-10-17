@@ -7,7 +7,7 @@ All tool queries run through `ro_query` (read-only), except `remember`.
 
 Find PEPs, people or topics matching free text. Call this before any other tool when the user names something without a PEP number.
 
-Outcome: `answered`, 1 rows, 0 paths, 962.4 ms.
+Outcome: `answered`, 1 rows, 0 paths, 947.6 ms.
 
 ```cypher
 CALL db.idx.fulltext.queryNodes('Person', $q) YIELD node, score RETURN node.name, score ORDER BY score DESC LIMIT 3
@@ -33,7 +33,7 @@ params: `{'k': 5, 'v': '<vector[384]>'}`
 
 Decision lineage of a PEP: who proposed and decided it, where the ruling is, which earlier PEPs it builds on (up to `depth` hops), and the CPython PRs that implemented it. Ancestors: every PEP reachable within `depth` hops (skipping Process PEPs such as PEP 1 and PEP 8, which everything cites), each via its cheapest path, kept only if it is about the same thing (embedding distance < MAX_DRIFT), closest first.
 
-Outcome: `answered`, 1 rows, 15 paths, 40.2 ms.
+Outcome: `answered`, 1 rows, 15 paths, 50.3 ms.
 
 ```cypher
 MATCH (p:PEP {number: $n}) RETURN p.number
@@ -46,7 +46,7 @@ MATCH (p:PEP {number: $n}) OPTIONAL MATCH (a:Person)-[r:AUTHORED]->(p) WITH p, c
 params: `{'n': 634}`
 
 ```cypher
-MATCH path = (p:PEP {number: $n})-[:REQUIRES|REFERENCES|SUPERSEDES*1..4]->(q:PEP) WHERE q.number <> $n AND all(x IN tail(nodes(path)) WHERE x.type <> 'Process') WITH p, path, q, reduce(w = 0.0, e IN relationships(path) | w + e.weight) AS cost ORDER BY cost WITH p, q, collect(path)[0] AS best WITH best, vec.cosineDistance(p.embedding, q.embedding) AS drift WHERE drift < $max_drift RETURN best ORDER BY drift LIMIT 12
+MATCH path = (p:PEP {number: $n})-[:REQUIRES|REFERENCES|SUPERSEDES*1..4]->(q:PEP) WHERE q.number <> $n AND all(x IN tail(nodes(path)) WHERE x.type <> 'Process') WITH p, path, q, reduce(w = 0.0, e IN relationships(path) | w + e.weight) AS cost ORDER BY cost WITH p, q, collect(path)[0] AS best WITH best, p, q, vec.cosineDistance(p.embedding, q.embedding) AS drift // A PEP can only build on what came before it; a later PEP it mentions replaced or followed it. WHERE drift < $max_drift AND coalesce(q.created, '') <= coalesce(p.created, '9999') RETURN best ORDER BY drift LIMIT 12
 ```
 params: `{'n': 634, 'max_drift': 0.27}`
 
@@ -84,7 +84,7 @@ params: `{'n': 634}`
 
 Whether a PEP still describes how Python works: its status and the full SUPERSEDES chain to whatever replaced it.
 
-Outcome: `answered`, 1 rows, 1 paths, 11.4 ms.
+Outcome: `answered`, 1 rows, 1 paths, 18.4 ms.
 
 ```cypher
 MATCH (p:PEP {number: $n}) RETURN p.number
@@ -110,7 +110,7 @@ params: `{'n': 333}`
 
 People who know an area (a topic such as 'typing', or a PEP's area). Ranked by PageRank over the area's influence graph (who the area's PEPs and PRs build on: citations, implementations, decisions), with the most active people listed separately. For a PEP, its own authors and decider come first.
 
-Outcome: `answered`, 1 rows, 6 paths, 80.4 ms.
+Outcome: `answered`, 1 rows, 6 paths, 85.1 ms.
 
 ```cypher
 MATCH (s:Topic) WHERE s.name = toLower($s) AND s.slug IS NOT NULL RETURN 'Topic' AS kind, s.name AS key, 'topic ' + s.name AS name, s
@@ -141,7 +141,7 @@ params: `{'name': 'Jukka Lehtosalo', 'key': 'typing'}`
 
 Knowledge concentration in an area: for each PEP, how many distinct people (authors, deciders, implementers) are attached, and what is orphaned if the top person left.
 
-Outcome: `answered`, 1 rows, 2 paths, 11.3 ms.
+Outcome: `answered`, 1 rows, 2 paths, 21.8 ms.
 
 ```cypher
 MATCH (s:Topic) WHERE s.name = toLower($s) AND s.slug IS NOT NULL RETURN 'Topic' AS kind, s.name AS key, 'topic ' + s.name AS name, s
@@ -167,7 +167,7 @@ params: `{'top': 'Alyssa Coghlan', 'nums': [459]}`
 
 Shortest weighted path between two PEPs and/or people across every relationship in the graph: authorship, decisions, PEP links, implementing PRs.
 
-Outcome: `answered`, 3 rows, 3 paths, 15.7 ms.
+Outcome: `answered`, 3 rows, 3 paths, 23.2 ms.
 
 ```cypher
 MATCH (p:PEP {number: $n}) RETURN p.number
@@ -188,7 +188,7 @@ params: `{'va': 572, 'vb': 634, 'rels': ['AUTHORED', 'DELEGATE_FOR', 'REFERENCES
 
 Findings saved in earlier sessions about a PEP, newest first.
 
-Outcome: `not_in_graph`, 0 rows, 0 paths, 2.2 ms.
+Outcome: `not_in_graph`, 0 rows, 0 paths, 1.6 ms.
 
 ```cypher
 MATCH (p:PEP {number: $n}) RETURN p.number
@@ -202,9 +202,9 @@ params: `{'n': 572}`
 
 ## `already_decided(idea='Has anyone proposed a do-while loop?')`
 
-Has Python already decided this idea? Finds the PEP or the rejected idea inside a PEP that matches the proposal, then follows the graph: the ruling and who made it, whether it was superseded, which later PEPs set the same approach aside again, and who to ask. Use for "has X been proposed", "why not X", "was X rejected", or any pasted proposal.
+Has Python already decided this idea? Finds the PEP or the rejected idea inside a PEP that matches the proposal, then follows the graph: the ruling and who made it, whether it was superseded, earlier and later PEPs whose rejected ideas cite it, and who to ask. Use for "has X been proposed", "why not X", "was X rejected", or any pasted proposal.
 
-Outcome: `answered`, 1 rows, 1 paths, 1406.6 ms.
+Outcome: `answered`, 1 rows, 3 paths, 1566.5 ms.
 
 ```cypher
 CALL db.idx.vector.queryNodes('PEP', 'embedding', $k, vecf32($v)) YIELD node RETURN 'pep', node.number, node.title, node.title + '. ' + coalesce(node.abstract, '')
@@ -237,7 +237,12 @@ CALL db.idx.fulltext.queryNodes('Thread', $q) YIELD node RETURN 'thread', node.i
 params: `{'k': 15, 'v': '<vector[384]>', 'q': 'while|loop'}`
 
 ```cypher
-MATCH (p:PEP {number: $n}) OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p) WITH p, collect(DISTINCT au.name) AS authors OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who) WITH p, authors, collect(ruling) AS rulings, collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at, url: coalesce(d.verdict_url, d.url)}) AS decisions OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP) WITH p, authors, rulings, decisions, collect(line) AS lines OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'}) WITH p, authors, rulings, decisions, lines, collect(npath) AS npaths, collect({text: s.text, url: s.url, title: s.title})[0] AS notice OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p) RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings, decisions, lines, npaths, notice, collect(back), collect({pep: later.number, title: later.title, created: later.created, via: x.via})
+MATCH (p:PEP {number: $n}) OPTIONAL MATCH apath = (au:Person)-[:AUTHORED]->(p) WITH p, collect(DISTINCT au.name) AS authors, collect(apath)[0..4] AS apaths OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who) WITH p, authors, apaths, collect(ruling) AS rulings, collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at, url: coalesce(d.verdict_url, d.url)}) AS decisions OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP) WITH p, authors, apaths, rulings, decisions, collect(line) AS lines OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'}) WITH p, authors, apaths, rulings, decisions, lines, collect(npath) AS npaths, collect({text: s.text, url: s.url, title: s.title})[0] AS notice OPTIONAL MATCH back = (later:PEP)-[:REJECTS_APPROACH_OF*1..3]->(p) WHERE later <> p WITH p, authors, apaths, rulings, decisions, lines, npaths, notice, later, back, relationships(back)[0] AS x, nodes(back)[1] AS through RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, apaths, rulings, decisions, lines, npaths, notice, collect(back), collect({pep: later.number, title: later.title, status: later.status, created: later.created, via: x.via, through: through.number, hops: length(back)})
+```
+params: `{'n': 315}`
+
+```cypher
+MATCH e = (p:PEP {number: $n})-[x:REJECTS_APPROACH_OF]->(q:PEP) RETURN e, q.number, q.title, q.status, q.created, x.via[0] ORDER BY q.created
 ```
 params: `{'n': 315}`
 
@@ -245,7 +250,7 @@ params: `{'n': 315}`
 
 Draft a forum reply to someone proposing `idea`: what was decided before, quoted, with links and who to ask. Built only from already_decided's rows; nothing is posted.
 
-Outcome: `answered`, 2 rows, 1 paths, 1194.9 ms.
+Outcome: `answered`, 2 rows, 2 paths, 1244.7 ms.
 
 ```cypher
 CALL db.idx.vector.queryNodes('PEP', 'embedding', $k, vecf32($v)) YIELD node RETURN 'pep', node.number, node.title, node.title + '. ' + coalesce(node.abstract, '')
@@ -278,7 +283,12 @@ CALL db.idx.fulltext.queryNodes('Thread', $q) YIELD node RETURN 'thread', node.i
 params: `{'k': 15, 'v': '<vector[384]>', 'q': 'switch|statement'}`
 
 ```cypher
-MATCH (p:PEP {number: $n}) OPTIONAL MATCH (au:Person)-[:AUTHORED]->(p) WITH p, collect(DISTINCT au.name) AS authors OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who) WITH p, authors, collect(ruling) AS rulings, collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at, url: coalesce(d.verdict_url, d.url)}) AS decisions OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP) WITH p, authors, rulings, decisions, collect(line) AS lines OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'}) WITH p, authors, rulings, decisions, lines, collect(npath) AS npaths, collect({text: s.text, url: s.url, title: s.title})[0] AS notice OPTIONAL MATCH back = (later:PEP)-[x:REJECTS_APPROACH_OF]->(p) RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, rulings, decisions, lines, npaths, notice, collect(back), collect({pep: later.number, title: later.title, created: later.created, via: x.via})
+MATCH (p:PEP {number: $n}) OPTIONAL MATCH apath = (au:Person)-[:AUTHORED]->(p) WITH p, collect(DISTINCT au.name) AS authors, collect(apath)[0..4] AS apaths OPTIONAL MATCH ruling = (p)-[:RESOLVED_BY]->(d:Decision)-[m:MADE_BY]->(who) WITH p, authors, apaths, collect(ruling) AS rulings, collect({outcome: d.outcome, by: who.name, inferred: m.inferred, at: d.at, url: coalesce(d.verdict_url, d.url)}) AS decisions OPTIONAL MATCH line = (p)<-[:SUPERSEDES*1..5]-(:PEP) WITH p, authors, apaths, rulings, decisions, collect(line) AS lines OPTIONAL MATCH npath = (p)-[:HAS_SECTION]->(s:Section {kind: 'notice'}) WITH p, authors, apaths, rulings, decisions, lines, collect(npath) AS npaths, collect({text: s.text, url: s.url, title: s.title})[0] AS notice OPTIONAL MATCH back = (later:PEP)-[:REJECTS_APPROACH_OF*1..3]->(p) WHERE later <> p WITH p, authors, apaths, rulings, decisions, lines, npaths, notice, later, back, relationships(back)[0] AS x, nodes(back)[1] AS through RETURN p.number, p.title, p.status, p.created, p.url, coalesce(p.abstract, ''), authors, apaths, rulings, decisions, lines, npaths, notice, collect(back), collect({pep: later.number, title: later.title, status: later.status, created: later.created, via: x.via, through: through.number, hops: length(back)})
+```
+params: `{'n': 3103}`
+
+```cypher
+MATCH e = (p:PEP {number: $n})-[x:REJECTS_APPROACH_OF]->(q:PEP) RETURN e, q.number, q.title, q.status, q.created, x.via[0] ORDER BY q.created
 ```
 params: `{'n': 3103}`
 
@@ -372,6 +382,10 @@ def main() -> None:
 
     try_query(g, "CALL db.idx.fulltext.createNodeIndex('PEP', 'title', 'abstract')")
     try_query(g, "CALL db.idx.fulltext.createNodeIndex('Person', 'name')")
+    # Exact, case-insensitive person lookup (connection endpoints) without a label scan.
+    g.query("MATCH (a:Person) SET a.name_lc = toLower(a.name)")
+    try_query(g, "CREATE INDEX FOR (a:Person) ON (a.name_lc)")
+    try_query(g, "CREATE INDEX FOR (s:Session) ON (s.id)")   # session memory looks this up on every answer
     try_query(g, f"CREATE VECTOR INDEX FOR (p:PEP) ON (p.embedding) OPTIONS {{dimension: {DIM}, similarityFunction: 'cosine'}}")
 
     peps = g.ro_query("MATCH (p:PEP) RETURN p.number, p.title, p.abstract").result_set
@@ -521,6 +535,7 @@ def main() -> None:
     try_query(g, "CALL db.idx.fulltext.createNodeIndex('Alternative', 'title', 'text')")
     try_query(g, "CREATE VECTOR INDEX FOR (a:Alternative) ON (a.embedding) OPTIONS {dimension: 384, similarityFunction: 'cosine'}")
     try_query(g, "CREATE INDEX FOR (s:Section) ON (s.pep)")
+    try_query(g, "CREATE INDEX FOR (a:Alternative) ON (a.url)")
     print({"sections": len(secs), "alternatives": len(alts), "peps_with_alternatives": len({a["pep"] for a in alts})})
 
 

@@ -15,6 +15,31 @@ mcp = MCPServer("lineage", instructions=(
 
 
 @mcp.tool()
+def already_decided(idea: str) -> dict:
+    """Has Python already decided this idea? The PEP, rejected idea or forum thread that matches it, the
+    ruling and who made it, earlier and later PEPs that took it up, quoted and deep-linked."""
+    return tools.call("already_decided", {"idea": idea})
+
+
+@mcp.tool()
+def draft_reply(idea: str) -> dict:
+    """Draft a forum reply to someone proposing `idea`, built only from already_decided's rows. Nothing is posted."""
+    return tools.call("draft_reply", {"idea": idea})
+
+
+@mcp.tool()
+def changes(since: str = "", pep: str = "") -> dict:
+    """What changed in the graph at recent syncs: new PEPs, status changes, supersessions, rulings, linked PRs."""
+    return tools.call("changes", {"since": since, "pep": pep})
+
+
+@mcp.tool()
+def my_session(session: str) -> dict:
+    """What was asked earlier in a session, with the PEPs each answer touched (read from the graph)."""
+    return tools.call("my_session", {"session": session})
+
+
+@mcp.tool()
 def resolve(text: str) -> dict:
     """Find PEPs, people or topics matching free text, e.g. 'walrus operator'."""
     return tools.call("resolve", {"text": text})

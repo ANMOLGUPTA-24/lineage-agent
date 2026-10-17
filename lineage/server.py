@@ -13,6 +13,18 @@ from lineage import agent
 from lineage.db import connect, graph, resolve
 
 app = FastAPI(title="Lineage")
+
+
+@app.on_event("startup")
+def warm_up():
+    """Load the embedding and reranking models in the background, so the first question isn't the slow one."""
+    def run():
+        try:
+            agent.ask("Has anyone proposed a do-while loop?", session="warmup")
+            graph().query("MATCH (s:Session {id: 'warmup'}) OPTIONAL MATCH (s)-[:ASKED]->(q) DETACH DELETE q, s")
+        except Exception:   # warming is best effort; the first real question still works, only slower
+            pass
+    threading.Thread(target=run, daemon=True).start()
 WEB = Path(__file__).parent / "web"
 
 

@@ -20,8 +20,8 @@
  {
   "id": "switch",
   "shot": "ask-switch",
-  "say": "Should Python add a switch statement? Lineage finds PEP thirty-one oh three, rejected in two thousand six, and quotes Guido's rejection notice, linked to the exact section. Then it follows the graph. PEP six twenty-two took the idea up again, and was replaced by PEP six thirty-four, the match statement Python has today.",
-  "show": "Should Python add a switch statement? Lineage finds PEP 3103, rejected in 2006, and quotes Guido's rejection notice, linked to the exact section. Then it follows the graph. PEP 622 took the idea up again, and was replaced by PEP 634, the match statement Python has today."
+  "say": "Should Python add a switch statement? Lineage finds PEP thirty-one oh three, proposed in two thousand six and rejected a year later, and quotes Guido's rejection notice, linked to the exact section. Then it follows the graph. PEP six twenty-two took the idea up again, and was replaced by PEP six thirty-four, the match statement Python has today.",
+  "show": "Should Python add a switch statement? Lineage finds PEP 3103, proposed in 2006 and rejected a year later, and quotes Guido's rejection notice, linked to the exact section. Then it follows the graph. PEP 622 took the idea up again, and was replaced by PEP 634, the match statement Python has today."
  },
  {
   "id": "chain",

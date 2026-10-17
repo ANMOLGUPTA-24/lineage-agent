@@ -10,8 +10,9 @@ company is the Python project: one of the largest open-source organisations, wit
 forum threads and Steering Council issues.
 
 > **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers recorded from the graph; run it locally to ask anything) ·
-> **Demo video:** [watch (2:50, narrated, captioned)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@daa906ec312cfeb6ffd2708765a7150794c6dfe7/docs/video/lineage-demo.mp4) ·
-> **Run it in a minute:** `docker compose -f docker-compose.quick.yml up` → http://localhost:8000 (pre-built graph, no API key) ·
+> **Demo video:** [watch (2:51, narrated, captioned)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@daa906ec312cfeb6ffd2708765a7150794c6dfe7/docs/video/lineage-demo.mp4) ·
+> **Run it locally:** `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (pre-built graph, no API key;
+> 2–4 minutes the first time, about 1 GB of images; port taken? set `ports: ["8080:8000"]` in the compose file) ·
 > [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
 
 ![The home page opens on a real recorded answer: null coalescing, proposed in PEP 505 (2015, deferred), raised again in PEP 824 (2026) and in two forum threads, with the people and the graph path behind it](docs/screenshots/home.jpg)
@@ -64,7 +65,7 @@ the tools that answer "has this team already decided this?" don't change.
 
 **Scale:** 745 PEPs, 1,085 rejected ideas and 866 quotable sections parsed from the PEP sources, 1,748
 discuss.python.org threads, 505 CPython PRs and 460 issues, 257 rulings, 2,175 people, built deterministically
-from public data in under 4 minutes (`make ingest`), with a 48-test suite.
+from public data in under 4 minutes (`make ingest`), with a 69-test suite.
 
 **What the graph does per answer:** typed traversals over evidence edges extracted from the PEPs' own text
 (`REJECTS_APPROACH_OF`, `CITES`), `algo.SPpaths` with hub-aware weights, PageRank and WCC on per-area
@@ -101,7 +102,7 @@ who ruled on it, or which earlier proposals it builds on four hops back. Those a
 | `who_knows(subject)` | Who should I ask? | **PageRank** over the area's own influence graph (`INFLUENCE_<area>`: who the area's PEPs and PRs build on), plus the most active people and, for a PEP, its own authors and decider |
 | `bus_factor(subject)` | Where is knowledge concentrated? | PEPs that depend on one person, and **WCC** on the area's influence graph with and without its top person |
 | `connection(a, b)` | How are A and B related? | **`algo.SPpaths`** weighted shortest paths over every relationship type |
-| `already_decided(idea)` | Has Python already decided this? | vector + full-text candidates over PEPs, 1,085 rejected ideas and 1,748 forum threads, scored by a local cross-encoder; then a traversal: ruling, decider, the PEP's own rejection notice (quoted), `SUPERSEDES*`, and later PEPs that set the same approach aside (`REJECTS_APPROACH_OF`) |
+| `already_decided(idea)` | Has Python already decided this? | vector + full-text candidates over PEPs, 1,085 rejected ideas and 1,748 forum threads, scored by a local cross-encoder; then a traversal: ruling, decider, the PEP's own rejection notice (quoted), `SUPERSEDES*`, and earlier or later PEPs whose rejected ideas cite it (`REJECTS_APPROACH_OF*1..3`) |
 | `draft_reply(idea)` | Answer a forum proposal | a reply built only from `already_decided` rows: quotes, deep links, who to ask. Nothing is posted |
 | *(after every answer)* | "You asked about PEP 572 earlier…" | session memory in the graph: `(:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP)`; `algo.SPpaths` from this answer's PEP to the nearest PEP asked about earlier; `my_session` answers "what did I ask earlier?". Carried across sync swaps |
 | `recall` / `remember` | What did we find last time? | `Finding` nodes linked to the PEP they describe |
@@ -119,8 +120,9 @@ hand-written and parameterized (no string concatenation, so no injection), and r
 
 ### Honesty guard
 
-After the LLM writes its answer, every `PEP NNN` and person name it mentions is checked against the
-tool results. If it mentions something the graph never returned, the answer is **rejected** and
+After the LLM writes its answer, every `PEP NNN`, person name, verdict word ("accepted", "rejected"…),
+year and quotation in it is checked against the tool results. If it states something the graph never
+returned, the answer is **rejected** and
 replaced with one built directly from the rows. The UI shows the rejected text crossed out.
 Decisions the source data doesn't attribute (pre-2018 rulings without a named delegate, for example)
 are marked `inferred` and drawn dashed.
@@ -227,7 +229,7 @@ Raw API responses are cached in `data/raw/*.json`, so building the graph needs n
 docker compose -f docker-compose.quick.yml up --build      # → http://localhost:8000
 ```
 
-`deploy/graph.rdb` is a saved FalkorDB graph (5 MB) written by the same pinned FalkorDB image the
+`deploy/graph.rdb` is a saved FalkorDB graph (9 MB) written by the same pinned FalkorDB image the
 compose file uses, so nothing is ingested on startup. The **Codespaces** button above runs exactly this.
 
 **Build the graph yourself from the cached public data (about 2 minutes on 8 cores):**
@@ -243,7 +245,7 @@ Without Docker for the app:
 ```bash
 docker run -d -p 6379:6379 -p 3000:3000 falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
 uv sync && make ingest && make app
-make test                         # 58 behaviour tests against the loaded graph
+make test                         # 69 behaviour tests against the loaded graph
 make sync                         # rebuild beside the live graph and swap (see "Keeping it current")
 uv run python -m eval.run         # the evaluation below
 ```
@@ -264,8 +266,10 @@ scripted model; it has not been run against a hosted model for this submission.
 ### MCP: the agent interface
 
 The web page is one client. The same typed tools are an MCP server, so any agent (Claude Desktop, Claude
-Code, Cursor) can use Lineage as its memory of Python's decisions, with the same read-only Cypher and the
-same paths in every result:
+Code, Cursor) can use Lineage as its memory of Python's decisions: the same parameterized Cypher (read-only
+except `remember`, which saves a finding) and the same paths in every result. Tools: `already_decided`,
+`draft_reply`, `why`, `is_current`, `who_knows`, `bus_factor`, `connection`, `changes`, `resolve`, `recall`,
+`remember`, `my_session`.
 
 ```json
 {"mcpServers": {"lineage": {"command": "uv", "args": ["run", "python", "-m", "lineage.mcp_server"],
@@ -294,3 +298,8 @@ tests/                     outcomes, depth, supersession, tenant isolation, guar
 - CPython PR links come from titles that name a PEP, which covers the main implementation
   PRs but not all of them.
 
+
+## License
+
+MIT, see [LICENSE](LICENSE). The PEP texts, Steering Council issues, CPython metadata and discuss.python.org
+posts in `data/raw/` belong to their authors and are used here for research and indexing.

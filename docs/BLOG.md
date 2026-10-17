@@ -4,8 +4,8 @@
 
 # Has Python already decided this? Building a graph agent over 25 years of PEPs
 
-Every few weeks someone on discuss.python.org proposes a `do`-`while` loop. Python decided that in
-2003 (PEP 315, rejected). The switch statement was rejected in 2007 after "a quick poll" during Guido's PyCon
+People keep proposing a `do`-`while` loop on discuss.python.org. PEP 315 proposed it in 2003, and it
+was rejected. The switch statement was rejected in 2007 after "a quick poll" during Guido's PyCon
 keynote; `?.` operators have been deferred since 2015 and proposed again in 2026. The answers exist,
 but they are spread across 745 PEPs, their rejected-ideas sections, Steering Council issues and
 CPython pull requests.
@@ -80,7 +80,7 @@ switch PEP itself. No cutoff works when the wrong answer is closer than the righ
 So vector and full-text search only gather about 90 candidates (PEPs, rejected ideas, forum
 threads), and a small local cross-encoder (MiniLM-L-6, ~0.45 s on CPU, no API key) scores each
 (idea, candidate) pair. Then the graph takes over for the part that matters: the ruling, who made
-it, the PEP's own rejection notice, supersession, and later PEPs that set the same approach aside.
+it, the PEP's own rejection notice, supersession, and earlier or later PEPs whose rejected ideas cite it.
 
 ### 3. Graph algorithms on projections, and reading the docs by testing them
 
