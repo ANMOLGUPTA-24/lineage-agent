@@ -1,9 +1,9 @@
-# Has Python already decided this? Tracing 26 years of PEPs with a graph
+# Has Python already decided this? Tracing 26 years of rejected ideas with a graph
 
 *Who proposed it, who decided, and did it come back? A FalkorDB graph over Python's design history.*
 
-The `do`-`while` loop comes up regularly on discuss.python.org, and that's reasonable: the reasons it was turned
-down are hard to find. PEP 315 proposed it in 2003; it was deferred, and Guido rejected it in 2013. That answer
+The `do`-`while` loop comes up regularly on discuss.python.org, and the reasons it was turned down are hard to
+find. PEP 315 proposed it in 2003; it was deferred, and Guido rejected it in 2013. That answer
 is public, but it sits in one of 745 PEPs (Python Enhancement Proposals, the documents where language changes
 are argued and decided), among 1,085 "rejected ideas" entries inside those PEPs, and across 1,748 forum threads.
 
@@ -39,16 +39,9 @@ No single document contains that chain. The graph does, as three hops:
 
 ![Keyword arguments in indexing: PEP 472 (2014), PEP 637 (2020), then PEP 647 and PEP 696 citing it](screenshots/came-back.jpg)
 
-I measured this against a vector-only baseline given the same data and embedding model:
-
-| Question | Lineage | Vector baseline |
-|---|---|---|
-| Who decided it? | 5 / 6 | 1 / 6 |
-| Did the idea come back? | 3 / 3 | 0 / 3 |
-| How are two PEPs related? | 4 / 4 | 1 / 4 |
-
-The samples are small, so read these as direction, not precision. The full results, including where Lineage
-loses, are further down.
+Against a vector-only baseline with the same data and embedding model, Lineage named who decided in 5 of 6
+test questions (the baseline, 1) and found the comeback in 3 of 3 (the baseline, none). Full results, including
+where it loses, are below.
 
 ## Three things I learned building it
 
@@ -64,7 +57,7 @@ and the ones pointing at older, never-adopted PEPs were earlier competing propos
 becomes an edge, 50 in all, each keeping the sentence that makes the link:
 
 ```cypher
-MATCH (a:Alternative)-[:REJECTED_IN]->(p:PEP), (q:PEP {number: c.pep})
+MATCH (a:Alternative)-[:REJECTED_IN]->(p:PEP), (a)-[:CITES]->(q:PEP)
 WHERE q.type <> 'Process' AND q.created < p.created
   AND q.status IN ['Rejected', 'Withdrawn', 'Deferred', 'Superseded', 'Draft']
 MERGE (p)-[e:REJECTS_APPROACH_OF]->(q) ON CREATE SET e.via = [a.url]
@@ -72,8 +65,7 @@ MERGE (p)-[e:REJECTS_APPROACH_OF]->(q) ON CREATE SET e.via = [a.url]
 
 That edge type is what answers "did it come back?" The `given:` clause from PEP 3150 (Alyssa Coghlan, 2010)
 was set aside by PEP 403 in 2011 ("The problems with using a full nested suite are best described in PEP 3150")
-and again by PEP 572 in 2018. Following `REJECTS_APPROACH_OF*1..3` also finds the indirect cases, like the
-typing PEPs above.
+and again by PEP 572 in 2018.
 
 ### 2. Vectors find candidates; something else has to decide
 
@@ -84,43 +76,33 @@ works when the wrong answer is nearer than the right one.
 So vector and full-text search only gather about 90 candidates: PEPs, rejected ideas and forum threads. A small
 cross-encoder (a model that reads the question and one candidate together and scores whether they describe the
 same idea; MiniLM, about half a second on a laptop CPU, no API key) keeps the real matches. The graph does the
-rest, and sometimes it fixes the model: when a forum thread judged to be the same idea refers to a PEP the model
-only called "related", the PEP is promoted. That's how "null coalescing" finds PEP 505.
+rest: the ruling, who made it, and everything that came before and after.
 
 ### 3. Graph algorithms need the right shape
 
 "Who should I ask about typing?" used to be a count of items per person. Now each area gets its own
 person-to-person graph at ingest (a → b when a's work in that area builds on, or was decided by, b's), and PageRank
-runs on it. FalkorDB's PageRank takes one node label and one relationship type, and in my tests on 4.22 three
-parallel edges scored the same as one, so each projection keeps one edge per pair.
+runs on it. (FalkorDB's PageRank works on one node label and one relationship type, which is why each area gets
+its own small graph.)
 
-The result: for typing, Mark Shannon ranks fourth with a single item, because he was PEP 484's BDFL-Delegate.
-The most active person, Jelle Zijlstra with 79 items, is listed separately, because "whose work this area
+The result: for typing, Mark Shannon ranks fourth with a single PEP, because he was PEP 484's BDFL-Delegate.
+The most active person, Jelle Zijlstra, with 79 PEPs and pull requests, is listed separately, because "whose work this area
 builds on" and "who is active now" are different questions.
 
 ![Who should I ask about typing: PageRank over the typing influence graph, with the citations behind it](screenshots/who-knows.jpg)
 
-Shortest paths needed the same care. With unit weights, the link between PEP 484 and PEP 695 was "Guido wrote
-both". Edges into busy nodes now cost more, so the answer is the direct citation:
-
-```cypher
-CALL algo.SPpaths({sourceNode: x, targetNode: y, relTypes: $rels, weightProp: 'weight',
-                   maxLen: 6, relDirection: 'both', pathCount: 3})
-// where person, topic and citation edges cost 1 + ln(1 + degree)
-```
-
 ## Before the PEP: the forum, and memory
 
 Most ideas are discussed on discuss.python.org and never become PEPs, but the discussion is often the best
-record of why. Lineage loads the 2,073 topics in the Ideas category, with the opening post and participants of
-the 1,551 that have five or more posts, plus 197 threads where PEPs were discussed. "Have multi-line lambdas
+record of why. Lineage indexes 1,748 threads: the 1,551 of the category's 2,073 Ideas topics that have five or more posts,
+plus 197 threads where PEPs were discussed. "Have multi-line lambdas
 been proposed?" now answers that no PEP did, and points to the 2023 and 2025 threads and the core developer who
 replied.
 
 Each answer is also stored as `(:Session)-[:ASKED]->(:Query)-[:ACCESSED]->(:PEP)`. The next answer asks the
 graph how its PEP connects to what you asked before (at most two hops, because longer chains link almost
-anything), so after the walrus operator, a question about statement-local names ends with "the graph links it
-to PEP 572". Because every answer writes to the graph, sessions are capped and requests are rate-limited.
+anything), so after the walrus operator, a question about the `given:` clause ends with "the graph links it
+to PEP 572".
 
 ![Session memory as graph nodes](screenshots/memory.jpg)
 
@@ -134,7 +116,7 @@ which is a ceiling on any model answering from them.
 |---|---|---|---|
 | Held-out ideas: right PEP as the top answer | 17 | 13 | 9 |
 | Held-out ideas with no PEP: says "not recorded" | 5 | 5 | 5 (cutoff tuned on these questions) |
-| Right PEP anywhere in the top 5 (all ideas) | 37 | 29 (top answer only) | 36 |
+| Right PEP found (Lineage: its top answer; baseline: anywhere in its top 5) | 37 | 29 | 36 |
 | Is it still current? | 31 | 31 | 29 |
 | Who decided it? | 6 | 5 | 1 |
 | Did the idea come back? | 3 | 3 | 0 |
@@ -143,32 +125,25 @@ which is a ceiling on any model answering from them.
 Median answer time is 0.7 s against the baseline's 0.04 s: the graph walk and the reranker cost something.
 
 The baseline is better at one thing: getting the right PEP somewhere into its top five. Lineage's advantage is
-in ranking it first and in everything after. It is also wrong in ways I can name: 3 of 32 confident "same idea"
-answers cited the wrong PEP (an HTTP/3 client matched PEP 476, which is about HTTPS certificate checks), and
+in ranking it first and in everything after. It is also wrong in ways I can name: of the 32 answers where it was sure it had found the same idea,
+3 cited the wrong PEP (an HTTP/3 client matched PEP 476, which is about HTTPS certificate checks), and
 several correct answers came out only as "related". Every miss is listed in `eval/RESULTS.md`.
 
 When a language model writes the answer instead of the templates, a guard checks every PEP number, person name,
 verdict ("accepted", "rejected"), year and quotation against the tool results, and rejects the answer if any of
 them didn't come from the graph.
 
-## Keeping it current
-
-`make sync` rebuilds the graph next to the live one, records what changed (new PEPs, status changes, rulings),
-carries session memory across, and switches an app-level alias key that every request resolves. With four
-threads querying during a two-minute sync, all 22,468 reads saw a complete graph.
-
 ## What I'd do next
 
 - Track ideas that came back as new PEPs after 2019, and what changed between the attempts.
-- Classify each rejected-idea mention instead of using a status rule, and measure it on the 210-mention sample.
 - A larger held-out question set: some rows above rest on three to six questions.
 - Use forum participation, not only PEPs and pull requests, when ranking who to ask.
 
 ## Built with
 
 Python 3.12, FalkorDB (graph, vector and full-text indexes, `algo.pageRank`, `algo.WCC`, `algo.SPpaths`), FastAPI,
-fastembed for local embeddings and reranking, and an MCP server that gives any agent the same 12 tools. It runs
-without an API key; any OpenAI-compatible model can be plugged in. Built for Graph Hacks: Context for AI Agents
+fastembed for local embeddings and reranking, and an MCP server that gives any agent the same 12 tools. `make sync` rebuilds the graph beside the live one and swaps it in without
+interrupting reads. It runs without an API key; any OpenAI-compatible model can be plugged in. Built for Graph Hacks: Context for AI Agents
 (WeMakeDevs × FalkorDB), Track 03, Company Brain.
 
 Run it yourself in a few minutes: `docker compose -f docker-compose.quick.yml up --build`, then open
