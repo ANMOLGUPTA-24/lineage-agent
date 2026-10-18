@@ -82,7 +82,18 @@ TRIAGE_BUDGET = 400 * 1024
 def triage_json() -> tuple[str, int]:
     """The triage record for the queue, under TRIAGE_BUDGET: if it runs over, drop each step's args (the page
     doesn't show them), then shorten its why and outcome."""
-    rows = triage.history(limit=200)
+    # Every live decision and every decisive backfill decision, then the most recent other backfill ones, so a long
+    # backfill can't crowd the showcase cases out.
+    rows, seen = [], set()
+    batches = [triage.history(limit=500, mode="live")]
+    batches += [triage.history(limit=500, mode="backfill", action=a)
+                for a in ("reply_with_ruling", "point_to_existing", "link_prior_threads")]
+    batches.append(triage.history(limit=120, mode="backfill"))
+    for batch in batches:
+        for r in batch:
+            if (r.get("mode"), r["topic"]) not in seen:
+                seen.add((r.get("mode"), r["topic"]))
+                rows.append(r)
     text = json.dumps({"rows": rows}, default=str)
     if len(text.encode()) > TRIAGE_BUDGET:
         for r in rows:

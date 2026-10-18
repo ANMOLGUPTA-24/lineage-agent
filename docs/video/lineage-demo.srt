@@ -111,81 +111,117 @@ the subgraph the queries walked, each index search, what the cross-encoder kept,
 and the exact Cypher that ran, with its parameters.
 
 29
-00:01:46,325 --> 00:01:50,634
-FalkorDB holds PEPs, rejected ideas, rulings, pull requests,
+00:01:46,325 --> 00:01:47,269
+For Track 01,
 
 30
-00:01:50,684 --> 00:01:52,450
-forum threads and people.
+00:01:47,319 --> 00:01:52,775
+a triage agent reads each new Ideas topic and picks one of five actions.
 
 31
-00:01:52,500 --> 00:01:57,275
-Each rejected idea is its own node, linked to the earlier PEP it set aside.
+00:01:52,825 --> 00:01:55,150
+This one asks for a memory model.
 
 32
-00:01:57,325 --> 00:02:00,246
-Vector and full-text indexes find candidates,
+00:01:55,200 --> 00:02:01,065
+It chose each tool from what the graph returned, and matched PEP 583, from 2008,
 
 33
-00:02:00,296 --> 00:02:03,680
-a local cross-encoder checks they are the same idea,
+00:02:01,115 --> 00:02:02,100
+now withdrawn.
 
 34
-00:02:03,730 --> 00:02:05,925
-and Cypher traversals do the rest.
+00:02:02,150 --> 00:02:05,129
+It recorded the decision and that link in the graph,
 
 35
-00:02:05,975 --> 00:02:07,975
-PageRank finds who to ask.
+00:02:05,179 --> 00:02:07,400
+and sent the topic to the PEP's author.
 
 36
-00:02:08,025 --> 00:02:12,575
-The same tools run as an MCP server, so any agent can use them.
+00:02:07,450 --> 00:02:10,350
+The reply is drafted for a person to send.
 
 37
-00:02:14,025 --> 00:02:16,325
-No language model is required.
+00:02:10,400 --> 00:02:12,025
+It never posts.
 
 38
-00:02:16,375 --> 00:02:20,479
-When one writes the answer, a guard rejects any PEP number, name,
+00:02:13,475 --> 00:02:17,784
+FalkorDB holds PEPs, rejected ideas, rulings, pull requests,
 
 39
-00:02:20,529 --> 00:02:23,100
-verdict or quote the graph didn't return.
+00:02:17,834 --> 00:02:19,600
+forum threads and people.
 
 40
-00:02:23,150 --> 00:02:27,300
-On 98 questions, against vector search over the same data:
+00:02:19,650 --> 00:02:24,425
+Each rejected idea is its own node, linked to the earlier PEP it set aside.
 
 41
-00:02:27,350 --> 00:02:30,450
-who decided, 5 of 6, against 1 of 6.
+00:02:24,475 --> 00:02:27,396
+Vector and full-text indexes find candidates,
 
 42
-00:02:30,500 --> 00:02:32,200
-Did the idea come back:
+00:02:27,446 --> 00:02:30,830
+a local cross-encoder checks they are the same idea,
 
 43
-00:02:32,250 --> 00:02:34,300
-3 of 3, against none.
+00:02:30,880 --> 00:02:33,075
+and Cypher traversals do the rest.
 
 44
-00:02:34,350 --> 00:02:39,775
-Lineage is wrong on 3 of 32 confident matches, and every miss is published.
+00:02:33,125 --> 00:02:35,125
+PageRank finds who to ask.
 
 45
-00:02:41,225 --> 00:02:42,575
-Lineage.
+00:02:35,175 --> 00:02:39,725
+The same tools run as an MCP server, so any agent can use them.
 
 46
-00:02:42,625 --> 00:02:44,975
-Has Python already decided this?
+00:02:41,175 --> 00:02:43,475
+No language model is required.
 
 47
-00:02:45,025 --> 00:02:48,625
-Try the live demo, or run it with Docker in about a minute.
+00:02:43,525 --> 00:02:47,629
+When one writes the answer, a guard rejects any PEP number, name,
 
 48
-00:02:48,675 --> 00:02:50,325
+00:02:47,679 --> 00:02:50,250
+verdict or quote the graph didn't return.
+
+49
+00:02:50,300 --> 00:02:54,450
+On 98 questions, against vector search over the same data:
+
+50
+00:02:54,500 --> 00:02:57,600
+who decided, 5 of 6, against 1 of 6.
+
+51
+00:02:57,650 --> 00:02:59,350
+Did the idea come back:
+
+52
+00:02:59,400 --> 00:03:01,450
+3 of 3, against none.
+
+53
+00:03:01,500 --> 00:03:06,925
+Lineage is wrong on 3 of 32 confident matches, and every miss is published.
+
+54
+00:03:08,375 --> 00:03:09,725
+Lineage.
+
+55
+00:03:09,775 --> 00:03:12,125
+Has Python already decided this?
+
+56
+00:03:12,175 --> 00:03:15,775
+Try the live demo, or run it with Docker in about a minute.
+
+57
+00:03:15,825 --> 00:03:17,475
 The links are below.

@@ -1,8 +1,9 @@
 # Demo video
 
-[`docs/video/lineage-demo.mp4`](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4): 2:51, 1080p, narrated (Kokoro-82M, local), captions burned in
+[`docs/video/lineage-demo.mp4`](video/lineage-demo.mp4): 3:18, 1080p, narrated (Kokoro-82M, local), captions burned in
 (also `docs/video/lineage-demo.srt`). Recorded from the real UI against the live graph; rebuild with
-`scripts/video/` (voice.py, record.py, build.py).
+`scripts/video/` (voice.py, record.py, build.py). The triage scene shows the live run of the triage agent
+(`/api/triage?mode=live`), so rows from a history backfill don't push the showcase topic out of view.
 
 ## Script as narrated
 
@@ -17,6 +18,8 @@
 **chain** (ask-kwindex): Some ideas keep coming back. Keyword arguments in indexing were rejected in 2014, proposed again in 2020, and rejected by the Steering Council. Later typing PEPs cite that rejection. Lineage walks those links, and drafts a forum reply built only from what it found.
 
 **explain** (explain): Every answer shows its work: the subgraph the queries walked, each index search, what the cross-encoder kept, and the exact Cypher that ran, with its parameters.
+
+**triage** (triage, Track 01): For Track 01, a triage agent reads each new Ideas topic and picks one of five actions. This one asks for a memory model. It chose each tool from what the graph returned, and matched PEP 583, from 2008, now withdrawn. It recorded the decision and that link in the graph, and sent the topic to the PEP's author. The reply is drafted for a person to send. It never posts.
 
 **how** (slide-how): FalkorDB holds PEPs, rejected ideas, rulings, pull requests, forum threads and people. Each rejected idea is its own node, linked to the earlier PEP it set aside. Vector and full-text indexes find candidates, a local cross-encoder checks they are the same idea, and Cypher traversals do the rest. PageRank finds who to ask. The same tools run as an MCP server, so any agent can use them.
 

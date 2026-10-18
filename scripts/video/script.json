@@ -36,6 +36,12 @@
   "show": "Every answer shows its work: the subgraph the queries walked, each index search, what the cross-encoder kept, and the exact Cypher that ran, with its parameters."
  },
  {
+  "id": "triage",
+  "shot": "triage",
+  "say": "For Track zero one, a triage agent reads each new Ideas topic and picks one of five actions. This one asks for a memory model. It chose each tool from what the graph returned, and matched PEP five eighty-three, from two thousand eight, now withdrawn. It recorded the decision and that link in the graph, and sent the topic to the PEP's author. The reply is drafted for a person to send. It never posts.",
+  "show": "For Track 01, a triage agent reads each new Ideas topic and picks one of five actions. This one asks for a memory model. It chose each tool from what the graph returned, and matched PEP 583, from 2008, now withdrawn. It recorded the decision and that link in the graph, and sent the topic to the PEP's author. The reply is drafted for a person to send. It never posts."
+ },
+ {
   "id": "how",
   "shot": "slide-how",
   "say": "Falkor D B holds PEPs, rejected ideas, rulings, pull requests, forum threads and people. Each rejected idea is its own node, linked to the earlier PEP it set aside. Vector and full-text indexes find candidates, a local cross-encoder checks they are the same idea, and Cypher traversals do the rest. PageRank finds who to ask. The same tools run as an M C P server, so any agent can use them.",

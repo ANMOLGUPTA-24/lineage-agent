@@ -175,6 +175,36 @@ def scene_explain(sc):
     scroll_to(sc, ".how-sum details pre", 330)
 
 
+def scene_triage(sc):
+    # Show the live run only: a backfill over forum history can push the showcase topic past the page's 100 rows.
+    sc.page.route("**/api/triage?*", lambda route: route.continue_(url=APP + "api/triage?limit=100&mode=live"))
+    home(sc)
+    sc.page.wait_for_timeout(1200)
+    sc.start()
+    sc.glide(1180, 30, 25)                      # the header link
+    sc.page.click("#nav-triage")
+    sc.page.wait_for_selector(".t-sum")
+    sc.glide(520, 300, 25)                      # the summary line
+    sc.wait_until(sc.at(1) - 0.6)
+    sc.page.click("[data-act=decided]")         # replies drafted: the showcase card is among them
+    card = ".t-row:has(a[href$='/t/108762'])"
+    scroll_to(sc, card, 90)
+    sc.glide(420, 230, 25)                      # its stamp and reason
+    sc.wait_until(sc.at(2))
+    sc.page.click(f"{card} .t-how > summary")   # how it decided
+    sc.page.wait_for_timeout(300)
+    scroll_to(sc, f"{card} .t-how", 120)
+    sc.glide(300, 400, 30)
+    sc.wait_until(sc.at(3))
+    scroll_to(sc, f"{card} .fields", 140)       # back up to the fields
+    sc.glide(330, 330, 25)                      # wrote to the graph, sent to
+    sc.wait_until(sc.at(4))
+    sc.page.click(f"{card} .t-draft > summary")
+    sc.page.wait_for_timeout(300)
+    scroll_to(sc, f"{card} .t-draft", 50)
+    sc.glide(400, 420, 30)
+
+
 def slide(name, steps):
     """steps[k]: the slide element revealed when sentence k starts."""
     def run(sc):
@@ -188,7 +218,7 @@ def slide(name, steps):
 
 
 SCENES = {"hook": scene_hook, "what": scene_what, "hero": scene_hero, "switch": scene_switch, "chain": scene_chain,
-          "explain": scene_explain, "how": slide("how", [0, 1, 2, 3, 4]),
+          "explain": scene_explain, "triage": scene_triage, "how": slide("how", [0, 1, 2, 3, 4]),
           "trust": slide("results", [0, 0, 1, 1, 1, 1, 2]), "close": slide("end", [0, 0, 1, 1])}
 
 

@@ -997,10 +997,17 @@ async function showTriage() {
   window.scrollTo(0, 0);
   let rows;
   try {
-    // Filtering happens here, over the whole record, so the counts on each filter stay true.
-    const r = await fetch(STATIC ? "triage.json" : "/api/triage?limit=100");
-    if (!r.ok) throw new Error(r.status);
-    rows = (await r.json()).rows || [];
+    // Filtering happens here, over the whole record, so the counts on each filter stay true. Live decisions and every
+    // decisive backfill decision are loaded in full, so a long backfill can't push them out of the newest 100.
+    const urls = STATIC ? ["triage.json"] : ["/api/triage?limit=100&mode=live",
+      ...["reply_with_ruling", "point_to_existing", "link_prior_threads"].map((a) => `/api/triage?limit=100&mode=backfill&action=${a}`),
+      "/api/triage?limit=100&mode=backfill"];
+    const seen = new Set();
+    rows = [];
+    for (const res of await Promise.all(urls.map((u) => fetch(u)))) {
+      if (!res.ok) throw new Error(res.status);
+      for (const x of (await res.json()).rows || []) { const k = `${x.mode}:${x.topic}`; if (!seen.has(k)) { seen.add(k); rows.push(x); } }
+    }
   } catch (e) { rows = null; }
   const box = document.getElementById("t-body"); if (!box) return;   // the person moved on
   if (rows === null || !rows.length) {
