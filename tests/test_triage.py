@@ -29,7 +29,7 @@ def test_rejected_idea_gets_the_ruling():
     d = triage.decide(topic("Add a do-while loop to Python"))
     assert d["action"] == "reply_with_ruling" and 315 in peps(d)
     assert "PEP 315" in d["reason"] and "https://peps.python.org/pep-0315/" in d["draft"]
-    assert any(r["why"] == "author of PEP 315" for r in d["reviewers"])
+    assert any(r["why"].startswith("author of PEP 315; ") for r in d["reviewers"])
 
 
 def test_adopted_idea_points_to_existing():
@@ -226,6 +226,8 @@ def fake_tools(monkeypatch, rows, **replies):
     monkeypatch.setattr(triage, "earlier_triage", lambda ids: [])
     monkeypatch.setattr(triage, "decision_at", lambda n: decided_on.get(n))
     monkeypatch.setattr(triage, "pep_authors", lambda n: ["Ann Author", "Bob Author"])
+    monkeypatch.setattr(triage, "last_active", lambda names, when: {n: ("2026-01-02", "posted on the forum")
+                                                                    for n in names if n not in inactive})
 
     def scan(tr, target, topic):
         tr.local("rejected_ideas", {"pep": target["pep"]}, "adopted PEP")["outcome"] = "none close"
@@ -236,17 +238,18 @@ def fake_tools(monkeypatch, rows, **replies):
 
 decided_on: dict = {}   # PEP -> decision date, for the synthetic planner tests (reset by the autouse fixture)
 alts: dict = {}         # PEP -> the rejected idea scan_rejected_ideas finds
+inactive: set = set()   # people last_active does not find
 
 
 @pytest.fixture(autouse=True)
 def reset_fakes():
-    decided_on.clear(), alts.clear()
+    decided_on.clear(), alts.clear(), inactive.clear()
     yield
 
 
 def tools_of(d):
     assert all(s["why"] and s["outcome"] for s in d["steps"]), d["steps"]   # every step says why and what it found
-    return [s["tool"] for s in d["steps"]]
+    return [s["tool"] for s in d["steps"] if s["tool"] != "active_reviewers"]   # tested on its own below
 
 
 def test_plan_superseded_pep_points_at_the_latest(monkeypatch):
@@ -259,7 +262,7 @@ def test_plan_superseded_pep_points_at_the_latest(monkeypatch):
     assert tools_of(d) == ["already_decided", "is_current", "rejected_ideas", "draft_reply"]   # a ruling is on record: no why()
     assert "superseded by PEP 765" in d["steps"][1]["why"] and "PEP 765 (Final)" in d["steps"][1]["outcome"]
     assert d["action"] == "point_to_existing" and "superseded by PEP 765" in d["reason"]
-    assert d["draft"].startswith("PEP 601 was superseded: what Python follows now is PEP 765")
+    assert d["draft"].split("\n")[2].startswith("What Python follows now is PEP 765")   # near the top
     assert {e["pep"]: e["match"] for e in d["evidence"]} == {601: "same", 765: "supersedes_it"}
 
 
@@ -298,7 +301,8 @@ def test_plan_same_threads_use_their_participants(monkeypatch):
     assert "earlier triage linked \"thread 11\" to PEP 315" in d["reason"]
     assert any(e["pep"] == 315 and e["match"] == "via_triage" for e in d["evidence"])
     assert d["reviewers"][-1] == {"name": "Raymond Hettinger",
-                                  "why": "author of PEP 315, which an earlier triage linked to this idea"}
+                                  "why": "author of PEP 315, which an earlier triage linked to this idea; "
+                                         "posted on the forum in 2026"}
 
 
 def test_plan_threads_without_core_devs_ask_who_knows_their_pep(monkeypatch):
@@ -309,7 +313,8 @@ def test_plan_threads_without_core_devs_ask_who_knows_their_pep(monkeypatch):
     assert tools_of(d) == ["already_decided", "earlier_triage", "who_knows", "draft_reply"]
     assert ("who_knows", {"subject": "695"}) in calls and "is the discussion of PEP 695" in \
         next(s["why"] for s in d["steps"] if s["tool"] == "who_knows")
-    assert d["reviewers"] == [{"name": "Eric Traut", "why": "author of PEP 695, which \"thread 12\" discusses"}]
+    assert d["reviewers"] == [{"name": "Eric Traut",
+                               "why": "author of PEP 695, which \"thread 12\" discusses; posted on the forum in 2026"}]
 
 
 def test_plan_related_history_checks_reviewers_with_connection(monkeypatch):
@@ -324,7 +329,7 @@ def test_plan_related_history_checks_reviewers_with_connection(monkeypatch):
     assert tools_of(d) == ["already_decided", "connection", "connection"]   # 2 reviewers already: no who_knows
     assert [a for n, a in calls if n == "connection"] == [{"a": "Far Dev", "b": "PEP 3120"}, {"a": "Near Dev", "b": "PEP 3120"}]
     assert [r["name"] for r in d["reviewers"]] == ["Near Dev", "Far Dev"]   # the closer one first
-    assert d["reviewers"][0]["why"].endswith("1 hop from PEP 3120 in the graph")
+    assert d["reviewers"][0]["why"].endswith("1 hop from PEP 3120 in the graph; posted on the forum in 2026")
 
 
 def test_plan_generic_cluster_is_not_used_for_related_history(monkeypatch):
@@ -333,7 +338,7 @@ def test_plan_generic_cluster_is_not_used_for_related_history(monkeypatch):
                                                                      "most_built_on": [{"name": "Hub", "rank": 1}]}]})
     d = triage.decide(topic("source encodings", tid=-17))
     assert tools_of(d) == ["already_decided", "who_knows"] and "generic cluster" in d["steps"][1]["outcome"]
-    assert d["reviewers"] == [{"name": "Only Author", "why": "author of PEP 3120"}]
+    assert d["reviewers"] == [{"name": "Only Author", "why": "author of PEP 3120; posted on the forum in 2026"}]
 
 
 def test_plan_nothing_found_goes_to_nearest_threads_then_who_knows(monkeypatch):
@@ -450,7 +455,7 @@ def test_a_post_naming_an_adopted_pep_builds_on_it(monkeypatch):
     d = triage.decide(topic("More deprecation decorators", tid=-20, text="PEP 702 added @deprecated; extend it to parameters."))
     assert d["action"] == "flag_for_review" and d["draft"] is None
     assert d["reason"].startswith("The post builds on PEP 702") and "Its authors should see it" in d["reason"]
-    assert [r["why"] for r in d["reviewers"][:2]] == ["author of PEP 702, which the post builds on"] * 2
+    assert [r["why"] for r in d["reviewers"][:2]] == ["author of PEP 702, which the post builds on; posted on the forum in 2026"] * 2
     assert {e["pep"]: e["match"] for e in d["evidence"] if e["pep"]} == {702: "builds_on"}
     assert "draft_reply" not in tools_of(d)
 
@@ -523,3 +528,25 @@ def test_a_timed_out_tool_is_a_step_not_a_failure(monkeypatch):
     assert d["steps"][1] == {"tool": "connection", "args": {"a": "Dev A", "b": "PEP 3120"},
                              "why": d["steps"][1]["why"], "outcome": "timed out: kept, unranked"}
     assert d["reviewers"][0]["name"] == "Dev A"
+
+
+# ---------------------------------------------------------------- routing only to active people
+
+def test_inactive_people_are_not_routed(monkeypatch):
+    fake_tools(monkeypatch, [pep_row(315, "Rejected")])
+    inactive.add("Bob Author")
+    d = triage.decide(topic("do-while", tid=-30))
+    assert [r["name"] for r in d["reviewers"]] == ["Ann Author"] and d["inactive"] == ["Bob Author"]
+    assert d["reviewers"][0]["why"] == "author of PEP 315; posted on the forum in 2026"
+    step = next(s for s in d["steps"] if s["tool"] == "active_reviewers")
+    assert step["outcome"] == "kept 1; dropped as inactive: Bob Author" and "3 years" in step["why"]
+    inactive.add("Ann Author")
+    d = triage.decide(topic("do-while", tid=-31))
+    assert d["reviewers"] == [] and "Nobody active found; a moderator should pick reviewers." in d["reason"]
+
+
+def test_last_active_reads_the_graph_window():
+    # Guido posts on the forum every year; the authors of PEP 315 (2003) did nothing in 2004-2007 by this record.
+    got = triage.last_active(["Guido van Rossum", "W Isaac Carroll", "No Such Person"], "2026-10-18")
+    assert set(got) == {"Guido van Rossum"} and got["Guido van Rossum"][0] >= "2023-10-18"
+    assert "W Isaac Carroll" not in triage.last_active(["W Isaac Carroll"], "2026-10-18")

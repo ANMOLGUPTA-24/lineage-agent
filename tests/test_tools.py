@@ -416,3 +416,18 @@ def test_rate_limit():
     server._hits.clear()
     assert not any(server.throttled("t") for _ in range(server.RATE))
     assert server.throttled("t")
+
+
+def test_draft_leads_with_what_python_has_now():
+    draft = tools.call("draft_reply", {"idea": "add a switch statement"})["rows"][0]["draft"]
+    top = draft.split("\n\n")[1]
+    assert "PEP 635" in top and "Pattern Matching" in top and "since Python 3.10" in top and "PEP 3103" in top
+    draft = tools.call("draft_reply", {"idea": "forbid return break continue breaking out of finally"})["rows"][0]["draft"]
+    assert draft.split("\n\n")[1].startswith("What Python follows now is PEP 765")
+
+
+def test_draft_without_a_ruling_says_so_instead_of_quoting_the_abstract():
+    draft = tools.call("draft_reply", {"idea": "define a memory model for python concurrency"})["rows"][0]["draft"]
+    assert "No ruling is recorded for it: it was withdrawn by its authors." in draft
+    assert "From the PEP:" not in draft and "answer the reasons above" not in draft
+    assert "start from where that discussion stopped" in draft

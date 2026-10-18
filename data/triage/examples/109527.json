@@ -14,17 +14,18 @@
  "reviewers": [
   {
    "name": "Guido van Rossum",
-   "why": "core developer, posted in \"Switch Python's parsing tech to something more powerful than LL(1)\" (the nearest earlier thread, not a match)"
+   "why": "core developer, posted in \"Switch Python's parsing tech to something more powerful than LL(1)\" (the nearest earlier thread, not a match); posted on the forum in 2026"
   },
   {
    "name": "Nathaniel J. Smith",
-   "why": "core developer, posted in \"Switch Python's parsing tech to something more powerful than LL(1)\" (the nearest earlier thread, not a match)"
+   "why": "core developer, posted in \"Switch Python's parsing tech to something more powerful than LL(1)\" (the nearest earlier thread, not a match); posted on the forum in 2024"
   },
   {
    "name": "Eric V. Smith",
-   "why": "core developer, posted in \"Ability to modify python types by simple class declaration\" (the nearest earlier thread, not a match)"
+   "why": "core developer, posted in \"Ability to modify python types by simple class declaration\" (the nearest earlier thread, not a match); posted on the forum in 2026"
   }
  ],
+ "inactive": [],
  "draft": null,
  "steps": [
   {
@@ -41,7 +42,22 @@
     "topic": 109527
    },
    "why": "already_decided found nothing from before the topic: the nearest earlier forum threads by embedding show who works nearby (not a match)",
-   "outcome": "7 threads within distance 0.26; 3 core developers"
+   "outcome": "7 threads within distance 0.26; 6 core developers"
+  },
+  {
+   "tool": "active_reviewers",
+   "args": {
+    "people": [
+     "Guido van Rossum",
+     "Nathaniel J. Smith",
+     "Eric V. Smith",
+     "Facundo Batista",
+     "Serhiy Storchaka",
+     "Paul Moore"
+    ]
+   },
+   "why": "route only to people active in the 3 years before the topic (forum posts in threads from then, PEPs authored or decided, PRs opened): an old author may have left",
+   "outcome": "kept 3"
   }
  ],
  "cypher": 7,

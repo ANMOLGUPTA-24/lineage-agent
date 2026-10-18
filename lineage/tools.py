@@ -899,14 +899,73 @@ def draft_reply(idea: str, tenant: str = "python") -> dict:
     return res
 
 
-def draft_from_rows(rows: list[dict]) -> str | None:
-    """The reply text, from already_decided rows (the triage agent passes rows filtered to earlier history)."""
+def draft_from_rows(rows: list[dict], tenant: str = "python") -> str | None:
+    """The reply text, from already_decided rows (the triage agent passes rows filtered to earlier history).
+
+    It leads with what Python has now when a same-idea row leads to an adopted PEP: the PEP itself, the adopted
+    PEP a rejected idea sits in, what superseded it, a later PEP that took it up again (came_back), or a later
+    adopted PEP that cites it and is about the same thing (embedding distance < CURRENT_DRIFT). That PEP is
+    recorded on the row (`now_in_python`), so everything the draft links is in the rows it returns. A PEP's
+    abstract is only a one-line description of what was proposed; when no ruling is recorded, the draft says so
+    and where the discussion stopped."""
     same = [r for r in rows if r["match"] == "same"]
     if not same:
         return None
+    adopted = ("Final", "Accepted", "Active")
+    CURRENT_DRIFT = 0.30   # 3103 -> 635 (match) is 0.28; an incidental citation such as 505 -> 635 is 0.34
+
+    def info(nums: list[int]) -> dict:
+        if not nums:
+            return {}
+        return {n: {"pep": n, "title": t, "status": st, "python_version": v, "url": u} for n, t, st, v, u in graph(tenant).ro_query(
+            "MATCH (p:PEP) WHERE p.number IN $n RETURN p.number, p.title, p.status, p.python_version, p.url",
+            {"n": nums}).result_set}
+
+    def now_in_python(r: dict) -> dict | None:
+        """The adopted PEP this row leads to, and how."""
+        if r["kind"] == "thread":
+            return None
+        if r.get("status") in adopted:
+            return {**info([r["pep"]]).get(r["pep"], {}), "via": "own" if r["kind"] == "pep" else "rejected_in"}
+        sup = int(m.group(1)) if (m := re.search(r"(\d+)", str(r.get("superseded_by") or ""))) else None
+        if sup and (x := info([sup]).get(sup)) and x["status"] in adopted:
+            return {**x, "via": "superseded"}
+        back = [b for b in r.get("came_back") or [] if b.get("status") in adopted]
+        if back:
+            n = back[-1]["pep"]
+            return {**info([n]).get(n, {"pep": n, "title": back[-1].get("title"), "status": back[-1]["status"],
+                                        "python_version": None, "url": back[-1]["url"]}), "via": "came_back"}
+        later = graph(tenant).ro_query("""MATCH (a:PEP)-[:REFERENCES|REQUIRES]->(b:PEP {number: $n})
+                                          WHERE a.status IN $adopted AND a.created > b.created
+                                          WITH a, vec.cosineDistance(a.embedding, b.embedding) AS drift
+                                          WHERE drift < $drift RETURN a.number ORDER BY drift LIMIT 1""",
+                                       {"n": r["pep"], "adopted": list(adopted), "drift": CURRENT_DRIFT}).result_set
+        return {**info([later[0][0]])[later[0][0]], "via": "refers"} if later else None
+
+    def since(x: dict) -> str:
+        return f" since Python {x['python_version']}" if x.get("python_version") else ""
+
+    def one_line(text: str) -> str:
+        text = " ".join((text or "").split())
+        first = re.split(r"(?<=[.!?])\s", text, maxsplit=1)[0]
+        return first if len(first) <= 200 else first[:197].rsplit(" ", 1)[0] + "..."
+
     lines = ["This has come up before."]
+    lead = next(((r, x) for r in same if (x := now_in_python(r))), None)
+    if lead:
+        r, x = lead
+        r["now_in_python"] = x
+        head = f"PEP {x['pep']} ({x['title']})"
+        lines += ["", {
+            "own": f"Python has had this{since(x)}: {head}.",
+            "rejected_in": f"Python has {head}{since(x)}; it considered this exact idea and left it out (below).",
+            "superseded": f"What Python follows now is {head}{since(x)}; it superseded PEP {r['pep']}.",
+            "came_back": f"Python has had this in another form{since(x)}: {head}, which took it up again after PEP {r['pep']}.",
+            "refers": f"Python took this up later in another form{since(x)}: {head}, which refers back to PEP {r['pep']}.",
+        }[x["via"]] + f" {x['url']}"]
     # Each PEP is named once: two matched PEPs often list each other as earlier tries or comebacks (472, 637).
     named = {r["pep"] for r in same if isinstance(r.get("pep"), int) and r["kind"] == "pep"}
+    reasons = False   # was any reason quoted (a ruling notice, a recorded ruling, a rejected idea's own words)?
     for r in same:
         lines.append("")
         if r["kind"] == "thread":
@@ -918,6 +977,7 @@ def draft_from_rows(rows: list[dict]) -> str | None:
                              f"PEP {x['pep']} ({x['title']}, {x['status']}).")
             continue
         if r["kind"] == "rejected_idea":
+            reasons = True
             lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) considered "{r["idea"]}" and set it aside: '
                          f'"{r["idea_quote"]}" {r["idea_url"]}')
             for e in r["earlier_forms"][:2]:
@@ -929,13 +989,26 @@ def draft_from_rows(rows: list[dict]) -> str | None:
             if d:
                 names = " and ".join(x["by"] for x in d["decided_by"])
                 by = f", {'attributed to' if any(x['inferred'] for x in d['decided_by']) else 'decided by'} {names}"
+            what = f'PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]})'
             # The PEP's own ruling notice is the reason; the abstract only says what was proposed.
             if r["reason"]:
-                lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) proposed it; it was {r["verdict"]}{by}. '
+                reasons = True
+                lines.append(f'- {what} proposed it; it was {r["verdict"]}{by}. '
                              f'Its {r["reason"]["section"]}: "{r["reason"]["quote"]}" {r["reason"]["url"]}')
+            elif d or r.get("status") in adopted or r.get("status") == "Draft":
+                reasons = reasons or bool(d and d["url"])
+                verdict = "it is still a draft" if r.get("status") == "Draft" else f"it was {r['verdict']}{by}"
+                lines.append(f'- {what} proposed it ({one_line(r["quote"])}); {verdict}. {r["url"]}')
             else:
-                lines.append(f'- PEP {r["pep"]} ("{r["title"]}", {r["created"][:4]}) proposed it; it was {r["verdict"]}{by}. '
-                             f'From the PEP: "{r["quote"]}" {r["url"]}')
+                # No ruling: say so, and where the discussion stopped, instead of quoting the abstract as a reason.
+                last = max([(b.get("created") or "", f"PEP {b['pep']} ({(b.get('created') or '')[:4]}, {b.get('status')})")
+                            for b in r.get("came_back") or []]
+                           + [(t.get("created") or "", f'the forum thread "{t["title"]}" ({(t.get("created") or "")[:4]})')
+                              for t in same if t["kind"] == "thread"], default=None)
+                lines.append(f'- {what} proposed it ({one_line(r["quote"])}) {r["url"]}')
+                lines.append(f"  No ruling is recorded for it: it was {r['verdict']}."
+                             + (f" The last record of the idea is {last[1]}." if last and last[0] > (r["created"] or "")
+                                else " The discussion stopped there."))
             if d and d["url"]:
                 lines.append(f"  The ruling: {d['url']}")
         for e in [x for x in r.get("earlier_tries", []) if x["pep"] not in named][:2]:
@@ -954,8 +1027,10 @@ def draft_from_rows(rows: list[dict]) -> str | None:
         advice = f"This is already part of Python through PEP {first['pep']}; a change to it would start from that PEP."
     elif first["kind"] == "pep" and first.get("status") == "Draft":
         advice = f"PEP {first['pep']} is still open; the place to add to it is that PEP's discussion."
-    else:
+    elif reasons:
         advice = "A new proposal would need to answer the reasons above."
+    else:
+        advice = "No ruling was recorded, so a new proposal would start from where that discussion stopped."
     lines += ["", advice
               + (f" People who know this history: {', '.join(people)}." if people else ""),
               "", "(Drafted by Lineage from the PEP graph. Check the links before posting.)"]

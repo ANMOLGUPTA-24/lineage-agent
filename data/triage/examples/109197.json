@@ -8,7 +8,7 @@
  },
  "mode": "live",
  "action": "flag_for_review",
- "reason": "Only related history (2 items); a person should judge whether it is the same idea.",
+ "reason": "Only related history (2 items); a person should judge whether it is the same idea. Nobody active found; a moderator should pick reviewers.",
  "confidence": 2.33,
  "evidence": [
   {
@@ -30,11 +30,9 @@
    "score": 1.36
   }
  ],
- "reviewers": [
-  {
-   "name": "Martin von L\u00f6wis",
-   "why": "author of PEP 3120"
-  }
+ "reviewers": [],
+ "inactive": [
+  "Martin von L\u00f6wis"
  ],
  "draft": null,
  "steps": [
@@ -53,6 +51,16 @@
    },
    "why": "only 1 reviewer from the evidence; ask who the area of PEP 3120 (related idea) builds on",
    "outcome": "the cluster around PEP 3129 is a generic cluster for a related PEP: not used"
+  },
+  {
+   "tool": "active_reviewers",
+   "args": {
+    "people": [
+     "Martin von L\u00f6wis"
+    ]
+   },
+   "why": "route only to people active in the 3 years before the topic (forum posts in threads from then, PEPs authored or decided, PRs opened): an old author may have left",
+   "outcome": "kept 0; dropped as inactive: Martin von L\u00f6wis"
   }
  ],
  "cypher": 19,

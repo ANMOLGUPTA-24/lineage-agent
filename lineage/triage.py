@@ -403,7 +403,7 @@ def decide(topic: dict, mode: str = "live") -> dict:
                 reason += f" The graph records no decider for PEP {n}; the reply quotes the PEP's own notice."
             else:
                 tr.found(f"no ruling recorded, only its status ({status})")
-                reason += f" The graph records no ruling for PEP {n}, only its status ({status}); the reply quotes the PEP itself."
+                reason += f" The graph records no ruling for PEP {n}, only its status ({status}); the reply says so and where the discussion stopped."
         if action == "flag_for_review" and not any(r["match"] == "same" and r["kind"] != "thread" for r in rows):
             decided = None   # nothing decisive left: reviewers and the draft treat it as related history
     elif threads:
@@ -431,17 +431,20 @@ def decide(topic: dict, mode: str = "live") -> dict:
         action = "route_to_experts"
         reason = "Nothing in the graph matches closely. That is not proof the idea is new."
 
-    who = reviewers(rows, topic, trace=tr)
+    who = reviewers(rows, topic, limit=6, trace=tr)   # more than needed: inactive people are dropped below
     built = next((r["pep"] for r in rows if r["match"] == "builds_on"), None)
     if built:   # the post builds on this PEP: its authors come first
         authors = [{"name": a, "why": f"author of PEP {built}, which the post builds on"} for a in pep_authors(built)[:2]]
-        who = (authors + [w for w in who if w["name"] not in {a["name"] for a in authors}])[:3]
+        who = authors + [w for w in who if w["name"] not in {a["name"] for a in authors}]
     for x in extra:
         if x["match"] == "via_triage" and len(who) < 3:
             for name in pep_authors(x["pep"])[:1]:
                 if not any(o["name"] == name for o in who):
                     who.append({"name": name, "why": f"author of PEP {x['pep']}, which an earlier triage linked to this idea"})
-    if action == "route_to_experts":
+    who, dropped = active_only(tr, who, when)
+    if dropped and not who:
+        reason += " Nobody active found; a moderator should pick reviewers."
+    elif action == "route_to_experts":
         reason += (" Routed to core developers from the nearest earlier forum threads." if who else
                    " No earlier thread is close either, so there is nobody to route to: a person should pick reviewers.")
     elif not who:
@@ -461,9 +464,6 @@ def decide(topic: dict, mode: str = "live") -> dict:
             o = next((r for r in as_then if r["kind"] == "pep" and r.get("pep") == opened["pep"]), decided)
             draft = (f"An open PEP already proposes this: PEP {o['pep']} ({o['title']}), {o['url']}. "
                      "Nothing is decided yet; the place to take this is that PEP's discussion.\n\n" + draft)
-        if draft and action == "point_to_existing" and latest and latest["status"] in ADOPTED:
-            draft = (f"PEP {decided['pep']} was superseded: what Python follows now is PEP {latest['pep']} "
-                     f"({latest['title']}, {latest['status']}), {latest['url']}.\n\n" + draft)
         tr.found(f"drafted ({len(draft)} characters, not posted)" if draft else "nothing to draft")
     evidence = [{"kind": r["kind"], "pep": r.get("pep"), "thread_id": r.get("thread_id"), "title": r["title"],
                  "match": r["match"], "url": r.get("idea_url") or r.get("url"), "score": r.get("score")} for r in rows[:5]]
@@ -473,7 +473,7 @@ def decide(topic: dict, mode: str = "live") -> dict:
     evidence += [x for x in extra if not any(e["pep"] == x["pep"] for e in evidence)]
     return {"topic": topic, "mode": mode, "action": action, "reason": reason,
             "confidence": max((r["score"] for r in rows), default=None),
-            "evidence": evidence, "reviewers": who, "draft": draft, "steps": tr.steps,
+            "evidence": evidence, "reviewers": who, "inactive": dropped, "draft": draft, "steps": tr.steps,
             "paths": tr.paths[:12], "cypher": tr.cypher}
 
 
@@ -538,6 +538,51 @@ def scan_rejected_ideas(tr: Trace, target: dict, topic: dict) -> dict | None:
             "idea": title, "idea_url": url, "idea_quote": tools.first_sentences(text), "earlier_forms": [],
             "authors": pep_authors(target["pep"]), "decision": None, "reason": None, "superseded_by": None,
             "came_back": [], "earlier_tries": [], "quote": ""}
+
+
+ACTIVE_YEARS = 3
+
+
+def last_active(names: list[str], when: str) -> dict[str, tuple[str, str]]:
+    """Each person's latest activity in the ACTIVE_YEARS before `when` (a date): a post in a forum thread created
+    then, a PEP they authored or decided then, or a PR they opened then, as (date, what)."""
+    if not names:
+        return {}
+    start = f"{int(when[:4]) - ACTIVE_YEARS}{when[4:10]}"
+    rows = graph().ro_query("""
+        UNWIND $names AS name MATCH (a:Person {name: name})
+        OPTIONAL MATCH (a)-[:POSTED_IN|STARTED]->(t:Thread) WHERE t.created >= $start AND t.created < $when
+        WITH a, max(t.created) AS posted
+        OPTIONAL MATCH (a)-[:AUTHORED|DELEGATE_FOR]->(p:PEP) WHERE p.created >= $start AND p.created < $when
+        WITH a, posted, p ORDER BY p.created DESC
+        WITH a, posted, collect(p)[0] AS pep
+        OPTIONAL MATCH (d:Decision)-[:MADE_BY]->(a) WHERE d.at >= $start AND d.at < $when
+        WITH a, posted, pep, max(d.at) AS decided
+        OPTIONAL MATCH (a)-[:OPENED]->(x:PR) WHERE x.created_at >= $start AND x.created_at < $when
+        RETURN a.name, posted, pep.created, pep.number, decided, max(x.created_at)""",
+                            {"names": names, "start": start, "when": when}).result_set
+    out = {}
+    for name, posted, pep_at, pep_n, decided, pr_at in rows:
+        seen = [(posted, "posted on the forum"), (pep_at, f"authored PEP {pep_n}"), (decided, "decided a PEP"),
+                (pr_at, "opened a CPython PR")]
+        seen = [(d, what) for d, what in seen if d]
+        if seen:
+            out[name] = max(seen)
+    return out
+
+
+def active_only(tr: Trace, who: list[dict], when: str, limit: int = 3) -> tuple[list[dict], list[str]]:
+    """Route only to people active in the ACTIVE_YEARS before the topic; each kept person's why says how."""
+    if not who:
+        return [], []
+    seen = last_active([w["name"] for w in who], when)
+    kept = [{**w, "why": f"{w['why']}; {seen[w['name']][1]} in {seen[w['name']][0][:4]}"} for w in who if w["name"] in seen][:limit]
+    dropped = [w["name"] for w in who if w["name"] not in seen]
+    tr.local("active_reviewers", {"people": [w["name"] for w in who]},
+             f"route only to people active in the {ACTIVE_YEARS} years before the topic (forum posts in threads from "
+             "then, PEPs authored or decided, PRs opened): an old author may have left")["outcome"] = (
+        f"kept {len(kept)}" + (f"; dropped as inactive: {', '.join(dropped)}" if dropped else ""))
+    return kept, dropped
 
 
 def pep_authors(n: int) -> list[str]:
