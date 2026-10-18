@@ -13,7 +13,7 @@ drafts that action for a person to send ([details](#track-01-an-agent-that-decid
 
 > **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers and 158 triage decisions recorded from the graph: 20 live, the rest from a backfill over forum history; run it locally to ask anything) ·
 > **Write-up:** [Python already said no: tracing 26 years of rejected ideas with a graph](https://medium.com/@anmolgupta.skp/python-already-said-no-tracing-26-years-of-rejected-ideas-with-a-graph-d8060ecc1cba) ·
-> **Demo video:** [YouTube (3:18, narrated, captioned)](https://youtu.be/-A4iY44PgGk) · [mp4](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@a5a6211c6f20862a9e67b25feda9244ebb528da2/docs/video/lineage-demo.mp4) ·
+> **Demo video:** [YouTube (3:19, narrated, captioned)](https://youtu.be/-A4iY44PgGk) · [mp4](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@a5a6211c6f20862a9e67b25feda9244ebb528da2/docs/video/lineage-demo.mp4) ·
 > **Run it locally:** `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (pre-built graph, no API key;
 > 2–4 minutes the first time, about 1 GB of images; port taken? set `ports: ["8080:8000"]` in the compose file) ·
 > [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
@@ -104,7 +104,7 @@ Over MCP: `triage_topic(topic_id, record=False)` returns the decision (with `rec
 returns the earlier decision instead if the topic was already triaged); `triage_queue(limit)` lists recorded
 decisions, newest first. The web app serves the same list at `GET /api/triage` and shows it as the **Triage
 queue** view (`#triage`); the [live demo](https://anmolgupta-24.github.io/lineage-agent/demo/#triage) shows the
-19 recorded decisions. In the quick-start container the graph is loaded from `deploy/graph.rdb` at each start,
+recorded decisions (20 live, the rest from the backfill). In the quick-start container the graph is loaded from `deploy/graph.rdb` at each start,
 so decisions recorded there don't survive a restart.
 
 **One real decision** (`data/triage/examples/109384.json`, trimmed):
@@ -319,7 +319,8 @@ without its top person?), `algo.betweenness` (person bridge score), `algo.labelP
 from "same words" (multi-line lambdas landed 0.21 from conditional expressions, switch statements
 0.30 from the switch PEP). Vectors and full-text only gather candidates; a local MiniLM
 cross-encoder scores them: true matches scored 6.0-7.9 on hand-checked ideas, unrecorded ones
-below 0. Above 5 is "same idea", 1-5 is labelled "related", and below that the answer is
+below 0. Above 5 is "same idea", 1-5 is labelled "related" (a related PEP is promoted to "same idea" when a
+forum thread the cross-encoder judged the same idea refers to it), and below that the answer is
 "the graph doesn't record it", never "it's new". **Every query is listed in [docs/QUERIES.md](docs/QUERIES.md)**, generated
 from what the tools actually run.
 
@@ -339,7 +340,7 @@ Raw API responses are cached in `data/raw/*.json`, so building the graph needs n
 
 ## Run it
 
-**Quickest (about a minute, graph pre-built):**
+**Quickest (2–4 minutes the first time, graph pre-built):**
 
 ```bash
 docker compose -f docker-compose.quick.yml up --build      # → http://localhost:8000

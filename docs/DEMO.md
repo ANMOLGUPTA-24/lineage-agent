@@ -1,6 +1,6 @@
 # Demo video
 
-[`docs/video/lineage-demo.mp4`](video/lineage-demo.mp4): 3:18, 1080p, narrated (Kokoro-82M, local), captions burned in
+[`docs/video/lineage-demo.mp4`](video/lineage-demo.mp4): 3:19, 1080p, narrated (Kokoro-82M, local), captions burned in
 (also `docs/video/lineage-demo.srt`). Recorded from the real UI against the live graph; rebuild with
 `scripts/video/` (voice.py, record.py, build.py). The triage scene shows the live run of the triage agent
 (`/api/triage?mode=live`), so rows from a history backfill don't push the showcase topic out of view.
