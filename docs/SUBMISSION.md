@@ -15,7 +15,7 @@ Copy into the submission form. Every number here is from the repo; re-check if t
 **Live demo:** https://anmolgupta-24.github.io/lineage-agent/demo/ (static: the real UI with 67 answers and 158 triage decisions (20 live, the rest from a backfill over forum history) recorded from the
 graph, opening on a multi-hop example; anything else shows how to run it locally in a minute)
 
-**Demo video:** https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@a5a6211c6f20862a9e67b25feda9244ebb528da2/docs/video/lineage-demo.mp4 (3:18, narrated, captions burned in; `docs/video/lineage-demo.srt` for upload)
+**Demo video:** https://youtu.be/-A4iY44PgGk (YouTube, unlisted) · mp4: https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@a5a6211c6f20862a9e67b25feda9244ebb528da2/docs/video/lineage-demo.mp4 (3:18, narrated, captions burned in; `docs/video/lineage-demo.srt` for upload)
 
 **How to run (live deployment alternative):**
 `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (2–4 minutes the first time; the graph is

@@ -13,7 +13,7 @@ drafts that action for a person to send ([details](#track-01-an-agent-that-decid
 
 > **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers and 158 triage decisions recorded from the graph: 20 live, the rest from a backfill over forum history; run it locally to ask anything) ·
 > **Write-up:** [Python already said no: tracing 26 years of rejected ideas with a graph](https://medium.com/@anmolgupta.skp/python-already-said-no-tracing-26-years-of-rejected-ideas-with-a-graph-d8060ecc1cba) ·
-> **Demo video:** [watch (3:18, narrated, captioned)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@a5a6211c6f20862a9e67b25feda9244ebb528da2/docs/video/lineage-demo.mp4) ·
+> **Demo video:** [YouTube (3:18, narrated, captioned)](https://youtu.be/-A4iY44PgGk) · [mp4](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@a5a6211c6f20862a9e67b25feda9244ebb528da2/docs/video/lineage-demo.mp4) ·
 > **Run it locally:** `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (pre-built graph, no API key;
 > 2–4 minutes the first time, about 1 GB of images; port taken? set `ports: ["8080:8000"]` in the compose file) ·
 > [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/ANMOLGUPTA-24/lineage-agent?quickstart=1)
@@ -135,6 +135,14 @@ Values) as related, not the same, so the agent asks the PEP's authors to look ra
 Concurrency Memory Model for Python* (2008), withdrawn by its authors; the agent drafted a reply quoting the PEP and
 routed it to the PEP's author, Jeffrey Yasskin (`data/triage/examples/108762.*`). Drafts are rare in practice:
 most new ideas have no same-idea record, as the dry run below also shows.
+
+**Backfill over forum history, hand-checked** ([eval/TRIAGE_BACKFILL.md](eval/TRIAGE_BACKFILL.md)): run over the
+1,139 Ideas topics posted since January 2024 (`python -m lineage.triage --backfill --since 2024-01-01`, 32 minutes,
+median 2.0 s a topic), the agent drafted a reply for 19: an earlier same-idea PEP or forum thread existed. Every one
+was labelled by hand: 8 fully right, 7 partly (related history, not the same idea), 4 wrong. The first run was worse
+(7 right of 32); the hand check found three policy bugs, which were fixed and the backfill re-run; both runs are in
+the report. It also routed 857 topics to at least one person and wrote 21 `SAME_IDEA_AS` and 491 `RELATED_TO` edges
+into the graph. A seeded sample of 20 routed topics found no missed same-idea PEP and 2 missed earlier threads.
 
 **Dry run over the 60 most recent Ideas topics** in the cached data (2026-08-19 to 2026-10-16;
 [eval/TRIAGE.md](eval/TRIAGE.md), `uv run python -m eval.triage_eval`):
