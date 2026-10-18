@@ -16,7 +16,7 @@ walked. Because it was a FalkorDB hackathon, I leaned on FalkorDB's graph algori
 where that paid off and where it didn't.
 
 **Try it:** [live demo](https://anmolgupta-24.github.io/lineage-agent/) (it replays 67 answers recorded from the
-graph; run it locally to ask anything) · [2:51 video](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4) · [code](https://github.com/ANMOLGUPTA-24/lineage-agent)
+graph; run it locally to ask anything) · [2:51 video](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@a5a6211c6f20862a9e67b25feda9244ebb528da2/docs/video/lineage-demo.mp4) · [code](https://github.com/ANMOLGUPTA-24/lineage-agent)
 
 ## What an answer looks like
 
