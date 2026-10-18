@@ -5,11 +5,13 @@ Python's decisions: the PEP that proposed it, the ruling and who made it, whethe
 the sentence from the source that says so, and who to ask. It can draft the reply. Every answer comes with
 the graph path that produced it and the exact Cypher that ran.
 
-Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), **Track 03: Company Brain**. The
-company is the Python project: one of the largest open-source organisations, with its decisions in public PEPs,
-forum threads and Steering Council issues.
+Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB), entered in **Track 01: Agents That
+Act on Connected Data** and **Track 03: Company Brain**. The company is the Python project: one of the largest
+open-source organisations, with its decisions in public PEPs, forum threads and Steering Council issues. For
+Track 01, a triage agent reads new forum ideas, decides from the graph what to do with each, and records and
+drafts that action for a person to send ([details](#track-01-an-agent-that-decides-and-acts)).
 
-> **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers recorded from the graph; run it locally to ask anything) ·
+> **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers and 19 triage decisions recorded from the graph; run it locally to ask anything) ·
 > **Write-up:** [Python already said no: tracing 26 years of rejected ideas with a graph](https://medium.com/@anmolgupta.skp/python-already-said-no-tracing-26-years-of-rejected-ideas-with-a-graph-d8060ecc1cba) ·
 > **Demo video:** [watch (2:51, narrated, captioned)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4) ·
 > **Run it locally:** `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (pre-built graph, no API key;
@@ -51,6 +53,106 @@ The graph schema and the tools are source-agnostic. Pointing Lineage at an organ
 (with their "rejected alternatives" sections), its tracker and its chat means writing one parser per source;
 the tools that answer "has this team already decided this?" don't change.
 
+### Track 01: an agent that decides and acts
+
+`lineage/triage.py` is a triage agent for new discuss.python.org Ideas topics. For each topic it asks the graph
+whether the idea has history, picks one of five actions from what comes back, records the decision in the graph,
+and writes the action to an outbox for a person to send. It never posts to the forum.
+
+| Track 01 asks for | In Lineage |
+|---|---|
+| Multi-hop reasoning | `decide()` calls `already_decided`, which walks topic → PEP or rejected idea → `RESOLVED_BY` ruling → `MADE_BY` decider, plus `SUPERSEDES*` and `REJECTS_APPROACH_OF*1..3` for earlier and later attempts. `reviewers()` goes on from the match: thread → `POSTED_IN` core developers, PEP → `AUTHORED` authors, and PageRank over the area only when the PEP is the same idea or the area is a named topic |
+| Graph queries and algorithms as agent tools | `decide()` and `reviewers()` call the same typed tools as the chat agent (`already_decided`, `who_knows`, `draft_reply` via `tools.draft_from_rows`); `nearest_threads()` is a vector-index query joined to `POSTED_IN`; `who_knows` is PageRank over per-area influence projections |
+| Tool selection through MCP | `triage_topic(topic_id, record)` and `triage_queue(limit)` in `lineage/mcp_server.py`, next to the 12 existing tools, so an MCP client chooses when to triage and when to look things up itself. Inside `decide()` the order of tool calls is fixed code, not a model's choice |
+| Actions based on what the graph shows | the action is a function of the rows: an adopted same-idea PEP, a rejected one, same-idea forum threads only, related history only, or nothing (`decide()`). `record()` writes `(:Triage)-[:ABOUT]->(:Thread)`, `-[:EVIDENCE]->(:PEP)`, `-[:ROUTED_TO {why}]->(:Person)` |
+| Explainable results | every decision carries a one-line `reason`, the evidence rows with links, a `why` for each person it routes to, and the graph paths and Cypher count from `already_decided`; `history()` reads decisions back from the graph |
+
+**The five actions**
+
+| Action | When | What it prepares |
+|---|---|---|
+| `reply_with_ruling` | a PEP or rejected idea is the same idea, and it was ruled on (rejected, withdrawn, deferred, superseded) | a drafted reply quoting the ruling, with earlier and later attempts |
+| `point_to_existing` | the same idea is in a Final, Accepted, Active or Provisional PEP | a drafted reply saying where it lives |
+| `link_prior_threads` | the same idea is an open Draft PEP (nothing decided yet), or there is no PEP but the forum discussed the same idea before | a drafted reply pointing to that discussion |
+| `flag_for_review` | only related history | what to read, and who to ask |
+| `route_to_experts` | nothing in the graph is close | the core developers from the nearest earlier threads, labelled "not a match"; if none are close, it says nobody was found |
+
+Every topic is judged as if just posted: `prior()` drops the topic's own thread and anything dated after it, so
+a later PEP can't be cited as history.
+
+**What "act" means here.** Three things, in this order: the decision is written into the graph as `Triage` nodes
+and edges; a JSON record and a Markdown note (reason, evidence, who to send it to, drafted reply) go to
+`data/triage/<topic>.json` and `.md`; and if `TRIAGE_WEBHOOK_URL` is set (a Slack or Discord incoming webhook,
+off by default), the note is posted there. A topic already in the graph as `Triage` is skipped on the next run.
+
+The agent does not reply on the forum, and that is deliberate. discuss.python.org is a public community space,
+and an automated "this was rejected in 2009" reply to a newcomer is costly when it is wrong (3 of 32 confident
+"same idea" matches in the evaluation below name the wrong PEP) and unwelcoming even when it is right. So the
+agent does the searching and drafting, and a person reads the note and decides whether to post it.
+
+**Run it**
+
+```bash
+make triage                                            # the 10 newest Ideas topics: graph writes + outbox
+make triage-dry                                        # same decisions, nothing written
+uv run python -m lineage.triage --latest 10            # what `make triage` runs (topics in creation order)
+uv run python -m lineage.triage --topic 109384         # one topic (repeatable)
+uv run python -m lineage.triage --latest 10 --dry-run  # what `make triage-dry` runs
+```
+
+Over MCP: `triage_topic(topic_id, record=False)` returns the decision (with `record=True` it also writes it, and
+returns the earlier decision instead if the topic was already triaged); `triage_queue(limit)` lists recorded
+decisions, newest first. The web app serves the same list at `GET /api/triage` and shows it as the **Triage
+queue** view (`#triage`); the [live demo](https://anmolgupta-24.github.io/lineage-agent/demo/#triage) shows the
+19 recorded decisions. In the quick-start container the graph is loaded from `deploy/graph.rdb` at each start,
+so decisions recorded there don't survive a restart.
+
+**One real decision** (`data/triage/examples/109384.json`, trimmed):
+
+```json
+{
+ "action": "flag_for_review",
+ "reason": "Only related history (2 items); a person should judge whether it is the same idea.",
+ "confidence": 2.03,
+ "evidence": [
+  {"kind": "rejected_idea", "pep": 661, "title": "Sentinel Values", "match": "related",
+   "url": "https://peps.python.org/pep-0661/#use-a-registry-of-per-module-sentinel-names"},
+  {"kind": "rejected_idea", "pep": 661, "title": "Sentinel Values", "match": "related",
+   "url": "https://peps.python.org/pep-0661/#using-class-objects"}
+ ],
+ "reviewers": [{"name": "Tal Einat", "why": "author of PEP 661"},
+               {"name": "Jelle Zijlstra", "why": "author of PEP 661"}],
+ "draft": null
+}
+```
+
+The topic "Allow automatic naming of sentinels within classes" matched two rejected ideas in PEP 661 (Sentinel
+Values) as related, not the same, so the agent asks the PEP's authors to look rather than replying.
+
+**Recorded decisions: 19**, all on 2026-10-17, from live runs on recent Ideas topics (`GET /api/triage`):
+12 `route_to_experts` (2 of them with nobody close enough to route to) and 7 `flag_for_review`. None is one of
+the three reply actions, so none drafted a reply. In practice drafts are rare: most new ideas have no
+same-idea record, as the dry run below also shows.
+
+**Dry run over the 60 most recent Ideas topics** in the cached data (2026-08-19 to 2026-10-16;
+[eval/TRIAGE.md](eval/TRIAGE.md), `uv run python -m eval.triage_eval`):
+
+| Action | Topics (of 60) |
+|---|---|
+| `reply_with_ruling` | 1 |
+| `point_to_existing` | 0 |
+| `link_prior_threads` | 0 |
+| `flag_for_review` | 17 |
+| `route_to_experts` | 42 |
+
+48 of 60 were routed to at least one person. Median decision time 1.69 s (max 2.25 s), models warm, one CPU
+process. This measures what the agent does, not whether it is right: there are no labels for the correct action.
+A hand check of 9 decisions is in the file: the one `reply_with_ruling` (a memory-model topic matched to PEP 583,
+withdrawn in 2008) is right; of the 8 newest `flag_for_review`, none should have been a ruling, one is arguably
+`link_prior_threads` and two have weak evidence. The 42 routings were not checked for missed matches, and at
+least one is known (109406 has an earlier thread the cross-encoder scored below the cutoff), so read them as
+"nothing confident found", not "new".
+
 ### Does the graph matter? Measured against vector and keyword search on the same data
 
 | 98 questions with known answers (n) | Lineage (graph) | Vector search* | BM25 keyword search* |
@@ -69,7 +171,7 @@ Details below.
 
 **Scale:** 745 PEPs, 1,085 rejected ideas and 866 quotable sections parsed from the PEP sources, 1,748
 discuss.python.org threads, 505 CPython PRs and 460 issues, 257 rulings, 2,175 people, built deterministically
-from public data in under 4 minutes (`make ingest`), with a 69-test suite.
+from public data in under 4 minutes (`make ingest`), with a 107-test suite (behaviour, triage and smoke tests).
 
 **What the graph does per answer:** typed traversals over evidence edges extracted from the PEPs' own text
 (`REJECTS_APPROACH_OF`, `CITES`), `algo.SPpaths` with hub-aware weights, PageRank and WCC on per-area
@@ -249,7 +351,8 @@ Without Docker for the app:
 ```bash
 docker run -d -p 6379:6379 -p 3000:3000 falkordb/falkordb@sha256:b0bdcac2cbaff989e77cb0610439b7a9289e86de033ccbbd4368b66fb680ae7a
 uv sync && make ingest && make app
-make test                         # 69 behaviour tests against the loaded graph
+make test                         # 107 tests against the loaded graph (behaviour, triage, API and demo smoke)
+make smoke                        # check a running instance and every link in the docs
 make sync                         # rebuild beside the live graph and swap (see "Keeping it current")
 uv run python -m eval.run         # the evaluation below
 ```
@@ -271,9 +374,9 @@ scripted model; it has not been run against a hosted model for this submission.
 
 The web page is one client. The same typed tools are an MCP server, so any agent (Claude Desktop, Claude
 Code, Cursor) can use Lineage as its memory of Python's decisions: the same parameterized Cypher (read-only
-except `remember`, which saves a finding) and the same paths in every result. Tools: `already_decided`,
+except `remember`, which saves a finding, and `triage_topic` with `record=True`) and the same paths in every result. Tools: `already_decided`,
 `draft_reply`, `why`, `is_current`, `who_knows`, `bus_factor`, `connection`, `changes`, `resolve`, `recall`,
-`remember`, `my_session`.
+`remember`, `my_session`, and for the triage agent `triage_topic` and `triage_queue`.
 
 ```json
 {"mcpServers": {"lineage": {"command": "uv", "args": ["run", "python", "-m", "lineage.mcp_server"],

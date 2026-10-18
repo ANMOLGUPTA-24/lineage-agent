@@ -131,20 +131,51 @@ def fake_topic(monkeypatch):
         (triage.OUTBOX / f"{FAKE}.{ext}").unlink(missing_ok=True)
 
 
+EARLIER = 65193   # a real forum thread ("New function `repr_args` in `pprint` or `reprlib`")
+
+
+def fake_decision(t):
+    return {"topic": t, "action": "reply_with_ruling", "reason": "test reason", "confidence": 7.5,
+            "evidence": [{"kind": "pep", "pep": 315, "thread_id": None, "title": "Enhanced While Loop", "match": "same",
+                          "url": "https://peps.python.org/pep-0315/"},
+                         {"kind": "thread", "pep": None, "thread_id": EARLIER, "title": "x", "match": "related", "url": "u"}],
+            "reviewers": [{"name": "Raymond Hettinger", "why": "author of PEP 315"}], "draft": "drafted text", "paths": []}
+
+
 def test_record_history_round_trip(fake_topic):
     assert not triage.already_triaged(FAKE)
-    d = {"topic": fake_topic, "action": "reply_with_ruling", "reason": "test reason", "confidence": 7.5,
-         "evidence": [{"kind": "pep", "pep": 315, "thread_id": None, "title": "Enhanced While Loop", "match": "same",
-                       "url": "https://peps.python.org/pep-0315/"}],
-         "reviewers": [{"name": "Raymond Hettinger", "why": "author of PEP 315"}], "draft": "drafted text", "paths": []}
-    tid = triage.record(d)
+    tid = triage.record(fake_decision(fake_topic))
     assert tid.startswith(f"triage-{FAKE}-") and triage.already_triaged(FAKE)
     (h,) = triage.history(topic=FAKE)
     assert h["action"] == "reply_with_ruling" and h["reason"] == "test reason" and h["title"] == fake_topic["title"]
     assert h["evidence_peps"] == [315] and h["routed_to"] == ["Raymond Hettinger"]
+    (url,), = graph().ro_query("MATCH (t:Thread {id: $t}) RETURN t.url", {"t": EARLIER}).result_set
+    assert h["evidence"] == [
+        {"kind": "pep", "id": 315, "title": "Enhanced While Loop", "url": "https://peps.python.org/pep-0315/"},
+        {"kind": "thread", "id": EARLIER, "title": "New function `repr_args` in `pprint` or `reprlib`", "url": url}]
+    assert h["routed"] == [{"name": "Raymond Hettinger", "why": "author of PEP 315"}]
+    assert h["draft"] == "drafted text"
     assert "drafted text" in (triage.OUTBOX / f"{FAKE}.md").read_text()
     assert (triage.OUTBOX / f"{FAKE}.json").exists()
     assert triage.triage([fake_topic]) == []   # the graph remembers: a second run skips it
+
+
+def test_sync_carries_thread_evidence_and_draft(fake_topic):
+    from lineage.ingest import sync
+    triage.record(fake_decision(fake_topic))
+    db, name = connect(), "triagecopytest"
+    dst = db.select_graph(name)
+    try:
+        dst.query("""CREATE (:PEP {number: 315, title: 'Enhanced While Loop'}), (:Person {name: 'Raymond Hettinger'}),
+                            (:Thread {id: $t, title: 'earlier', url: 'u'})""", {"t": EARLIER})
+        (at,), = graph().ro_query("MATCH (t:Triage {topic: $t}) RETURN t.at", {"t": FAKE}).result_set
+        assert sync.copy_triage(graph(), dst, since=at) >= 1
+        (got,), = dst.ro_query("""MATCH (tr:Triage {topic: $t})
+                                  RETURN [tr.draft, [(tr)-[:EVIDENCE]->(p:PEP) | p.number], [(tr)-[:EVIDENCE]->(x:Thread) | x.id],
+                                          [(tr)-[e:ROUTED_TO]->(who:Person) | e.why]]""", {"t": FAKE}).result_set
+        assert got == ["drafted text", [315], [EARLIER], ["author of PEP 315"]]
+    finally:
+        dst.delete()
 
 
 def test_unreachable_webhook_does_not_stop_the_record(fake_topic, monkeypatch, capsys):

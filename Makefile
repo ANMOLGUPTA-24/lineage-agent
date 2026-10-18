@@ -38,4 +38,7 @@ triage-dry:       ## same decisions, nothing written (no graph writes, no outbox
 test:
 	uv run pytest -q
 
-.PHONY: fetch ingest sync rollback app mcp triage triage-dry test
+smoke:             ## check a running instance (default localhost:8000) and every link in the docs
+	uv run python scripts/smoke.py --links
+
+.PHONY: fetch ingest sync rollback app mcp triage triage-dry test smoke

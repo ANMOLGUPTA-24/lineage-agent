@@ -4,7 +4,7 @@ Copy into the submission form. Every number here is from the repo; re-check if t
 
 **Project name:** Lineage (Python decisions): has Python already decided this?
 
-**Track:** Track 03: Company Brain
+**Track:** Track 01: Agents That Act on Connected Data, and Track 03: Company Brain
 
 **Tagline:** Has Python already decided this? A FalkorDB graph agent over 26 years of Python's decisions.
 
@@ -12,7 +12,7 @@ Copy into the submission form. Every number here is from the repo; re-check if t
 
 **Blog post:** https://medium.com/@anmolgupta.skp/python-already-said-no-tracing-26-years-of-rejected-ideas-with-a-graph-d8060ecc1cba
 
-**Live demo:** https://anmolgupta-24.github.io/lineage-agent/demo/ (static: the real UI with 67 answers recorded from the
+**Live demo:** https://anmolgupta-24.github.io/lineage-agent/demo/ (static: the real UI with 67 answers and 19 triage decisions recorded from the
 graph, opening on a multi-hop example; anything else shows how to run it locally in a minute)
 
 **Demo video:** https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4 (2:51, narrated, captions burned in; `docs/video/lineage-demo.srt` for upload)
@@ -26,6 +26,13 @@ Lineage treats the Python project as the company: 745 PEPs, 1,085 rejected ideas
 threads, Steering Council rulings and CPython PRs in one FalkorDB graph. Ask "has anyone proposed X?" and it
 answers with the ruling, who made it, whether the idea came back, quotes from the source, and drafts the reply.
 
+**Track 01:** a triage agent (`lineage/triage.py`) takes each new discuss.python.org Ideas topic, asks the graph
+whether it has history, and picks one of five actions: reply with the earlier ruling, point to the accepted PEP,
+link earlier threads, flag for review, or route to the core developers nearest the topic. It writes the decision
+into the graph (`Triage` nodes with `ABOUT`, `EVIDENCE` and `ROUTED_TO` edges) and an outbox note with a drafted
+reply; a person decides whether to post it. It never posts to the forum itself, and skips topics it has already
+triaged. Also exposed as the MCP tools `triage_topic` and `triage_queue`.
+
 **What it does:**
 - `already_decided` / `draft_reply`: finds the PEP, rejected idea or forum thread that matches a proposal, then
   walks the graph for the ruling, decider (flagged when inferred), the PEP's own rejection notice (quoted,
@@ -35,6 +42,14 @@ answers with the ruling, who made it, whether the idea came back, quotes from th
 - `who_knows`, `bus_factor`: PageRank and WCC over per-area influence projections built at ingest.
 - `changes`: what the last `make sync` changed. Sync rebuilds beside the live graph and swaps an alias atomically.
 - Every answer returns the graph paths and the exact Cypher (with parameters) it ran; the model never writes Cypher.
+- Triage agent (Track 01): for each new Ideas topic, decides `reply_with_ruling`, `point_to_existing`,
+  `link_prior_threads`, `flag_for_review` or `route_to_experts` from the graph, records `(:Triage)-[:ABOUT|EVIDENCE|ROUTED_TO]`,
+  writes an outbox note with the reason, evidence and drafted reply (optional webhook); never posts.
+  Dry run over the 60 newest Ideas topics: 1 reply_with_ruling (hand-checked, right), 17 flag_for_review,
+  42 route_to_experts, median 1.7 s each (eval/TRIAGE.md, 9 decisions hand-checked). 19 decisions recorded from live
+  runs; none drafted a reply, since most new ideas have no same-idea record. `make triage` / `make triage-dry`;
+  Triage queue view in the UI and the live demo (#triage). The tool order inside the agent is fixed code; an MCP
+  client chooses when to call it.
 - Also exposed as an MCP server.
 
 **How FalkorDB is used (the graph does the work):**

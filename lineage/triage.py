@@ -19,8 +19,8 @@ It never posts to the forum. Topics it has already triaged are skipped: the grap
     route_to_experts      nothing in the record: send it to the people this area builds on
 
   Written to the graph:
-    (:Triage {id, topic, at, action, confidence, reason})-[:ABOUT]->(:Thread)
-    (:Triage)-[:EVIDENCE]->(:PEP)
+    (:Triage {id, topic, at, action, confidence, reason, draft})-[:ABOUT]->(:Thread)
+    (:Triage)-[:EVIDENCE]->(:PEP), (:Triage)-[:EVIDENCE]->(:Thread)   the PEPs and earlier forum threads it relied on
     (:Triage)-[:ROUTED_TO {why}]->(:Person)
 """
 import argparse
@@ -181,15 +181,28 @@ def decide(topic: dict) -> dict:
 
 
 def history(topic: int | None = None, limit: int = 20) -> list[dict]:
-    """Recorded decisions, newest first: what was decided, why, the evidence and who it went to."""
+    """Recorded decisions, newest first: what was decided, why, the evidence (PEPs, then earlier forum
+    threads), who it went to and why, and the drafted reply."""
     rows = graph().ro_query("""MATCH (tr:Triage)-[:ABOUT]->(th:Thread) WHERE $t IS NULL OR tr.topic = $t
                                OPTIONAL MATCH (tr)-[:EVIDENCE]->(p:PEP)
-                               OPTIONAL MATCH (tr)-[:ROUTED_TO]->(who:Person)
-                               RETURN tr.topic, th.title, th.url, tr.at, tr.action, tr.reason,
-                                      collect(DISTINCT p.number), collect(DISTINCT who.name)
+                               WITH tr, th, collect(DISTINCT p) AS ps
+                               OPTIONAL MATCH (tr)-[:EVIDENCE]->(et:Thread)
+                               WITH tr, th, ps, collect(DISTINCT et) AS ts
+                               OPTIONAL MATCH (tr)-[e:ROUTED_TO]->(who:Person)
+                               RETURN tr.topic, th.title, th.url, tr.at, tr.action, tr.reason, tr.draft,
+                                      [p IN ps | [p.number, p.title]], [x IN ts | [x.id, x.title, x.url]],
+                                      collect({name: who.name, why: e.why})
                                ORDER BY tr.at DESC LIMIT $n""", {"t": topic, "n": limit}).result_set
-    return [{"topic": r[0], "title": r[1], "url": r[2], "at": r[3], "action": r[4], "reason": r[5],
-             "evidence_peps": r[6], "routed_to": r[7]} for r in rows]
+    out = []
+    for topic_id, title, url, at, action, reason, draft, ps, ts, routed in rows:
+        ps, routed = sorted(ps), [x for x in routed if x["name"]]
+        out.append({"topic": topic_id, "title": title, "url": url, "at": at, "action": action, "reason": reason,
+                    "evidence_peps": [n for n, _ in ps], "routed_to": [x["name"] for x in routed],
+                    "evidence": [{"kind": "pep", "id": n, "title": t, "url": f"https://peps.python.org/pep-{n:04d}/"}
+                                 for n, t in ps]
+                                + [{"kind": "thread", "id": i, "title": t, "url": u} for i, t, u in sorted(ts)],
+                    "routed": routed, "draft": draft})
+    return out
 
 
 def already_triaged(tid: int) -> bool:
@@ -202,14 +215,19 @@ def record(d: dict) -> str:
     tid = f"triage-{t['id']}-{at}"
     g = graph()
     g.query("""MERGE (th:Thread {id: $t}) ON CREATE SET th.title = $title, th.url = $url, th.created = $created, th.kind = 'idea'
-               CREATE (tr:Triage {id: $id, topic: $t, at: $at, action: $action, reason: $reason, confidence: $conf})
+               CREATE (tr:Triage {id: $id, topic: $t, at: $at, action: $action, reason: $reason, confidence: $conf,
+                                  draft: $draft})
                CREATE (tr)-[:ABOUT {weight: 1.0}]->(th)""",
             {"t": t["id"], "title": t["title"], "url": t["url"], "created": t.get("created") or "", "id": tid, "at": at,
-             "action": d["action"], "reason": d["reason"], "conf": d["confidence"]})
+             "action": d["action"], "reason": d["reason"], "conf": d["confidence"], "draft": d.get("draft")})
     peps = sorted({e["pep"] for e in d["evidence"] if isinstance(e.get("pep"), int)})
     if peps:
         g.query("""MATCH (tr:Triage {id: $id}) UNWIND $peps AS n MATCH (p:PEP {number: n})
                    MERGE (tr)-[:EVIDENCE {weight: 1.0}]->(p)""", {"id": tid, "peps": peps})
+    threads = sorted({e["thread_id"] for e in d["evidence"] if e["kind"] == "thread" and isinstance(e.get("thread_id"), int)})
+    if threads:
+        g.query("""MATCH (tr:Triage {id: $id}) UNWIND $threads AS n MATCH (th:Thread {id: n})
+                   MERGE (tr)-[:EVIDENCE {weight: 1.0}]->(th)""", {"id": tid, "threads": threads})
     if d["reviewers"]:
         g.query("""MATCH (tr:Triage {id: $id}) UNWIND $people AS r MATCH (p:Person {name: r.name})
                    MERGE (tr)-[e:ROUTED_TO]->(p) SET e.why = r.why, e.weight = 1.0""",

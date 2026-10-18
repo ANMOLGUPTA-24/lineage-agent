@@ -107,18 +107,26 @@ def copy_triage(src, dst, since: str = "") -> int:
     """Triage decisions (lineage/triage.py): the agent's record of what it decided and did."""
     rows = src.ro_query("""MATCH (tr:Triage)-[:ABOUT]->(th:Thread) WHERE tr.at >= $since
                            OPTIONAL MATCH (tr)-[:EVIDENCE]->(p:PEP)
+                           WITH tr, th, collect(DISTINCT p.number) AS peps
+                           OPTIONAL MATCH (tr)-[:EVIDENCE]->(et:Thread)
+                           WITH tr, th, peps, collect(DISTINCT et.id) AS threads
                            OPTIONAL MATCH (tr)-[r:ROUTED_TO]->(who:Person)
                            RETURN tr.id, tr.topic, tr.at, tr.action, tr.reason, tr.confidence,
-                                  th.id, th.title, th.url, th.created, collect(DISTINCT p.number),
-                                  collect(DISTINCT {name: who.name, why: r.why})""", {"since": since}).result_set
+                                  th.id, th.title, th.url, th.created, peps,
+                                  collect(DISTINCT {name: who.name, why: r.why}), threads, tr.draft""",
+                        {"since": since}).result_set
     for r in rows:
         dst.query("""MERGE (th:Thread {id: $tid}) ON CREATE SET th.title = $title, th.url = $url, th.created = $created, th.kind = 'idea'
                      MERGE (tr:Triage {id: $id})
-                       ON CREATE SET tr.topic = $topic, tr.at = $at, tr.action = $action, tr.reason = $reason, tr.confidence = $conf
+                       ON CREATE SET tr.topic = $topic, tr.at = $at, tr.action = $action, tr.reason = $reason, tr.confidence = $conf,
+                                     tr.draft = $draft
                      MERGE (tr)-[:ABOUT {weight: 1.0}]->(th)
                      WITH tr UNWIND $peps AS n MATCH (p:PEP {number: n}) MERGE (tr)-[:EVIDENCE {weight: 1.0}]->(p)""",
                   {"id": r[0], "topic": r[1], "at": r[2], "action": r[3], "reason": r[4], "conf": r[5], "tid": r[6],
-                   "title": r[7], "url": r[8], "created": r[9], "peps": r[10] or [0]})
+                   "title": r[7], "url": r[8], "created": r[9], "peps": r[10] or [0], "draft": r[13]})
+        if r[12]:   # forum threads it cited; a thread missing from the new graph is skipped, not invented
+            dst.query("""MATCH (tr:Triage {id: $id}) UNWIND $threads AS n MATCH (th:Thread {id: n})
+                         MERGE (tr)-[:EVIDENCE {weight: 1.0}]->(th)""", {"id": r[0], "threads": r[12]})
         people = [x for x in r[11] if x.get("name")]
         if people:
             dst.query("""MATCH (tr:Triage {id: $id}) UNWIND $people AS x MATCH (p:Person {name: x.name})

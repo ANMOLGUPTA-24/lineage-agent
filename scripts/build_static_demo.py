@@ -7,8 +7,8 @@ recorded by calling the agent exactly as the web server does. The crawl starts f
 home page offers and follows each answer's suggested next questions, so every button on the demo
 leads to a recorded answer. Anything else shows how to run Lineage locally to ask it.
 
-It also writes the triage agent's recent decisions (triage.json) and records the "Ask Lineage" question
-behind each one, so the triage queue works in the snapshot too.
+It also writes the triage agent's recent decisions (triage.json), with the evidence, reviewers and drafted
+reply each one recorded, for the triage queue.
 """
 import json
 import re
@@ -51,16 +51,6 @@ def norm(q: str) -> str:
     return re.sub(r"[?!.]+$", "", re.sub(r"\s+", " ", q.strip().lower()))
 
 
-def triage_question(title: str) -> str:
-    """Must match triageQuestion() in lineage/web/index.html."""
-    t = re.sub(r"[?!.]+$", "", re.sub(r"^(idea|proposal|pre-pep)\s*:\s*", "", (title or "").strip(), flags=re.I))
-    if re.match(r"^[A-Z][a-z]", t):
-        t = t[0].lower() + t[1:]
-    t = re.sub(r"^(add|allow|support|make|introduce|use|deprecate|remove|change|include|expose|provide|extend)\b",
-               lambda m: re.sub(r"e$", "", m[0]) + "ing", t)
-    return f"Has anyone proposed {t}?"
-
-
 def follow_ups(res: dict) -> list[str]:
     """Same rules as followUps() in lineage/web/index.html."""
     steps = res.get("steps") or []
@@ -87,8 +77,7 @@ def follow_ups(res: dict) -> list[str]:
 def main() -> None:
     agent.ask("warm up", session="snapwarmup")   # load the models first, so recorded timings are real ones
     decisions = triage.history(limit=30)
-    seeds = SEEDS + [triage_question(d["title"]) for d in decisions]
-    answers, queue, seen = {}, [(q, 0) for q in seeds], set()
+    answers, queue, seen = {}, [(q, 0) for q in SEEDS], set()
     sessions = ["snapwarmup"]
     while queue:
         q, depth = queue.pop(0)
