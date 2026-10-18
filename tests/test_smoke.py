@@ -56,7 +56,7 @@ def page_questions(page: str) -> list[str]:
 
 def check_triage_row(r: dict):
     assert set(r) == {"topic", "title", "url", "at", "action", "reason", "evidence_peps", "routed_to",
-                      "evidence", "routed", "draft"}, r
+                      "evidence", "routed", "draft", "mode", "steps", "wrote"}, r
     assert isinstance(r["topic"], int) and not isinstance(r["topic"], bool)
     for k in ("title", "url", "at", "reason"):
         assert isinstance(r[k], str) and r[k], (k, r)

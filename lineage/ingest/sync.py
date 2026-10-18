@@ -103,8 +103,13 @@ def copy_sessions(src, dst, since: str = "") -> int:
     return len(rows)
 
 
+TRIAGE_LINKS = {("SAME_IDEA_AS", "PEP"): "number", ("SAME_IDEA_AS", "Thread"): "id",
+                ("RELATED_TO", "PEP"): "number", ("RELATED_TO", "Thread"): "id"}
+
+
 def copy_triage(src, dst, since: str = "") -> int:
-    """Triage decisions (lineage/triage.py): the agent's record of what it decided and did."""
+    """Triage decisions (lineage/triage.py): the agent's record of what it decided and did, including the
+    SAME_IDEA_AS / RELATED_TO links it wrote from each topic's thread."""
     rows = src.ro_query("""MATCH (tr:Triage)-[:ABOUT]->(th:Thread) WHERE tr.at >= $since
                            OPTIONAL MATCH (tr)-[:EVIDENCE]->(p:PEP)
                            WITH tr, th, collect(DISTINCT p.number) AS peps
@@ -113,17 +118,19 @@ def copy_triage(src, dst, since: str = "") -> int:
                            OPTIONAL MATCH (tr)-[r:ROUTED_TO]->(who:Person)
                            RETURN tr.id, tr.topic, tr.at, tr.action, tr.reason, tr.confidence,
                                   th.id, th.title, th.url, th.created, peps,
-                                  collect(DISTINCT {name: who.name, why: r.why}), threads, tr.draft""",
+                                  collect(DISTINCT {name: who.name, why: r.why}), threads, tr.draft,
+                                  coalesce(tr.mode, 'live'), tr.steps""",
                         {"since": since}).result_set
     for r in rows:
         dst.query("""MERGE (th:Thread {id: $tid}) ON CREATE SET th.title = $title, th.url = $url, th.created = $created, th.kind = 'idea'
                      MERGE (tr:Triage {id: $id})
                        ON CREATE SET tr.topic = $topic, tr.at = $at, tr.action = $action, tr.reason = $reason, tr.confidence = $conf,
-                                     tr.draft = $draft
+                                     tr.draft = $draft, tr.mode = $mode, tr.steps = $steps
                      MERGE (tr)-[:ABOUT {weight: 1.0}]->(th)
                      WITH tr UNWIND $peps AS n MATCH (p:PEP {number: n}) MERGE (tr)-[:EVIDENCE {weight: 1.0}]->(p)""",
                   {"id": r[0], "topic": r[1], "at": r[2], "action": r[3], "reason": r[4], "conf": r[5], "tid": r[6],
-                   "title": r[7], "url": r[8], "created": r[9], "peps": r[10] or [0], "draft": r[13]})
+                   "title": r[7], "url": r[8], "created": r[9], "peps": r[10] or [0], "draft": r[13], "mode": r[14],
+                   "steps": r[15]})
         if r[12]:   # forum threads it cited; a thread missing from the new graph is skipped, not invented
             dst.query("""MATCH (tr:Triage {id: $id}) UNWIND $threads AS n MATCH (th:Thread {id: n})
                          MERGE (tr)-[:EVIDENCE {weight: 1.0}]->(th)""", {"id": r[0], "threads": r[12]})
@@ -131,6 +138,19 @@ def copy_triage(src, dst, since: str = "") -> int:
         if people:
             dst.query("""MATCH (tr:Triage {id: $id}) UNWIND $people AS x MATCH (p:Person {name: x.name})
                          MERGE (tr)-[e:ROUTED_TO]->(p) SET e.why = x.why, e.weight = 1.0""", {"id": r[0], "people": people})
+    # The write-back links, for the decisions copied above. A target missing from the new graph is skipped.
+    links = src.ro_query("""MATCH (tr:Triage)-[:ABOUT]->(th:Thread) WHERE tr.at >= $since
+                            MATCH (th)-[w:SAME_IDEA_AS|RELATED_TO]->(x) WHERE w.triage = tr.id
+                            RETURN th.id, type(w), labels(x)[0], coalesce(x.number, x.id), w.confidence, w.at, w.triage, w.by""",
+                         {"since": since}).result_set
+    for (rel, label), key in TRIAGE_LINKS.items():
+        batch = [{"t": t, "x": x, "c": c, "at": at, "id": tid, "by": by} for t, rl, lb, x, c, at, tid, by in links
+                 if (rl, lb) == (rel, label)]
+        if batch:
+            dst.query(f"""UNWIND $rows AS r MATCH (th:Thread {{id: r.t}}) MATCH (x:{label} {{{key}: r.x}})
+                          MERGE (th)-[w:{rel}]->(x)
+                          SET w.by = r.by, w.triage = r.id, w.confidence = r.c, w.at = r.at, w.weight = 1.0""",
+                      {"rows": batch})
     return len(rows)
 
 

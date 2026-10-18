@@ -182,6 +182,29 @@ dl.fields dd { margin: 0; min-width: 0; }
 .t-draft[open] .o { display: inline; }
 .t-draft .letter { margin: 12px 0; }
 .t-note { color: var(--muted); font-size: 14px; margin-left: 8px; }
+/* what the agent did, then quiet filters */
+.t-sum { font: 19px/1.45 var(--serif); margin: 0 0 14px; max-width: 72ch; font-variant-numeric: tabular-nums; }
+.t-filters { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 0 0 22px; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; background: var(--card); }
+.seg button { background: none; border: 0; border-left: 1px solid var(--rule); padding: 6px 12px; font-size: 14px; color: var(--muted); cursor: pointer; }
+.seg button:first-child { border-left: 0; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--soft); color: var(--ink); font-weight: 600; }
+.seg .n { font-variant-numeric: tabular-nums; margin-left: 5px; font-weight: 400; color: var(--muted); }
+.t-mode { margin-left: 6px; }
+.t-row dl.fields { grid-template-columns: 148px 1fr; }
+/* how it decided: the tool plan, step by step */
+.t-how { margin: 14px 0 0; }
+.t-how > summary { padding: 7px 12px; font-size: 14px; }
+.t-steps { list-style: none; counter-reset: step; margin: 0; padding: 4px 14px 12px; }
+.t-steps li { counter-increment: step; display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 8px; padding: 9px 0 0; }
+.t-steps li::before { content: counter(step); font: 13px/1.5 var(--mono); color: var(--muted); grid-row: 1 / span 3; }
+.t-steps code, .t-wrote code { font: 13px/1.5 var(--mono); color: var(--ink); overflow-wrap: anywhere; }
+.t-steps .why { font-size: 14.5px; line-height: 1.45; }
+.t-steps .out { font-size: 14px; line-height: 1.45; color: var(--muted); }
+.t-wrote { list-style: none; margin: 0; padding: 0; }
+.t-wrote li { margin: 0 0 4px; }
+.t-wrote code { font-size: 12.5px; color: var(--muted); margin-right: 6px; }
 body.triage-view main { padding-bottom: 64px; }
 body.triage-view .dock { display: none; }   /* each card asks its own question */
 @media (min-width: 1180px) {
@@ -286,7 +309,10 @@ body.home .dock #f { box-shadow: none; }
   .bar { padding-left: 16px; padding-right: 16px; }
   .bar .data { margin-left: 0; width: 100%; }
   .dock { padding: 10px 12px 12px; }
-  dl.fields { grid-template-columns: 1fr; gap: 2px 0; }
+  dl.fields, .t-row dl.fields { grid-template-columns: 1fr; gap: 2px 0; }
+  .seg { flex-wrap: nowrap; max-width: 100%; }
+  .seg button { padding: 6px 8px; font-size: 13.5px; white-space: nowrap; }
+  .seg .n { margin-left: 3px; }
   dl.fields dd { margin-bottom: 8px; }
   .canvas { height: 300px; }
 }
@@ -891,15 +917,21 @@ function triageRow(r) {
   const peps = ev.filter((e) => e.kind === "pep"), threads = ev.filter((e) => e.kind === "thread");
   const routed = r.routed || (r.routed_to || []).map((name) => ({name}));
   const link = (url, text) => url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text);
+  // Newer records also carry the agent's tool plan and the knowledge edges it wrote back; older ones don't.
+  const steps = (Array.isArray(r.steps) ? r.steps : []).filter((s) => s && s.tool);
+  const wrote = (Array.isArray(r.wrote) ? r.wrote : []).filter((w) => w && w.rel && w.to);
   return `<li><article class="record t-row">
     <h3><span class="stamp s-${cls}">${esc(label)}</span> <span>${link(r.url, r.title)}</span></h3>
-    <p class="t-when">Triaged <time datetime="${esc(r.at)}">${when(r.at)}</time></p>
+    <p class="t-when">Triaged <time datetime="${esc(r.at)}">${when(r.at)}</time>${r.mode === "backfill" ? `<span class="t-mode">· backfill</span>` : ""}</p>
     <p class="t-reason">${esc(r.reason)}</p>
     <dl class="fields">
       ${field("Evidence", (peps.length ? `<div class="chips">${peps.map((e) => `<a class="chip" href="${esc(e.url || `https://peps.python.org/pep-${String(e.id).padStart(4, "0")}/`)}" target="_blank" rel="noopener">PEP ${esc(e.id)}</a>`).join("")}</div>` : "")
         + (threads.length ? `<ul class="t-threads">${threads.map((e) => `<li><span class="t-kind">Forum</span> ${link(e.url, e.title || `Thread ${e.id}`)}</li>`).join("")}</ul>` : ""))}
       ${field("Sent to", routed.length ? `<ul class="t-people">${routed.map((p) => `<li>${esc(p.name)}${p.why ? `<span class="t-why">${esc(p.why)}</span>` : ""}</li>`).join("")}</ul>` : "")}
+      ${field("Wrote to the graph", wrote.length ? `<ul class="t-wrote">${wrote.map((w) => `<li><code>${esc(w.rel)}</code>${link(w.url, w.to)}</li>`).join("")}</ul>` : "")}
     </dl>
+    ${steps.length ? `<details class="how-sum t-how"><summary><b>How it decided</b> ${plural(steps.length, "step")}</summary>
+      <ol class="t-steps">${steps.map((s) => `<li><code>${esc(s.tool)}</code>${s.why ? `<span class="why">${esc(sentence(s.why))}</span>` : ""}${s.outcome ? `<span class="out">→ ${esc(s.outcome)}</span>` : ""}</li>`).join("")}</ol></details>` : ""}
     ${r.draft ? `<details class="t-foot t-draft"><summary class="btn"><span class="c">Show drafted reply</span><span class="o">Hide drafted reply</span></summary>
       <div class="letter open">${letter(r.draft)}</div>
       <textarea hidden>${esc(r.draft)}</textarea>
@@ -907,30 +939,77 @@ function triageRow(r) {
       <span class="t-note">Waiting in the outbox. Nothing is posted until a person sends it.</span></details>` : ""}
   </article></li>`;
 }
+// The agent writes its reasons in lower case; start them as sentences, unless they open with a tool name.
+const sentence = (t) => /^[a-z]+(\s|[,:;]|$)/.test(t) ? t[0].toUpperCase() + t.slice(1) : t;
+// Decisive actions first, then flags, then routes; newest first within each.
+const GROUP = {reply_with_ruling: "decided", point_to_existing: "decided", link_prior_threads: "decided",
+  flag_for_review: "flagged", route_to_experts: "routed"};
+const GROUP_ORDER = ["decided", "flagged", "routed"];
+const groupOf = (r) => GROUP[r.action] || "routed";
+const FILTERS = [["all", "All"], ["decided", "Replies drafted"], ["flagged", "Flagged"], ["routed", "Routed"]];
+const MODES = [["all", "All"], ["live", "Live"], ["backfill", "Backfill"]];
+const tq = {rows: [], action: "all", mode: "all"};
+function triageSummary(rows) {
+  const n = {decided: 0, flagged: 0, routed: 0};
+  rows.forEach((r) => n[groupOf(r)]++);
+  const parts = [[n.decided, n.decided === 1 ? "1 reply drafted" : `${n.decided} replies drafted`], [n.flagged, `${n.flagged} flagged`],
+    [n.routed, `${n.routed} routed`]].filter(([k]) => k).map(([, t]) => t);
+  let s = `${plural(rows.length, "topic")} triaged: ${parts.join(", ")}`;
+  if (rows.some((r) => Array.isArray(r.wrote))) {
+    const k = rows.reduce((a, r) => a + (Array.isArray(r.wrote) ? r.wrote.length : 0), 0);
+    s += `; ${k ? plural(k, "knowledge link") : "no knowledge links"} written`;
+  }
+  return s + ".";
+}
+function segHTML(name, label, opts, cur, counts) {
+  return `<div class="seg" role="group" aria-label="${esc(label)}">${opts.map(([k, text]) =>
+    `<button type="button" data-${name}="${k}" aria-pressed="${k === cur}">${esc(text)}${counts ? `<span class="n">${counts[k]}</span>` : ""}</button>`).join("")}</div>`;
+}
+function renderTriage() {
+  const box = document.getElementById("t-body"); if (!box) return;
+  const backfill = tq.rows.some((r) => r.mode === "backfill");
+  if (!backfill) tq.mode = "all";
+  const inMode = tq.rows.filter((r) => tq.mode === "all" || (r.mode || "live") === tq.mode);
+  const counts = {all: inMode.length, decided: 0, flagged: 0, routed: 0};
+  inMode.forEach((r) => counts[groupOf(r)]++);
+  const shown = inMode.filter((r) => tq.action === "all" || groupOf(r) === tq.action)
+    .sort((a, b) => GROUP_ORDER.indexOf(groupOf(a)) - GROUP_ORDER.indexOf(groupOf(b)) || String(b.at || "").localeCompare(String(a.at || "")));
+  box.innerHTML = `<p class="t-sum">${esc(triageSummary(inMode))}</p>
+    <div class="t-filters">${segHTML("act", "Show decisions", FILTERS, tq.action, counts)}${backfill ? segHTML("mode", "Show runs", MODES, tq.mode) : ""}</div>
+    ${shown.length ? `<ol class="t-list" aria-label="Decisions, decisive actions first">${shown.map(triageRow).join("")}</ol>`
+      : `<p class="t-empty">No decisions match this filter.</p>`}`;
+  box.querySelectorAll("[data-act]").forEach((b) => b.onclick = () => { tq.action = b.dataset.act; renderTriage(); });
+  box.querySelectorAll("[data-mode]").forEach((b) => b.onclick = () => { tq.mode = b.dataset.mode; renderTriage(); });
+}
 async function showTriage() {
   $("#dock").append($("#f"));
   document.body.classList.remove("home");
   $("#nav-triage").setAttribute("aria-current", "page");
   document.body.classList.add("triage-view");
   $("#view").innerHTML = `<section class="triage" aria-labelledby="t-title"><h2 id="t-title">Triage queue</h2>
-    <p class="intro">For each new topic in the Ideas category on discuss.python.org, the triage agent asks the graph what a
-      person would: has this been proposed, what was decided, and who knows the area. It picks one action, records the decision
-      in the graph with the PEPs it rests on and the people it went to, and writes any reply to an outbox. It never posts to the
-      forum; a person reviews the outbox before anything is sent.</p>
+    <p class="intro">For each new topic in the Ideas category on discuss.python.org, the triage agent works through the graph
+      one tool at a time, choosing the next from what the last returned: has this been proposed, what was decided, which earlier
+      threads are the same idea, and who knows the area. It picks one action, records it in the graph with the evidence and the
+      people it went to, writes the links it found back as knowledge edges, and puts any reply in an outbox. It never posts to
+      the forum; a person reviews the outbox before anything is sent.</p>
     <div id="t-body"><p class="working">Reading the triage record…</p></div></section>`;
   window.scrollTo(0, 0);
   let rows;
   try {
-    const r = await fetch(STATIC ? "triage.json" : "/api/triage?limit=20");
+    // Filtering happens here, over the whole record, so the counts on each filter stay true.
+    const r = await fetch(STATIC ? "triage.json" : "/api/triage?limit=100");
     if (!r.ok) throw new Error(r.status);
     rows = (await r.json()).rows || [];
   } catch (e) { rows = null; }
   const box = document.getElementById("t-body"); if (!box) return;   // the person moved on
-  box.innerHTML = rows === null ? `<p class="t-empty">Couldn't read the triage record. Check that the server is running, then reload.</p>`
-    : !rows.length ? `<p class="t-empty">No decisions are recorded yet. Run the agent on the newest Ideas topics, then reload:</p>
-        <pre class="cmd">uv run python -m lineage.triage --latest 10</pre>`
-    : `<ol class="t-list" aria-label="Decisions, newest first">${rows.map(triageRow).join("")}</ol>`;
-  wire(box);
+  if (rows === null || !rows.length) {
+    box.innerHTML = rows === null ? `<p class="t-empty">Couldn't read the triage record. Check that the server is running, then reload.</p>`
+      : `<p class="t-empty">No decisions are recorded yet. Run the agent on the newest Ideas topics, then reload:</p>
+        <pre class="cmd">uv run python -m lineage.triage --latest 10</pre>`;
+    return;
+  }
+  tq.rows = rows;
+  renderTriage();
 }
 window.addEventListener("hashchange", () => { if (location.hash === "#triage") showTriage(); else if ($(".triage")) showHome(); });
 

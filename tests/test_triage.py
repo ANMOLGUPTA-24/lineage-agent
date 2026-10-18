@@ -1,5 +1,6 @@
 """Triage agent tests against the loaded graph (run `make ingest` first). Topics are synthetic (negative ids,
 no network); the round trip writes one fake topic into the graph and the outbox and removes it again."""
+import json
 import re
 
 import pytest
@@ -129,6 +130,7 @@ def fake_topic(monkeypatch):
     g.query("MATCH (th:Thread {id: $t}) DETACH DELETE th", {"t": FAKE})
     for ext in ("md", "json"):
         (triage.OUTBOX / f"{FAKE}.{ext}").unlink(missing_ok=True)
+        (triage.OUTBOX / "backfill" / f"{FAKE}.{ext}").unlink(missing_ok=True)
 
 
 EARLIER = 65193   # a real forum thread ("New function `repr_args` in `pprint` or `reprlib`")
@@ -137,9 +139,11 @@ EARLIER = 65193   # a real forum thread ("New function `repr_args` in `pprint` o
 def fake_decision(t):
     return {"topic": t, "action": "reply_with_ruling", "reason": "test reason", "confidence": 7.5,
             "evidence": [{"kind": "pep", "pep": 315, "thread_id": None, "title": "Enhanced While Loop", "match": "same",
-                          "url": "https://peps.python.org/pep-0315/"},
-                         {"kind": "thread", "pep": None, "thread_id": EARLIER, "title": "x", "match": "related", "url": "u"}],
-            "reviewers": [{"name": "Raymond Hettinger", "why": "author of PEP 315"}], "draft": "drafted text", "paths": []}
+                          "url": "https://peps.python.org/pep-0315/", "score": 7.5},
+                         {"kind": "thread", "pep": None, "thread_id": EARLIER, "title": "x", "match": "related", "url": "u",
+                          "score": 3.1}],
+            "reviewers": [{"name": "Raymond Hettinger", "why": "author of PEP 315"}], "draft": "drafted text", "paths": [],
+            "mode": "live", "steps": [{"tool": "already_decided", "args": {"idea": "x"}, "why": "start", "outcome": "1 match"}]}
 
 
 def test_record_history_round_trip(fake_topic):
@@ -174,6 +178,11 @@ def test_sync_carries_thread_evidence_and_draft(fake_topic):
                                   RETURN [tr.draft, [(tr)-[:EVIDENCE]->(p:PEP) | p.number], [(tr)-[:EVIDENCE]->(x:Thread) | x.id],
                                           [(tr)-[e:ROUTED_TO]->(who:Person) | e.why]]""", {"t": FAKE}).result_set
         assert got == ["drafted text", [315], [EARLIER], ["author of PEP 315"]]
+        (mode, steps), = dst.ro_query("MATCH (tr:Triage {topic: $t}) RETURN tr.mode, tr.steps", {"t": FAKE}).result_set
+        assert mode == "live" and json.loads(steps)[0]["tool"] == "already_decided"
+        links = dst.ro_query("""MATCH (:Thread {id: $t})-[w]->(x) WHERE w.by = 'triage'
+                                RETURN type(w), coalesce(x.number, x.id), w.confidence ORDER BY type(w)""", {"t": FAKE}).result_set
+        assert links == [["RELATED_TO", EARLIER, 3.1], ["SAME_IDEA_AS", 315, 7.5]]
     finally:
         dst.delete()
 
@@ -184,3 +193,229 @@ def test_unreachable_webhook_does_not_stop_the_record(fake_topic, monkeypatch, c
          "reviewers": [], "draft": None, "paths": []}
     assert triage.record(d) and triage.already_triaged(FAKE)
     assert (triage.OUTBOX / f"{FAKE}.md").exists() and "webhook failed" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------- the adaptive plan (synthetic rows, no network)
+
+def pep_row(n, status, match="same", **kw):
+    return {"kind": "pep", "pep": n, "match": match, "score": 7.0, "title": f"PEP {n} title", "status": status,
+            "verdict": status.lower(), "created": "2010-01-01", "url": f"https://peps.python.org/pep-{n:04d}/",
+            "quote": "q", "authors": ["Ann Author", "Bob Author"], "reason": None, "superseded_by": None,
+            "came_back": [], "earlier_tries": [], "decision": {"outcome": status, "at": "2011", "url": "ruling-url",
+                                                               "decided_by": [{"by": "Guido van Rossum", "inferred": False}]},
+            **kw}
+
+
+def thread_row(tid, match="same", committers=(), peps=()):
+    return {"kind": "thread", "thread_id": tid, "match": match, "score": 6.0, "title": f"thread {tid}",
+            "created": "2020-01-01", "url": f"https://discuss.python.org/t/{tid}", "posts": 10,
+            "participants": [{"name": c, "posts": 5, "group": "committers"} for c in committers],
+            "peps": [{"pep": n, "title": "t", "status": "Final", "how": "DISCUSSES"} for n in peps], "started_by": "x"}
+
+
+def fake_tools(monkeypatch, rows, **replies):
+    """tools.call answering already_decided with `rows` and any other tool from `replies` (a function of args)."""
+    calls = []
+
+    def call(name, args):
+        calls.append((name, args))
+        if name == "already_decided":
+            return {"outcome": "answered" if rows else "not_in_graph", "rows": rows, "paths": [], "cypher": ["q"]}
+        return replies[name](args) if name in replies else {"outcome": "not_in_graph", "rows": [], "paths": []}
+    monkeypatch.setattr(triage.tools, "call", call)
+    monkeypatch.setattr(triage, "earlier_triage", lambda ids: [])
+    return calls
+
+
+def tools_of(d):
+    assert all(s["why"] and s["outcome"] for s in d["steps"]), d["steps"]   # every step says why and what it found
+    return [s["tool"] for s in d["steps"]]
+
+
+def test_plan_superseded_pep_points_at_the_latest(monkeypatch):
+    fake_tools(monkeypatch, [pep_row(601, "Rejected", superseded_by="PEP 765")],
+               is_current=lambda a: {"outcome": "answered", "rows": [{"pep": 601, "current": False,
+                                                                       "latest": [{"pep": 765, "status": "Final"}]}]})
+    monkeypatch.setattr(triage, "pep_brief", lambda n: {"pep": n, "title": "Disallow it", "status": "Final",
+                                                        "url": "https://peps.python.org/pep-0765/", "created": "2024-11-15"})
+    d = triage.decide(topic("Forbid return in finally", tid=-10))
+    assert tools_of(d) == ["already_decided", "is_current", "draft_reply"]   # a ruling is on record: no why()
+    assert "superseded by PEP 765" in d["steps"][1]["why"] and "PEP 765 (Final)" in d["steps"][1]["outcome"]
+    assert d["action"] == "point_to_existing" and "superseded by PEP 765" in d["reason"]
+    assert d["draft"].startswith("PEP 601 was superseded: what Python follows now is PEP 765")
+    assert {e["pep"]: e["match"] for e in d["evidence"]} == {601: "same", 765: "supersedes_it"}
+
+
+def test_plan_asks_why_only_when_the_ruling_is_missing(monkeypatch):
+    calls = fake_tools(monkeypatch, [pep_row(505, "Deferred", decision=None,
+                                             came_back=[{"pep": 824, "created": "2008-01-01", "status": "Draft",
+                                                         "url": "u", "title": "t"}])],
+                       why=lambda a: {"outcome": "answered", "rows": [{"pep": 505, "decision": None}]})
+    d = triage.decide(topic("None-aware operators", tid=-11))
+    assert tools_of(d) == ["already_decided", "why", "draft_reply"] and ("why", {"pep": "505"}) in calls
+    assert "no Decision or decider" in d["steps"][1]["why"]
+    assert d["action"] == "reply_with_ruling" and "only its status (Deferred)" in d["reason"]
+    assert "came up again in 1 later PEP: PEP 824" in d["reason"]
+    fake_tools(monkeypatch, [pep_row(315, "Rejected")])   # decided by someone: no why()
+    assert tools_of(triage.decide(topic("do-while", tid=-12))) == ["already_decided", "draft_reply"]
+
+
+def test_plan_adopted_pep_is_checked_for_currency(monkeypatch):
+    fake_tools(monkeypatch, [pep_row(572, "Final")],
+               is_current=lambda a: {"outcome": "answered", "rows": [{"pep": 572, "current": True, "latest": []}]})
+    d = triage.decide(topic("walrus", tid=-13))
+    assert tools_of(d) == ["already_decided", "is_current", "draft_reply"]
+    assert d["action"] == "point_to_existing" and d["steps"][1]["outcome"] == "current: nothing supersedes it"
+
+
+def test_plan_same_threads_use_their_participants(monkeypatch):
+    fake_tools(monkeypatch, [thread_row(11, committers=["Core One", "Core Two"])])
+    monkeypatch.setattr(triage, "earlier_triage", lambda ids: [
+        {"thread_id": 11, "thread": "thread 11", "pep": 315, "title": "Enhanced While Loop", "status": "Rejected",
+         "created": "2003-04-22", "at": "2026-10-01"}])
+    monkeypatch.setattr(triage, "pep_authors", lambda n: ["Raymond Hettinger"])
+    monkeypatch.setattr(triage, "pep_brief", lambda n: {"pep": n, "url": "https://peps.python.org/pep-0315/"})
+    d = triage.decide(topic("loop until", tid=-14))
+    assert tools_of(d) == ["already_decided", "earlier_triage", "draft_reply"]   # committers posted: no who_knows
+    assert d["action"] == "link_prior_threads" and [r["name"] for r in d["reviewers"]][:2] == ["Core One", "Core Two"]
+    assert "earlier triage linked \"thread 11\" to PEP 315" in d["reason"]
+    assert any(e["pep"] == 315 and e["match"] == "via_triage" for e in d["evidence"])
+    assert d["reviewers"][-1] == {"name": "Raymond Hettinger",
+                                  "why": "author of PEP 315, which an earlier triage linked to this idea"}
+
+
+def test_plan_threads_without_core_devs_ask_who_knows_their_pep(monkeypatch):
+    calls = fake_tools(monkeypatch, [thread_row(12, peps=[695])],
+                       who_knows=lambda a: {"outcome": "answered", "rows": [{"subject": "PEP 695",
+                                                                             "direct": [{"name": "Eric Traut", "role": "authored"}]}]})
+    d = triage.decide(topic("generic syntax", tid=-15))
+    assert tools_of(d) == ["already_decided", "earlier_triage", "who_knows", "draft_reply"]
+    assert ("who_knows", {"subject": "695"}) in calls and "is the discussion of PEP 695" in \
+        next(s["why"] for s in d["steps"] if s["tool"] == "who_knows")
+    assert d["reviewers"] == [{"name": "Eric Traut", "why": "author of PEP 695, which \"thread 12\" discusses"}]
+
+
+def test_plan_related_history_checks_reviewers_with_connection(monkeypatch):
+    hops = {"Near Dev": 1, "Far Dev": 5}
+    calls = fake_tools(monkeypatch, [pep_row(3120, "Final", match="related", authors=[]),
+                                     thread_row(13, match="related", committers=["Far Dev", "Near Dev"])],
+                       connection=lambda a: {"outcome": "answered", "rows": [{"hops": hops[a["a"]], "strength": "x"}]},
+                       who_knows=lambda a: {"outcome": "answered", "rows": [{"subject": "the cluster around PEP 1",
+                                                                             "most_built_on": [{"name": "Hub", "rank": 1}]}]})
+    d = triage.decide(topic("source encodings", tid=-16))
+    assert d["action"] == "flag_for_review" and d["draft"] is None
+    assert tools_of(d) == ["already_decided", "connection", "connection"]   # 2 reviewers already: no who_knows
+    assert [a for n, a in calls if n == "connection"] == [{"a": "Far Dev", "b": "PEP 3120"}, {"a": "Near Dev", "b": "PEP 3120"}]
+    assert [r["name"] for r in d["reviewers"]] == ["Near Dev", "Far Dev"]   # the closer one first
+    assert d["reviewers"][0]["why"].endswith("1 hop from PEP 3120 in the graph")
+
+
+def test_plan_generic_cluster_is_not_used_for_related_history(monkeypatch):
+    fake_tools(monkeypatch, [pep_row(3120, "Final", match="related", authors=["Only Author"])],
+               who_knows=lambda a: {"outcome": "answered", "rows": [{"subject": "the cluster around PEP 1",
+                                                                     "most_built_on": [{"name": "Hub", "rank": 1}]}]})
+    d = triage.decide(topic("source encodings", tid=-17))
+    assert tools_of(d) == ["already_decided", "who_knows"] and "generic cluster" in d["steps"][1]["outcome"]
+    assert d["reviewers"] == [{"name": "Only Author", "why": "author of PEP 3120"}]
+
+
+def test_plan_nothing_found_goes_to_nearest_threads_then_who_knows(monkeypatch):
+    fake_tools(monkeypatch, [], who_knows=lambda a: {"outcome": "answered", "rows": [{"subject": "PEP 8000",
+                                                                                     "direct": [{"name": "Gov", "role": "delegate_for"}]}]})
+    monkeypatch.setattr(triage, "nearest_threads", lambda t: [{"id": 1, "title": "near", "committers": ["Dev A"], "peps": [8000]}])
+    d = triage.decide(topic("something new", tid=-18))
+    assert tools_of(d) == ["already_decided", "nearest_threads", "who_knows"]
+    assert d["action"] == "route_to_experts" and d["draft"] is None and d["evidence"] == []
+    assert [r["name"] for r in d["reviewers"]] == ["Dev A", "Gov"] and all("not a match" in r["why"] for r in d["reviewers"])
+    assert d["reviewers"][1]["why"].startswith("decided PEP 8000")
+
+
+def test_plan_on_the_real_graph_follows_supersession():
+    d = triage.decide(topic("Forbid return, break and continue breaking out of finally", tid=-19))
+    assert tools_of(d)[:2] == ["already_decided", "is_current"] and d["action"] == "point_to_existing"
+    assert "superseded by PEP 765" in d["reason"] and 765 in peps(d)
+
+
+# ---------------------------------------------------------------- write-back, modes, backfill, API
+
+def test_write_back_links_the_topic_and_history_reports_it(fake_topic):
+    from lineage import tools
+    run = tools.Run("python")
+    before = tools.thread_context(run, EARLIER)[0]
+    tid = triage.record(fake_decision(fake_topic))
+    links = graph().ro_query("""MATCH (:Thread {id: $t})-[w]->(x) WHERE w.by = 'triage'
+                                RETURN type(w), coalesce(x.number, x.id), w.triage, w.confidence ORDER BY type(w)""",
+                             {"t": FAKE}).result_set
+    assert links == [["RELATED_TO", EARLIER, tid, 3.1], ["SAME_IDEA_AS", 315, tid, 7.5]]
+    (h,) = triage.history(topic=FAKE)
+    (url,), = graph().ro_query("MATCH (t:Thread {id: $t}) RETURN t.url", {"t": EARLIER}).result_set
+    assert h["wrote"] == [{"rel": "SAME_IDEA_AS", "to": "PEP 315", "url": "https://peps.python.org/pep-0315/"},
+                          {"rel": "RELATED_TO", "to": f"thread {EARLIER}", "url": url}]
+    assert h["mode"] == "live" and h["steps"] == fake_decision(fake_topic)["steps"]
+    assert "**Written to the graph:** SAME_IDEA_AS -> PEP 315" in (triage.OUTBOX / f"{FAKE}.md").read_text()
+    # The links do not change what already_decided reads about the earlier thread.
+    assert tools.thread_context(run, EARLIER)[0] == before
+    assert triage.forget(FAKE) == 1 and not triage.already_triaged(FAKE)
+    assert not graph().ro_query("MATCH (:Thread {id: $t})-[w]->() WHERE w.by = 'triage' RETURN w", {"t": FAKE}).result_set
+
+
+def test_backfill_mode_is_recorded_and_filtered(fake_topic, monkeypatch, capsys):
+    monkeypatch.setenv("TRIAGE_WEBHOOK_URL", "http://127.0.0.1:9/")   # backfill never notifies
+    triage.record({**fake_decision(fake_topic), "mode": "backfill"})
+    assert "webhook" not in capsys.readouterr().out
+    assert (triage.OUTBOX / "backfill" / f"{FAKE}.md").exists() and not (triage.OUTBOX / f"{FAKE}.md").exists()
+    assert [h["topic"] for h in triage.history(mode="backfill", limit=100)].count(FAKE) == 1
+    assert FAKE not in [h["topic"] for h in triage.history(mode="live", limit=100)]
+    assert all(h["action"] == "reply_with_ruling" for h in triage.history(action="reply_with_ruling", limit=100))
+
+
+def cache_file(tmp_path, ideas, texts=None):
+    path = tmp_path / "discourse.json"
+    path.write_text(json.dumps({"ideas": {str(i["id"]): i for i in ideas},
+                                "topics": {str(k): {"text": v} for k, v in (texts or {}).items()}}))
+    return path
+
+
+def test_cached_topics_and_backfill_resume(tmp_path, monkeypatch):
+    ideas = [{"id": 20, "title": "About the Ideas category", "created": "2025-01-01T00:00:00Z"},
+             {"id": 3, "title": "c", "created": "2024-03-01T00:00:00Z"}, {"id": 1, "title": "a", "created": "2023-12-31T00:00:00Z"},
+             {"id": 2, "title": "b", "created": "2024-02-01T00:00:00Z"}, {"id": 4, "title": "d", "created": "2024-04-01T00:00:00Z"}]
+    path = cache_file(tmp_path, ideas, {2: "opening of b"})
+    got = triage.cached_topics("2024-01-01", path)
+    assert [t["id"] for t in got] == [2, 3, 4] and got[0]["text"] == "opening of b" and got[1]["text"] == ""
+    monkeypatch.setattr(triage, "triaged_topics", lambda: {2})   # done in an earlier run: skipped, not counted
+    monkeypatch.setattr(triage, "decide", lambda t, mode: {"topic": t, "action": "route_to_experts", "mode": mode})
+    out = triage.backfill("2024-01-01", limit=1, dry_run=True, path=path)
+    assert [(d["topic"]["id"], d["mode"]) for d in out] == [(3, "backfill")]
+
+
+def test_backfill_dry_run_on_two_cached_topics(tmp_path):
+    cache = json.loads(triage.RAW.read_text())
+    done = triage.triaged_topics()
+    two = [i for i in sorted(cache["ideas"].values(), key=lambda i: i["created"])
+           if i["created"] >= "2024-06-01" and i["id"] not in done][:2]
+    path = cache_file(tmp_path, two, {i["id"]: cache["topics"].get(str(i["id"]), {}).get("text", "") for i in two})
+    count = lambda: graph().ro_query("MATCH (t:Triage) RETURN count(t)").result_set[0][0]
+    n, files = count(), set(triage.OUTBOX.rglob("*"))
+    out = triage.backfill("2024-01-01", dry_run=True, path=path)
+    assert [d["topic"]["id"] for d in out] == [i["id"] for i in two]
+    assert all(d["mode"] == "backfill" and d["steps"][0]["tool"] == "already_decided" and d["action"] in triage.ACTIONS
+               for d in out)
+    assert count() == n and set(triage.OUTBOX.rglob("*")) == files   # a dry run writes nothing
+
+
+def test_api_triage_filters(fake_topic):
+    from fastapi.testclient import TestClient
+    from lineage import server
+    c = TestClient(server.app)
+    for bad in ({"mode": "nope"}, {"action": "post_it"}):
+        assert c.get("/api/triage", params=bad).status_code == 422
+    triage.record({**fake_decision(fake_topic), "mode": "backfill"})
+    rows = c.get("/api/triage", params={"mode": "backfill", "action": "reply_with_ruling", "limit": 100}).json()["rows"]
+    assert FAKE in [r["topic"] for r in rows] and all(r["mode"] == "backfill" for r in rows)
+    row = next(r for r in rows if r["topic"] == FAKE)
+    assert row["wrote"][0]["rel"] == "SAME_IDEA_AS" and row["steps"][0]["tool"] == "already_decided"
+    live = c.get("/api/triage", params={"mode": "live", "limit": 100}).json()["rows"]
+    assert FAKE not in [r["topic"] for r in live]
+    assert all(r["action"] == "route_to_experts"
+               for r in c.get("/api/triage", params={"action": "route_to_experts"}).json()["rows"])

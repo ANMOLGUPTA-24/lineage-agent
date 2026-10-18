@@ -42,8 +42,11 @@ def my_session(session: str) -> dict:
 @mcp.tool()
 def triage_topic(topic_id: int, record: bool = False) -> dict:
     """Decide what to do with a discuss.python.org Ideas topic from what the graph shows: reply with the
-    earlier ruling, link prior threads, flag for review, or route to the people the area builds on.
-    With record=True the decision is written to the graph and the outbox (nothing is posted)."""
+    earlier ruling, point to the PEP that holds it now, link prior threads, flag for review, or route to the
+    people the area builds on. The agent picks each next graph tool (is_current, why, who_knows, connection)
+    from what the last one showed; `steps` lists each with why it was chosen and what it found.
+    With record=True the decision is written to the graph, the topic's thread is linked to what it repeats
+    (SAME_IDEA_AS / RELATED_TO), and the reply goes to the outbox (nothing is posted)."""
     from lineage import triage
     t = triage.fetch_topic(topic_id)
     if not t:
@@ -57,10 +60,17 @@ def triage_topic(topic_id: int, record: bool = False) -> dict:
 
 
 @mcp.tool()
-def triage_queue(limit: int = 20) -> dict:
-    """The triage agent's recent decisions, newest first, read from the graph."""
+def triage_queue(limit: int = 20, mode: str = "", action: str = "") -> dict:
+    """The triage agent's recent decisions, newest first, read from the graph: each with its steps, evidence,
+    reviewers, draft and the links it wrote. Filter by mode ('live' or 'backfill') and/or action
+    (reply_with_ruling, point_to_existing, link_prior_threads, flag_for_review, route_to_experts)."""
     from lineage import triage
-    return {"outcome": "answered", "rows": triage.history(limit=limit)}
+    if mode and mode not in triage.MODES:
+        return {"outcome": "error", "note": f"mode must be one of {', '.join(triage.MODES)}", "rows": []}
+    if action and action not in triage.ACTIONS:
+        return {"outcome": "error", "note": f"action must be one of {', '.join(triage.ACTIONS)}", "rows": []}
+    rows = triage.history(limit=max(1, min(int(limit), 100)), mode=mode or None, action=action or None)
+    return {"outcome": "answered", "rows": rows}
 
 
 @mcp.tool()

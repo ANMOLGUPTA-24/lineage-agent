@@ -1,17 +1,19 @@
 """Build docs/demo/: the real UI plus recorded answers, for a static live demo (GitHub Pages).
 
   uv run python scripts/build_static_demo.py
+  uv run python scripts/build_static_demo.py --triage-only   # refresh triage.json and the page, keep the answers
 
 Every answer in the snapshot is a real response from the running graph (tools, rows, paths, Cypher),
 recorded by calling the agent exactly as the web server does. The crawl starts from the questions the
 home page offers and follows each answer's suggested next questions, so every button on the demo
 leads to a recorded answer. Anything else shows how to run Lineage locally to ask it.
 
-It also writes the triage agent's recent decisions (triage.json), with the evidence, reviewers and drafted
-reply each one recorded, for the triage queue.
+It also writes the triage agent's recorded decisions (triage.json, up to 200, live and backfill), with the
+evidence, reviewers, tool steps, knowledge edges and drafted reply each one recorded, for the triage queue.
 """
 import json
 import re
+import sys
 import uuid
 from datetime import date
 from pathlib import Path
@@ -74,9 +76,49 @@ def follow_ups(res: dict) -> list[str]:
     return out[:3]
 
 
+TRIAGE_BUDGET = 400 * 1024
+
+
+def triage_json() -> tuple[str, int]:
+    """The triage record for the queue, under TRIAGE_BUDGET: if it runs over, drop each step's args (the page
+    doesn't show them), then shorten its why and outcome."""
+    rows = triage.history(limit=200)
+    text = json.dumps({"rows": rows}, default=str)
+    if len(text.encode()) > TRIAGE_BUDGET:
+        for r in rows:
+            for st in r.get("steps") or []:
+                st.pop("args", None)
+        text = json.dumps({"rows": rows}, default=str)
+    for cap in (240, 160, 100, 60):
+        if len(text.encode()) <= TRIAGE_BUDGET:
+            break
+        for r in rows:
+            for st in r.get("steps") or []:
+                for k in ("why", "outcome"):
+                    if isinstance(st.get(k), str) and len(st[k]) > cap:
+                        st[k] = st[k][:cap - 1].rstrip() + "…"
+        text = json.dumps({"rows": rows}, default=str)
+    return text, len(rows)
+
+
+def write_page(count: int, recorded: str | None = None) -> None:
+    page = (ROOT / "lineage" / "web" / "index.html").read_text()
+    flag = f'<script>window.LINEAGE_STATIC = {{date: "{recorded or date.today().isoformat()}", count: {count}}};</script>\n'
+    (OUT / "index.html").write_text(page.replace("<script>\nconst $ =", flag + "<script>\nconst $ =", 1))
+
+
+def triage_only() -> None:
+    text, n = triage_json()
+    (OUT / "triage.json").write_text(text)
+    # The answers weren't re-recorded, so the page keeps the date they were.
+    old = re.search(r'LINEAGE_STATIC = \{date: "([^"]+)"', (OUT / "index.html").read_text())
+    write_page(len(json.loads((OUT / "answers.json").read_text())), old and old.group(1))
+    print(n, "triage decisions;", round(len(text.encode()) / 1024), "KB")
+
+
 def main() -> None:
     agent.ask("warm up", session="snapwarmup")   # load the models first, so recorded timings are real ones
-    decisions = triage.history(limit=30)
+    triage_text, n_decisions = triage_json()
     answers, queue, seen = {}, [(q, 0) for q in SEEDS], set()
     sessions = ["snapwarmup"]
     while queue:
@@ -96,15 +138,13 @@ def main() -> None:
                   {"ids": sessions})
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "answers.json").write_text(json.dumps(answers, default=str))
-    (OUT / "triage.json").write_text(json.dumps({"rows": decisions}, default=str))
+    (OUT / "triage.json").write_text(triage_text)
     # The home page's opening answer, for the live server and the snapshot alike.
     for where in (ROOT / "lineage" / "web", OUT):
         (where / "hero.json").write_text(json.dumps(answers[norm(HERO)], default=str))
-    page = (ROOT / "lineage" / "web" / "index.html").read_text()
-    flag = f'<script>window.LINEAGE_STATIC = {{date: "{date.today().isoformat()}", count: {len(answers)}}};</script>\n'
-    (OUT / "index.html").write_text(page.replace("<script>\nconst $ =", flag + "<script>\nconst $ =", 1))
-    print(len(answers), "answers;", round((OUT / "answers.json").stat().st_size / 1024), "KB;", len(decisions), "triage decisions")
+    write_page(len(answers))
+    print(len(answers), "answers;", round((OUT / "answers.json").stat().st_size / 1024), "KB;", n_decisions, "triage decisions")
 
 
 if __name__ == "__main__":
-    main()
+    triage_only() if "--triage-only" in sys.argv[1:] else main()

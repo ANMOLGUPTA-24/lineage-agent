@@ -6,8 +6,9 @@
   "url": "https://discuss.python.org/t/108762",
   "text": "Over the years there have been attempts to define a memory model, notably PEP 583 and many questions both on the bug tracker and here about expected semantics and atomicity of operations, e.g. What is Thread Safety as applied to Python? and What is the Long-Term Vision for a Parallel Python Programming Model?\n\nDespite that, there is AFAICT, nothing in the docs.\n\nWe have an object model but there is no mention of concurrent access.\n\nWe should write down concurrency models for both with-GIL and free-threading Python.\n\nIt doesn\u2019t need to be super precise and ultra rigorous, just reasonably complete and unambiguous.\n\nTo start with it doesn\u2019t even need to be that. Once we have a core, details can be filled out:\n\nSticking with the with GIL build, the basic threading model should cover:\n\nWhat is the GIL.\n\nProperties of the GIL\n\nThe state of threads when releasing or acquiring the GIL\n\nWhich of the most common operations are atomic\n\nHow to describe the behavior of non-atomic operations\n\nComparison to archetypal memory models, like Sequential Consistency.\n\nHow much leeway other implementations, like MIcroPython and GraalPython have\n\nand other things as necessary."
  },
+ "mode": "live",
  "action": "reply_with_ruling",
- "reason": "PEP 583 (A Concurrency Memory Model for Python, 2008) covered the same idea; it was withdrawn by its authors.",
+ "reason": "PEP 583 (A Concurrency Memory Model for Python, 2008) covered the same idea; it was withdrawn by its authors. The graph records no ruling for PEP 583, only its status (Withdrawn); the reply quotes the PEP itself.",
  "confidence": 3.66,
  "evidence": [
   {
@@ -16,7 +17,8 @@
    "thread_id": null,
    "title": "A Concurrency Memory Model for Python",
    "match": "same",
-   "url": "https://peps.python.org/pep-0583/"
+   "url": "https://peps.python.org/pep-0583/",
+   "score": 3.66
   }
  ],
  "reviewers": [
@@ -26,5 +28,43 @@
   }
  ],
  "draft": "This has come up before.\n\n- PEP 583 (\"A Concurrency Memory Model for Python\", 2008) proposed it; it was withdrawn by its authors. From the PEP: \"This PEP describes how Python programs may behave in the presence of concurrent reads and writes to shared variables from multiple threads. We use a *happens before* relation to define when variable accesses are ordered or concurrent.\" https://peps.python.org/pep-0583/\n\nA new proposal would need to answer the reasons above. People who know this history: Jeffrey Yasskin.\n\n(Drafted by Lineage from the PEP graph. Check the links before posting.)",
- "cypher": 9
+ "steps": [
+  {
+   "tool": "already_decided",
+   "args": {
+    "idea": "Define a concurrency model (aka memory model) for Python. Over the years there have been attempts to define a memory model, notably PEP 583 and many questions both on the bug tracker and here about expected semantics and atomicity of operations, e.g. What is Thread Safety as applied to Python? and"
+   },
+   "why": "every topic starts from the record: does a PEP, a rejected idea or a forum thread already cover the topic's title and opening post?",
+   "outcome": "2 matches, 1 from on or after the topic's date (dropped): same: PEP 583 (Withdrawn)"
+  },
+  {
+   "tool": "why",
+   "args": {
+    "pep": "583"
+   },
+   "why": "the reply quotes PEP 583's ruling, but the graph traversal from it found no Decision or decider: look for its ruling notice and lineage before quoting it",
+   "outcome": "no ruling recorded, only its status (Withdrawn)"
+  },
+  {
+   "tool": "who_knows",
+   "args": {
+    "subject": "583"
+   },
+   "why": "only 1 reviewer from the evidence; ask who the area of PEP 583 (same idea) builds on",
+   "outcome": "PEP 583: nobody beyond the reviewers already listed"
+  },
+  {
+   "tool": "draft_reply",
+   "args": {},
+   "why": "reply_with_ruling sends a reply: draft it from the 1 same-idea row the decision used, nothing newer than the topic",
+   "outcome": "drafted (591 characters, not posted)"
+  }
+ ],
+ "cypher": 26,
+ "wrote": [
+  {
+   "rel": "SAME_IDEA_AS",
+   "to": "PEP 583"
+  }
+ ]
 }

@@ -6,6 +6,7 @@
   "url": "https://discuss.python.org/t/109384",
   "text": "In 3.15, this is the way to define a sentinel within a class (example from the documentation ):\n\nclass Cls:\n\nPICKLABLE = sentinel(\"Cls.PICKLABLE\")\n\nI am personally averse to the common antipattern in Python of:\n\nvalue = some_function('value', ...)\n\n\u2026where \u201c value \u201d must appear both as the assignment left-hand side and as an argument string. It feels repetitious and, while not especially error-prone, when there is an error it\u2019s hard to diagnose. In this specific case things are complicated by needing to (remember to) give the constructor the qualified name.\n\nWhat if sentinel were enhanced to provide this alternative?\n\nclass Cls:\n\nPICKLABLE = sentinel()\n\nThe intended behaviour would be that the sentinel is initially constructed with __name__ is None , but sentinel implements __set_name__ (and a dummy __get__ ) so Cls later fills in the name via the descriptor protocol.\n\nThis feels considerably tidier to me, and would be backward-compatible because the name parameter to sentinel() is currently mandatory."
  },
+ "mode": "live",
  "action": "flag_for_review",
  "reason": "Only related history (2 items); a person should judge whether it is the same idea.",
  "confidence": 2.03,
@@ -16,7 +17,8 @@
    "thread_id": null,
    "title": "Sentinel Values",
    "match": "related",
-   "url": "https://peps.python.org/pep-0661/#use-a-registry-of-per-module-sentinel-names"
+   "url": "https://peps.python.org/pep-0661/#use-a-registry-of-per-module-sentinel-names",
+   "score": 2.03
   },
   {
    "kind": "rejected_idea",
@@ -24,7 +26,8 @@
    "thread_id": null,
    "title": "Sentinel Values",
    "match": "related",
-   "url": "https://peps.python.org/pep-0661/#using-class-objects"
+   "url": "https://peps.python.org/pep-0661/#using-class-objects",
+   "score": 1.56
   }
  ],
  "reviewers": [
@@ -38,5 +41,21 @@
   }
  ],
  "draft": null,
- "cypher": 13
+ "steps": [
+  {
+   "tool": "already_decided",
+   "args": {
+    "idea": "Allow automatic naming of sentinels within classes. In 3.15, this is the way to define a sentinel within a class (example from the documentation ):\n\nclass Cls:\n\nPICKLABLE = sentinel(\"Cls.PICKLABLE\")\n\nI am personally averse to the common antipattern in Python of:\n\nvalue = some_function('value"
+   },
+   "why": "every topic starts from the record: does a PEP, a rejected idea or a forum thread already cover the topic's title and opening post?",
+   "outcome": "3 matches, 1 from on or after the topic's date (dropped): related: rejected idea \"Use a registry of per-module sentinel names\" in PEP 661 (Final); related: rejected idea \"Using class objects\" in PEP 661 (Final)"
+  }
+ ],
+ "cypher": 13,
+ "wrote": [
+  {
+   "rel": "RELATED_TO",
+   "to": "PEP 661"
+  }
+ ]
 }

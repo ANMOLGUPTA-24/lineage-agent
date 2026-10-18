@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 import time
 from collections import defaultdict, deque
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse
@@ -59,9 +60,12 @@ def health():
 
 
 @app.get("/api/triage")
-def triage_history(limit: int = Query(20, ge=1, le=100)):
-    """What the triage agent decided, newest first (read only; `python -m lineage.triage` does the acting)."""
-    return {"rows": triage.history(limit=limit)}
+def triage_history(limit: int = Query(20, ge=1, le=100),
+                   mode: Literal[triage.MODES] | None = None,
+                   action: Literal[triage.ACTIONS] | None = None):
+    """What the triage agent decided, newest first, optionally only live or backfill runs and one action
+    (read only; `python -m lineage.triage` does the acting)."""
+    return {"rows": triage.history(limit=limit, mode=mode, action=action)}
 
 
 # Per-client sliding window. Every answer also writes session memory into the graph, so an
