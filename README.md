@@ -11,7 +11,7 @@ open-source organisations, with its decisions in public PEPs, forum threads and 
 Track 01, a triage agent reads new forum ideas, decides from the graph what to do with each, and records and
 drafts that action for a person to send ([details](#track-01-an-agent-that-decides-and-acts)).
 
-> **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers and 19 triage decisions recorded from the graph; run it locally to ask anything) ·
+> **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers and 20 triage decisions recorded from the graph; run it locally to ask anything) ·
 > **Write-up:** [Python already said no: tracing 26 years of rejected ideas with a graph](https://medium.com/@anmolgupta.skp/python-already-said-no-tracing-26-years-of-rejected-ideas-with-a-graph-d8060ecc1cba) ·
 > **Demo video:** [watch (2:51, narrated, captioned)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4) ·
 > **Run it locally:** `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (pre-built graph, no API key;
@@ -129,10 +129,12 @@ so decisions recorded there don't survive a restart.
 The topic "Allow automatic naming of sentinels within classes" matched two rejected ideas in PEP 661 (Sentinel
 Values) as related, not the same, so the agent asks the PEP's authors to look rather than replying.
 
-**Recorded decisions: 19**, all on 2026-10-17, from live runs on recent Ideas topics (`GET /api/triage`):
-12 `route_to_experts` (2 of them with nobody close enough to route to) and 7 `flag_for_review`. None is one of
-the three reply actions, so none drafted a reply. In practice drafts are rare: most new ideas have no
-same-idea record, as the dry run below also shows.
+**Recorded decisions: 20**, from live runs on recent Ideas topics (`GET /api/triage`): 12 `route_to_experts`
+(2 of them with nobody close enough to route to), 7 `flag_for_review` and 1 `reply_with_ruling`. The reply is
+"Define a concurrency model (aka memory model) for Python" (topic 108762): the graph matched it to PEP 583, *A
+Concurrency Memory Model for Python* (2008), withdrawn by its authors; the agent drafted a reply quoting the PEP and
+routed it to the PEP's author, Jeffrey Yasskin (`data/triage/examples/108762.*`). Drafts are rare in practice:
+most new ideas have no same-idea record, as the dry run below also shows.
 
 **Dry run over the 60 most recent Ideas topics** in the cached data (2026-08-19 to 2026-10-16;
 [eval/TRIAGE.md](eval/TRIAGE.md), `uv run python -m eval.triage_eval`):

@@ -12,7 +12,7 @@ Copy into the submission form. Every number here is from the repo; re-check if t
 
 **Blog post:** https://medium.com/@anmolgupta.skp/python-already-said-no-tracing-26-years-of-rejected-ideas-with-a-graph-d8060ecc1cba
 
-**Live demo:** https://anmolgupta-24.github.io/lineage-agent/demo/ (static: the real UI with 67 answers and 19 triage decisions recorded from the
+**Live demo:** https://anmolgupta-24.github.io/lineage-agent/demo/ (static: the real UI with 67 answers and 20 triage decisions recorded from the
 graph, opening on a multi-hop example; anything else shows how to run it locally in a minute)
 
 **Demo video:** https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@7a4cbb155b35fda916942f1a202876e7de0f51ba/docs/video/lineage-demo.mp4 (2:51, narrated, captions burned in; `docs/video/lineage-demo.srt` for upload)
@@ -46,8 +46,8 @@ triaged. Also exposed as the MCP tools `triage_topic` and `triage_queue`.
   `link_prior_threads`, `flag_for_review` or `route_to_experts` from the graph, records `(:Triage)-[:ABOUT|EVIDENCE|ROUTED_TO]`,
   writes an outbox note with the reason, evidence and drafted reply (optional webhook); never posts.
   Dry run over the 60 newest Ideas topics: 1 reply_with_ruling (hand-checked, right), 17 flag_for_review,
-  42 route_to_experts, median 1.7 s each (eval/TRIAGE.md, 9 decisions hand-checked). 19 decisions recorded from live
-  runs; none drafted a reply, since most new ideas have no same-idea record. `make triage` / `make triage-dry`;
+  42 route_to_experts, median 1.7 s each (eval/TRIAGE.md, 9 decisions hand-checked). 20 decisions recorded from live
+  runs, including one drafted reply (topic 108762 matched PEP 583, withdrawn); most new ideas have no same-idea record. `make triage` / `make triage-dry`;
   Triage queue view in the UI and the live demo (#triage). The tool order inside the agent is fixed code; an MCP
   client chooses when to call it.
 - Also exposed as an MCP server.
