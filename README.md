@@ -11,7 +11,7 @@ open-source organisations, with its decisions in public PEPs, forum threads and 
 Track 01, a triage agent reads new forum ideas, decides from the graph what to do with each, and records and
 drafts that action for a person to send ([details](#track-01-an-agent-that-decides-and-acts)).
 
-> **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers and 20 triage decisions recorded from the graph; run it locally to ask anything) ·
+> **Live demo:** [anmolgupta-24.github.io/lineage-agent](https://anmolgupta-24.github.io/lineage-agent/demo/) (67 answers and 158 triage decisions recorded from the graph: 20 live, the rest from a backfill over forum history; run it locally to ask anything) ·
 > **Write-up:** [Python already said no: tracing 26 years of rejected ideas with a graph](https://medium.com/@anmolgupta.skp/python-already-said-no-tracing-26-years-of-rejected-ideas-with-a-graph-d8060ecc1cba) ·
 > **Demo video:** [watch (3:18, narrated, captioned)](https://cdn.jsdelivr.net/gh/ANMOLGUPTA-24/lineage-agent@a5a6211c6f20862a9e67b25feda9244ebb528da2/docs/video/lineage-demo.mp4) ·
 > **Run it locally:** `docker compose -f docker-compose.quick.yml up --build` → http://localhost:8000 (pre-built graph, no API key;

@@ -224,7 +224,24 @@ def fake_tools(monkeypatch, rows, **replies):
         return replies[name](args) if name in replies else {"outcome": "not_in_graph", "rows": [], "paths": []}
     monkeypatch.setattr(triage.tools, "call", call)
     monkeypatch.setattr(triage, "earlier_triage", lambda ids: [])
+    monkeypatch.setattr(triage, "decision_at", lambda n: decided_on.get(n))
+    monkeypatch.setattr(triage, "pep_authors", lambda n: ["Ann Author", "Bob Author"])
+
+    def scan(tr, target, topic):
+        tr.local("rejected_ideas", {"pep": target["pep"]}, "adopted PEP")["outcome"] = "none close"
+        return alts.get(target["pep"])
+    monkeypatch.setattr(triage, "scan_rejected_ideas", scan)
     return calls
+
+
+decided_on: dict = {}   # PEP -> decision date, for the synthetic planner tests (reset by the autouse fixture)
+alts: dict = {}         # PEP -> the rejected idea scan_rejected_ideas finds
+
+
+@pytest.fixture(autouse=True)
+def reset_fakes():
+    decided_on.clear(), alts.clear()
+    yield
 
 
 def tools_of(d):
@@ -239,7 +256,7 @@ def test_plan_superseded_pep_points_at_the_latest(monkeypatch):
     monkeypatch.setattr(triage, "pep_brief", lambda n: {"pep": n, "title": "Disallow it", "status": "Final",
                                                         "url": "https://peps.python.org/pep-0765/", "created": "2024-11-15"})
     d = triage.decide(topic("Forbid return in finally", tid=-10))
-    assert tools_of(d) == ["already_decided", "is_current", "draft_reply"]   # a ruling is on record: no why()
+    assert tools_of(d) == ["already_decided", "is_current", "rejected_ideas", "draft_reply"]   # a ruling is on record: no why()
     assert "superseded by PEP 765" in d["steps"][1]["why"] and "PEP 765 (Final)" in d["steps"][1]["outcome"]
     assert d["action"] == "point_to_existing" and "superseded by PEP 765" in d["reason"]
     assert d["draft"].startswith("PEP 601 was superseded: what Python follows now is PEP 765")
@@ -264,8 +281,8 @@ def test_plan_adopted_pep_is_checked_for_currency(monkeypatch):
     fake_tools(monkeypatch, [pep_row(572, "Final")],
                is_current=lambda a: {"outcome": "answered", "rows": [{"pep": 572, "current": True, "latest": []}]})
     d = triage.decide(topic("walrus", tid=-13))
-    assert tools_of(d) == ["already_decided", "is_current", "draft_reply"]
-    assert d["action"] == "point_to_existing" and d["steps"][1]["outcome"] == "current: nothing supersedes it"
+    assert tools_of(d) == ["already_decided", "rejected_ideas", "is_current", "draft_reply"]
+    assert d["action"] == "point_to_existing" and d["steps"][2]["outcome"] == "current: nothing supersedes it"
 
 
 def test_plan_same_threads_use_their_participants(monkeypatch):
@@ -332,7 +349,7 @@ def test_plan_nothing_found_goes_to_nearest_threads_then_who_knows(monkeypatch):
 
 def test_plan_on_the_real_graph_follows_supersession():
     d = triage.decide(topic("Forbid return, break and continue breaking out of finally", tid=-19))
-    assert tools_of(d)[:2] == ["already_decided", "is_current"] and d["action"] == "point_to_existing"
+    assert tools_of(d)[:3] == ["already_decided", "is_current", "rejected_ideas"] and d["action"] == "point_to_existing"
     assert "superseded by PEP 765" in d["reason"] and 765 in peps(d)
 
 
@@ -392,16 +409,21 @@ def test_cached_topics_and_backfill_resume(tmp_path, monkeypatch):
 def test_backfill_dry_run_on_two_cached_topics(tmp_path):
     cache = json.loads(triage.RAW.read_text())
     done = triage.triaged_topics()
-    two = [i for i in sorted(cache["ideas"].values(), key=lambda i: i["created"])
-           if i["created"] >= "2024-06-01" and i["id"] not in done][:2]
+    # The newest untriaged topics: a backfill running at the same time works oldest first.
+    two = sorted([i for i in sorted(cache["ideas"].values(), key=lambda i: i["created"], reverse=True)
+                  if i["created"] >= "2024-01-01" and i["id"] not in done][:2], key=lambda i: i["created"])
+    if len(two) < 2:
+        pytest.skip("every cached topic is triaged")
+    ids = [i["id"] for i in two]
     path = cache_file(tmp_path, two, {i["id"]: cache["topics"].get(str(i["id"]), {}).get("text", "") for i in two})
-    count = lambda: graph().ro_query("MATCH (t:Triage) RETURN count(t)").result_set[0][0]
-    n, files = count(), set(triage.OUTBOX.rglob("*"))
+    count = lambda: graph().ro_query("MATCH (t:Triage) WHERE t.topic IN $ids RETURN count(t)", {"ids": ids}).result_set[0][0]
+    files = lambda: {f for f in triage.OUTBOX.rglob("*") if f.stem in {str(i) for i in ids}}
+    n, before = count(), files()
     out = triage.backfill("2024-01-01", dry_run=True, path=path)
-    assert [d["topic"]["id"] for d in out] == [i["id"] for i in two]
+    assert [d["topic"]["id"] for d in out] == ids
     assert all(d["mode"] == "backfill" and d["steps"][0]["tool"] == "already_decided" and d["action"] in triage.ACTIONS
                for d in out)
-    assert count() == n and set(triage.OUTBOX.rglob("*")) == files   # a dry run writes nothing
+    assert count() == n == 0 and files() == before   # a dry run writes nothing
 
 
 def test_api_triage_filters(fake_topic):
@@ -419,3 +441,85 @@ def test_api_triage_filters(fake_topic):
     assert FAKE not in [r["topic"] for r in live]
     assert all(r["action"] == "route_to_experts"
                for r in c.get("/api/triage", params={"action": "route_to_experts"}).json()["rows"])
+
+
+# ---------------------------------------------------------------- policy: cites, rejected ideas, status then
+
+def test_a_post_naming_an_adopted_pep_builds_on_it(monkeypatch):
+    fake_tools(monkeypatch, [pep_row(702, "Final", score=7.5), thread_row(14, match="related", committers=["Core One"])])
+    d = triage.decide(topic("More deprecation decorators", tid=-20, text="PEP 702 added @deprecated; extend it to parameters."))
+    assert d["action"] == "flag_for_review" and d["draft"] is None
+    assert d["reason"].startswith("The post builds on PEP 702") and "Its authors should see it" in d["reason"]
+    assert [r["why"] for r in d["reviewers"][:2]] == ["author of PEP 702, which the post builds on"] * 2
+    assert {e["pep"]: e["match"] for e in d["evidence"] if e["pep"]} == {702: "builds_on"}
+    assert "draft_reply" not in tools_of(d)
+
+
+def test_cites_reads_numbers_links_and_long_titles_in_the_post():
+    pep = {"pep": 616, "title": "String methods to remove prefixes and suffixes"}
+    assert triage.cites({"title": "Extend PEP-616"}, pep) and triage.cites({"title": "x", "text": "see pep-0616/"}, pep)
+    assert triage.cites({"title": "x", "text": "As in string methods to remove  prefixes and suffixes, ..."}, pep)
+    assert not triage.cites({"title": "x", "text": "PEP 6160 and PEP 61"}, pep)
+    # A short title in the topic's own title names the idea, not the PEP.
+    assert not triage.cites({"title": "Assignment expressions"}, {"pep": 572, "title": "Assignment Expressions"})
+
+
+def test_point_to_existing_needs_a_comfortable_score(monkeypatch):
+    fake_tools(monkeypatch, [pep_row(562, "Final", score=5.8)])
+    d = triage.decide(topic("Module-level __getattribute__", tid=-21))
+    assert d["action"] == "flag_for_review" and f"below the {triage.POINT_MIN}" in d["reason"]
+    assert d["evidence"][0]["match"] == "related" and "is_current" not in tools_of(d)
+
+
+def test_a_promotion_by_the_topics_own_thread_means_it_cites_the_pep(monkeypatch):
+    fake_tools(monkeypatch, [pep_row(616, "Final", score=2.4, via_thread=-22)])   # -22 is the topic itself
+    d = triage.decide(topic("tuple argument for str.removeprefix", tid=-22))
+    assert d["action"] == "flag_for_review" and "the post cites it" in d["steps"][0]["outcome"]
+    assert d["reason"].startswith("The post builds on PEP 616")
+    fake_tools(monkeypatch, [pep_row(505, "Deferred", score=2.0, via_thread=-29)])   # citing a ruled PEP: a re-proposal
+    assert triage.decide(topic("None-coalescing", tid=-29))["action"] == "reply_with_ruling"
+
+
+def test_a_same_idea_rejected_idea_beats_the_adopted_pep(monkeypatch):
+    rejected = {**pep_row(616, "Final"), "kind": "rejected_idea", "idea": "Accepting a tuple of affixes",
+                "idea_url": "https://peps.python.org/pep-0616/#accepting-a-tuple-of-affixes", "idea_quote": "Not now.",
+                "earlier_forms": [], "verdict": "set aside"}
+    fake_tools(monkeypatch, [pep_row(616, "Final", score=7.0), rejected])   # already_decided returned both
+    d = triage.decide(topic("removeprefix with a tuple", tid=-23))
+    assert d["action"] == "reply_with_ruling" and "Accepting a tuple of affixes" in d["draft"]
+    alts[616] = {**rejected, "score": 6.2}   # or the scan of the adopted PEP's own rejected ideas finds it
+    fake_tools(monkeypatch, [pep_row(616, "Final", score=7.0)])
+    d = triage.decide(topic("removeprefix with a tuple", tid=-24))
+    assert d["action"] == "reply_with_ruling" and tools_of(d) == ["already_decided", "rejected_ideas", "draft_reply"]
+    assert 'considered "Accepting a tuple of affixes" and set it aside' in d["reason"]
+    assert "considered \"Accepting a tuple of affixes\" and set it aside" in d["draft"]
+    assert {(e["kind"], e["match"]) for e in d["evidence"]} == {("rejected_idea", "same"), ("pep", "related")}
+
+
+def test_a_pep_decided_after_the_topic_was_open_then(monkeypatch):
+    decided_on[810] = "2025-11-03T16:25:04Z"
+    fake_tools(monkeypatch, [pep_row(810, "Final", score=7.0, created="2025-10-02")])
+    d = triage.decide(topic("Explicit lazy imports", tid=-25, created="2025-10-20"))
+    assert d["action"] == "link_prior_threads" and "status_then" in tools_of(d)
+    assert "already proposed this when the topic was posted" in d["reason"] and "Final only on 2025-11-03" in d["reason"]
+    assert d["draft"].startswith("An open PEP already proposes this: PEP 810")
+    assert "adopted" not in d["draft"] and "The ruling:" not in d["draft"] and "still open" in d["draft"]
+    decided_on[315] = "2026-01-01"   # a ruling after the topic is not quoted either
+    fake_tools(monkeypatch, [pep_row(315, "Rejected")])
+    d = triage.decide(topic("do-while", tid=-26, created="2025-06-01"))
+    assert d["action"] == "link_prior_threads" and "rejected" not in d["draft"]
+    decided_on[315] = "2004-01-01"   # decided before the topic: today's status stands
+    assert triage.decide(topic("do-while", tid=-27, created="2025-06-01"))["action"] == "reply_with_ruling"
+
+
+def test_a_timed_out_tool_is_a_step_not_a_failure(monkeypatch):
+    from redis.exceptions import ResponseError
+
+    def slow(a):
+        raise ResponseError("Query timed out")
+    fake_tools(monkeypatch, [pep_row(3120, "Final", match="related", authors=[]),
+                             thread_row(13, match="related", committers=["Dev A"])], connection=slow)
+    d = triage.decide(topic("x", tid=-28))
+    assert d["steps"][1] == {"tool": "connection", "args": {"a": "Dev A", "b": "PEP 3120"},
+                             "why": d["steps"][1]["why"], "outcome": "timed out: kept, unranked"}
+    assert d["reviewers"][0]["name"] == "Dev A"

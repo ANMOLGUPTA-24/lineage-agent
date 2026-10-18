@@ -35,9 +35,12 @@ and what it found. It never posts to the forum. Topics it has already triaged ar
 import argparse
 import json
 import os
+import re
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+from redis.exceptions import ResponseError
 
 from lineage import tools
 from lineage.db import graph
@@ -52,6 +55,14 @@ ACTIONS = ("reply_with_ruling", "point_to_existing", "link_prior_threads", "flag
 MODES = ("live", "backfill")
 WRITES = {"same": "SAME_IDEA_AS", "related": "RELATED_TO"}
 ROLE = {"authored": "author of", "delegate_for": "decided"}   # who_knows' "direct" roles, as a reviewer's why
+# point_to_existing says "this already exists", so it needs more than a same-idea match (tools.SAME_IDEA = 5.0).
+# The bands were set on hand-checked ideas where true matches scored 6.0-7.9; in the 2024-26 backfill
+# (eval/TRIAGE_BACKFILL.md) none of the 18 point_to_existing decisions was fully right, and the 4 that scored 5.0-6.0
+# without naming the PEP were promotions or extensions (55503 at 4.97 via a thread, 101401 at 5.81, 106430 at 5.76).
+# Known-good cases score 6.6 (PEP 572, PEP 814) to 8.9 (PEP 765). Below POINT_MIN it is flagged for a person.
+POINT_MIN = 6.0
+VERDICT_THEN = "still open when the topic was posted"
+WRITES["builds_on"] = "RELATED_TO"   # a post that builds on a PEP is related to it, not the same idea
 
 
 def fetch_topic(tid: int) -> dict | None:
@@ -165,7 +176,12 @@ class Trace:
         self.cypher = 0
 
     def call(self, tool: str, args: dict, why: str) -> dict:
-        res = tools.call(tool, args)
+        try:
+            res = tools.call(tool, args)
+        except ResponseError as e:   # a slow query (algo.SPpaths around a hub) must not lose the whole decision
+            if "timed out" not in str(e).lower() or tool == "already_decided":
+                raise
+            res = {"outcome": "timed_out", "rows": [], "paths": [], "note": str(e)}
         self.paths += res.get("paths") or []
         self.cypher += len(res.get("cypher") or [])
         self.steps.append({"tool": tool, "args": args, "why": why, "outcome": res.get("outcome", "")})
@@ -222,7 +238,7 @@ def reviewers(rows: list[dict], topic: dict | None = None, limit: int = 3, trace
             row = (res.get("rows") or [{}])[0]
             hops[o["name"]] = row.get("hops") if res["outcome"] == "answered" else None
             trace.found(f"{row['hops']} hop(s), {row.get('strength')}" if hops[o["name"]] is not None
-                        else "no path within 6 hops")
+                        else "timed out: kept, unranked" if res["outcome"] == "timed_out" else "no path within 6 hops")
             if hops[o["name"]] is not None and hops[o["name"]] <= 2:
                 o["why"] += f"; {plural(hops[o['name']], 'hop')} from PEP {pep['pep']} in the graph"
         out.sort(key=lambda o: hops.get(o["name"]) if hops.get(o["name"]) is not None else 99)
@@ -289,41 +305,76 @@ def decide(topic: dict, mode: str = "live") -> dict:
                   "the topic's title and opening post?")
     rows = prior(res.get("rows", []), topic) if res["outcome"] == "answered" else []
     tr.found(summarize(res, rows))
+    # already_decided promotes a PEP to "same" when a same-idea thread refers to it. If that thread is the topic's
+    # own (or a later one), what the graph shows is that the post cites the PEP: for a ruled PEP that is a
+    # re-proposal (PEP 505 in t/107510), for an adopted one the post builds on it (see cites()).
+    kept = {r["thread_id"] for r in rows if r["kind"] == "thread"}
+    for r in rows:
+        if r["kind"] != "thread" and r["match"] == "same" and r.get("via_thread") and r["via_thread"] not in kept:
+            r["cited_by_topic"] = True
+            tr.steps[-1]["outcome"] += (f"; PEP {r['pep']} is a same-idea match only because the topic's own or a later "
+                                        f"thread (t/{r['via_thread']}) refers to it: the post cites it")
     same = [r for r in rows if r["match"] == "same"]
     decided = next((r for r in same if r["kind"] != "thread"), None)
+    # An idea a PEP considered and set aside is a closer answer than the PEP that was adopted without it.
+    alt = next((r for r in same if r["kind"] == "rejected_idea"), None)
+    if alt and decided is not alt and decided.get("status") in ADOPTED:
+        decided = alt
     threads = [r for r in same if r["kind"] == "thread"]
-    extra, latest = [], None
+    extra, latest, then = [], None, None   # `then`: the PEP as it stood when the topic was posted, for the draft
     when = (topic.get("created") or "9999")[:10]
+    action = reason = found = None
 
     if decided:
         n, where = decided["pep"], (f"PEP {decided['pep']}" if decided["kind"] == "pep"
                                     else f"a rejected idea in PEP {decided['pep']}")
         status = decided.get("status")
-        # Is the matched PEP still the record to point at? Only worth asking when the graph hints it is not.
-        if decided.get("superseded_by") or status == "Superseded" or (status in ADOPTED and decided["kind"] == "pep"):
-            hint = (f"already_decided reports PEP {n} was superseded by {decided['superseded_by']}"
-                    if decided.get("superseded_by") else f"PEP {n} is {status}")
-            ic = tr.call("is_current", {"pep": str(n)},
-                         f"{hint}: follow the SUPERSEDES chain to the PEP that describes Python now before pointing at it")
-            chain = (ic.get("rows") or [{}])[0].get("latest") or [] if ic["outcome"] == "answered" else []
-            if chain:
-                latest = pep_brief(chain[0]["pep"])
-                if (latest["created"] or "")[:10] >= when:   # the topic can only be pointed at what existed before it
-                    tr.found(f"superseded by PEP {latest['pep']}, which is newer than the topic: not used")
-                    latest = None
-                else:
-                    tr.found(f"superseded: latest in the chain is PEP {latest['pep']} ({latest['status']})")
+        if decided.get("superseded_by") or status == "Superseded":
+            latest = follow_chain(tr, n, f"already_decided reports PEP {n} was superseded by {decided['superseded_by']}"
+                                  if decided.get("superseded_by") else f"PEP {n} is Superseded", when)
+        target = latest if latest and latest["status"] in ADOPTED else (
+            {"pep": n, "title": decided["title"], "status": status} if decided["kind"] == "pep" else None)
+        # Status at the time of the topic: a PEP decided after the topic was posted was still open then.
+        decided_on = decision_at(target["pep"]) if target else None
+        if target and (target["status"] in ADOPTED | RULED) and decided_on and decided_on[:10] >= when:
+            tr.local("status_then", {"pep": target["pep"]},
+                     f"PEP {target['pep']} is {target['status']} today, but the topic is from {when}: check when it was "
+                     "decided before quoting today's status")["outcome"] = f"decided {decided_on[:10]}, after the topic: open then"
+            action = "link_prior_threads"
+            reason = (f"An open PEP ({target['pep']}, {target['title']}) already proposed this when the topic was posted; "
+                      f"join that discussion. Nothing was decided yet: it was {target['status']} only on {decided_on[:10]}.")
+            then = {"pep": target["pep"], "status": "Draft", "verdict": VERDICT_THEN, "decision": None, "reason": None}
+        elif target and target["status"] in ADOPTED:
+            found = scan_rejected_ideas(tr, target, topic)
+            score = decided.get("score") or 0
+            if found and found["score"] >= tools.SAME_IDEA:
+                action, decided = "reply_with_ruling", found
+                rows.insert(0, found)
+                for r in rows:
+                    if r is not found and r["kind"] == "pep" and r["pep"] == found["pep"]:
+                        r["match"] = "related"   # the PEP was adopted, but without this idea
+                reason = (f"PEP {found['pep']} ({found['title']}, {(found.get('created') or '')[:4]}) considered "
+                          f"\"{found['idea']}\" and set it aside, though the PEP itself was {target['status']}: "
+                          "that is the ruling on this idea.")
+            elif cites(topic, target) or (target["pep"] == n and decided.get("cited_by_topic")):
+                action = "flag_for_review"
+                reason = (f"The post builds on PEP {target['pep']} ({target['title']}, {target['status']}): it names the PEP, "
+                          "so it is extending or revising it, not repeating it. Its authors should see it.")
+                builds_on(rows, target["pep"])
+            elif not latest and score < POINT_MIN:
+                action = "flag_for_review"
+                reason = (f"PEP {n} ({decided['title']}, {status}) matched at {score}, below the {POINT_MIN} needed to say "
+                          "the idea already exists; a person should judge whether it is the same idea.")
+                decided["match"] = "related"
             else:
-                tr.found("current: nothing supersedes it" if (ic.get("rows") or [{}])[0].get("current")
-                         else f"nothing supersedes it ({status})")
-        if latest and latest["status"] in ADOPTED:
-            action = "point_to_existing"
-            reason = (f"{where} ({decided['title']}, {(decided.get('created') or '')[:4]}) proposed the same idea and is "
-                      f"{status}, but it was superseded by PEP {latest['pep']} ({latest['title']}, {latest['status']}): "
-                      f"that is the record that describes Python now.")
-        elif status in ADOPTED and decided["kind"] == "pep":
-            action = "point_to_existing"
-            reason = f"PEP {n} ({decided['title']}) proposed the same idea and is {status}."
+                if not latest:   # adopted and confidently the same idea: is it still the record to point at?
+                    latest = follow_chain(tr, n, f"PEP {n} is {status} and matched at {score}", when)
+                    target = latest if latest and latest["status"] in ADOPTED else target
+                action = "point_to_existing"
+                reason = (f"{where} ({decided['title']}, {(decided.get('created') or '')[:4]}) proposed the same idea and is "
+                          f"{status}, but it was superseded by PEP {latest['pep']} ({latest['title']}, {latest['status']}): "
+                          "that is the record that describes Python now." if latest and latest["status"] in ADOPTED
+                          else f"PEP {n} ({decided['title']}) proposed the same idea and is {status}.")
         elif status == "Draft" and decided["kind"] == "pep":
             action = "link_prior_threads"   # an open draft is not a ruling: point at the discussion under way
             reason = (f"An open PEP ({n}, {decided['title']}) already proposes this; join that discussion. "
@@ -334,11 +385,13 @@ def decide(topic: dict, mode: str = "live") -> dict:
                       f"it was {decided['verdict']}.")
             if latest:
                 reason += f" It was later superseded by PEP {latest['pep']} ({latest['title']}, {latest['status']})."
-        back = [b for b in decided.get("came_back") or [] if not latest or b["pep"] != latest["pep"]]
-        if back:
-            reason += (f" It came up again in {plural(len(back), 'later PEP')}: "
-                       + ", ".join(f"PEP {b['pep']} ({(b.get('created') or '')[:4]}, {b.get('status')})" for b in back[:3]) + ".")
-        if action in ("reply_with_ruling", "point_to_existing") and not decided.get("decision") and not latest:
+        if action in ("reply_with_ruling", "point_to_existing", "link_prior_threads") and not then:
+            back = [b for b in decided.get("came_back") or [] if not latest or b["pep"] != latest["pep"]]
+            if back:
+                reason += (f" It came up again in {plural(len(back), 'later PEP')}: "
+                           + ", ".join(f"PEP {b['pep']} ({(b.get('created') or '')[:4]}, {b.get('status')})" for b in back[:3]) + ".")
+        if action in ("reply_with_ruling", "point_to_existing") and not decided.get("decision") and not latest \
+                and decided["kind"] == "pep":
             w = tr.call("why", {"pep": str(n)},
                         f"the reply quotes PEP {n}'s ruling, but the graph traversal from it found no Decision or decider: "
                         "look for its ruling notice and lineage before quoting it")
@@ -351,6 +404,8 @@ def decide(topic: dict, mode: str = "live") -> dict:
             else:
                 tr.found(f"no ruling recorded, only its status ({status})")
                 reason += f" The graph records no ruling for PEP {n}, only its status ({status}); the reply quotes the PEP itself."
+        if action == "flag_for_review" and not any(r["match"] == "same" and r["kind"] != "thread" for r in rows):
+            decided = None   # nothing decisive left: reviewers and the draft treat it as related history
     elif threads:
         action = "link_prior_threads"
         last = max(threads, key=lambda r: r.get("created") or "")
@@ -377,6 +432,10 @@ def decide(topic: dict, mode: str = "live") -> dict:
         reason = "Nothing in the graph matches closely. That is not proof the idea is new."
 
     who = reviewers(rows, topic, trace=tr)
+    built = next((r["pep"] for r in rows if r["match"] == "builds_on"), None)
+    if built:   # the post builds on this PEP: its authors come first
+        authors = [{"name": a, "why": f"author of PEP {built}, which the post builds on"} for a in pep_authors(built)[:2]]
+        who = (authors + [w for w in who if w["name"] not in {a["name"] for a in authors}])[:3]
     for x in extra:
         if x["match"] == "via_triage" and len(who) < 3:
             for name in pep_authors(x["pep"])[:1]:
@@ -389,15 +448,20 @@ def decide(topic: dict, mode: str = "live") -> dict:
         reason += " Nobody in the evidence qualifies as a reviewer: a person should pick one."
 
     # The reply is drafted from the same rows the decision used: only history from before the topic.
-    draft = None
+    # A PEP decided after the topic is drafted as it stood then: open, no ruling, no ruling notice.
+    draft, same = None, [r for r in rows if r["match"] == "same"]
     if action in ("reply_with_ruling", "link_prior_threads", "point_to_existing"):
         tr.local("draft_reply", {}, f"{action} sends a reply: draft it from the {plural(len(same), 'same-idea row')} the "
-                                    "decision used, nothing newer than the topic")
-        draft = tools.draft_from_rows(rows)
-        if draft and decided and decided.get("status") == "Draft":
-            draft = (f"An open PEP already proposes this: PEP {decided['pep']} ({decided['title']}), {decided['url']}. "
+                                    "decision used, nothing newer than the topic"
+                                    + (f", with PEP {then['pep']} as it stood then (open)" if then else ""))
+        as_then = [({**r, **then} if then and r["kind"] == "pep" and r.get("pep") == then["pep"] else r) for r in rows]
+        draft = tools.draft_from_rows(as_then)
+        opened = then or (decided if decided and decided["kind"] == "pep" and decided.get("status") == "Draft" else None)
+        if draft and opened:
+            o = next((r for r in as_then if r["kind"] == "pep" and r.get("pep") == opened["pep"]), decided)
+            draft = (f"An open PEP already proposes this: PEP {o['pep']} ({o['title']}), {o['url']}. "
                      "Nothing is decided yet; the place to take this is that PEP's discussion.\n\n" + draft)
-        if draft and latest and latest["status"] in ADOPTED:
+        if draft and action == "point_to_existing" and latest and latest["status"] in ADOPTED:
             draft = (f"PEP {decided['pep']} was superseded: what Python follows now is PEP {latest['pep']} "
                      f"({latest['title']}, {latest['status']}), {latest['url']}.\n\n" + draft)
         tr.found(f"drafted ({len(draft)} characters, not posted)" if draft else "nothing to draft")
@@ -411,6 +475,69 @@ def decide(topic: dict, mode: str = "live") -> dict:
             "confidence": max((r["score"] for r in rows), default=None),
             "evidence": evidence, "reviewers": who, "draft": draft, "steps": tr.steps,
             "paths": tr.paths[:12], "cypher": tr.cypher}
+
+
+def follow_chain(tr: Trace, n: int, hint: str, when: str) -> dict | None:
+    """is_current on PEP n: the latest PEP in its SUPERSEDES chain, if one existed before the topic."""
+    ic = tr.call("is_current", {"pep": str(n)},
+                 f"{hint}: follow the SUPERSEDES chain to the PEP that describes Python now before pointing at it")
+    row = (ic.get("rows") or [{}])[0] if ic["outcome"] == "answered" else {}
+    if not row.get("latest"):
+        tr.found("current: nothing supersedes it" if row.get("current") else f"nothing supersedes it ({row.get('status')})")
+        return None
+    latest = pep_brief(row["latest"][0]["pep"])
+    if (latest["created"] or "")[:10] >= when:   # the topic can only be pointed at what existed before it
+        tr.found(f"superseded by PEP {latest['pep']}, which is newer than the topic: not used")
+        return None
+    tr.found(f"superseded: latest in the chain is PEP {latest['pep']} ({latest['status']})")
+    return latest
+
+
+def decision_at(n: int) -> str | None:
+    """When PEP n was decided (its earliest dated Decision), if the graph records it."""
+    rows = graph().ro_query("""MATCH (:PEP {number: $n})-[:RESOLVED_BY]->(d:Decision) WHERE coalesce(d.at, '') <> ''
+                               RETURN min(d.at)""", {"n": n}).result_set
+    return rows[0][0] if rows else None
+
+
+def cites(topic: dict, pep: dict) -> bool:
+    """Does the topic name the PEP? Then it builds on the PEP, not repeats it. Its number anywhere ("PEP 616",
+    "PEP-750", "pep-0616" in a link) counts; its full title counts only in the opening post and only when it is
+    three words or more: a topic *titled* "Assignment expressions" is naming the idea, not citing PEP 572."""
+    if re.search(rf"\bpep[\s_-]?0*{pep['pep']}\b", f"{topic.get('title') or ''}\n{topic.get('text') or ''}", re.I):
+        return True
+    title = " ".join((pep.get("title") or "").lower().split())
+    return len(title.split()) >= 3 and title in " ".join((topic.get("text") or "").lower().split())
+
+
+def builds_on(rows: list[dict], n: int) -> None:
+    for r in rows:
+        if r["kind"] == "pep" and r.get("pep") == n:
+            r["match"] = "builds_on"
+
+
+def scan_rejected_ideas(tr: Trace, target: dict, topic: dict) -> dict | None:
+    """already_decided hides the rejected ideas of a PEP that matched itself. Score the adopted PEP's own rejected
+    ideas against the topic with the same cross-encoder: the topic may be an idea the PEP set aside."""
+    step = tr.local("rejected_ideas", {"pep": target["pep"]},
+                    f"PEP {target['pep']} is {target['status']}, but an adopted PEP can still have set this exact idea "
+                    "aside: score its own rejected ideas against the topic before saying it exists")
+    alts = graph().ro_query("""MATCH (a:Alternative)-[:REJECTED_IN]->(:PEP {number: $n})
+                               RETURN a.url, a.title, coalesce(a.text, '')""", {"n": target["pep"]}).result_set
+    if not alts:
+        step["outcome"] = "it records no rejected ideas"
+        return None
+    idea = tools.idea_text((topic["title"] + ". " + (topic.get("text") or "")[:240]).strip())
+    scores = [round(float(x), 2) for x in tools._reranker().rerank(idea, [(t + ". " + x)[:tools.SNIPPET] for _, t, x in alts])]
+    score, (url, title, text) = max(zip(scores, alts), key=lambda z: z[0])
+    step["outcome"] = (f"{plural(len(alts), 'rejected idea')}; closest \"{title}\" at {score} "
+                       + ("(same idea)" if score >= tools.SAME_IDEA else "(not the same idea)"))
+    p = pep_brief(target["pep"])
+    return {"kind": "rejected_idea", "match": "same", "score": score, "pep": target["pep"], "title": p["title"],
+            "status": p["status"], "created": p["created"], "url": p["url"], "verdict": "set aside",
+            "idea": title, "idea_url": url, "idea_quote": tools.first_sentences(text), "earlier_forms": [],
+            "authors": pep_authors(target["pep"]), "decision": None, "reason": None, "superseded_by": None,
+            "came_back": [], "earlier_tries": [], "quote": ""}
 
 
 def pep_authors(n: int) -> list[str]:
